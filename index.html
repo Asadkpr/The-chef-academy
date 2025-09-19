@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+
+  
+
+  <title>Culinary Arts</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #FAF7D9;
+      font-family: Arial, sans-serif;
+      position: relative;
+      color: #061C40;
+    }
+
+
+    /* Hero Section */
+    .hero {
+      height: 350px;
+      position: relative;
+      overflow: hidden;
+      padding-top: 70px; /* navbar height */
+    }
+
+   
+
+    
+   /* Register button + heading container - updated */
+.register-container {
+  position: absolute;
+  top: 50%;
+  left: 40px; /* a bit more inside */
+  transform: translateY(-50%);
+  /* z-index: 1000; */
+  text-align: left; /* professional alignment */
+}
+
+.register-container h2 {
+  font-size: 45px;
+  color: #061C40;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.2em; /* reduces space between full-width characters */
+}
+
+
+
+
+    /* Circle container right */
+    .circle-container {
+      position: absolute;
+      bottom: 70px;
+     
+      right: -250px;
+      width: 500px;
+      height: 500px;
+    }
+
+    .circle-border {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 3px solid rgba(0,0,0,0.2);
+      border-radius: 50%;
+      background: #FAF7D9;
+      top: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Vertical text inside big circle */
+    .circle-border span {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-size: 20px;
+      font-weight: bold;
+      color: #061C40;
+      letter-spacing: 5px;
+      transform: translateX(-30px);
+    }
+
+    .rotating {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 500px;
+      height: 500px;
+      transform: translate(-50%, -50%);
+      animation: rotate 20s linear infinite;
+    }
+
+    .rotating img {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #fff;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+      transform: translate(-50%, -50%);
+    }
+
+    .rotating img:nth-child(1) { top: calc(50% - 250px); left: 50%; }
+    .rotating img:nth-child(2) { top: calc(50% - 125px); left: calc(50% + 216px); }
+    .rotating img:nth-child(3) { top: calc(50% + 125px); left: calc(50% + 216px); }
+    .rotating img:nth-child(4) { top: calc(50% + 250px); left: 50%; }
+    .rotating img:nth-child(5) { top: calc(50% + 125px); left: calc(50% - 216px); }
+    .rotating img:nth-child(6) { top: calc(50% - 125px); left: calc(50% - 216px); }
+
+    @keyframes rotate {
+      from { transform: translate(-50%, -50%) rotate(0deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Courses Section */
+    .courses-section {
+      padding: 20px 50px;
+      background: #FAF7D9;
+      text-align: center;
+    }
+
+    .courses-section {
+      font-size: 32px;
+      color: #061C40;
+      /* margin-bottom: 50px; */
+    }
+    .section-title {
+  font-size: 32px;
+  color: #061C40;
+  font-weight: 700;
+  letter-spacing: -0.2em; /* reduces space between full-width letters */
+  line-height: 1.2;
+}
+
+
+    .courses-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 30px;
+    }
+
+    .course-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .course-card img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      display: block;
+      border-radius: 15px;
+    }
+
+    .course-name {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #FAF7D9;
+      color: #061C40;
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: 0.3s ease;
+    }
+
+   .overlay {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #FAF7D9;
+  color: #061C40;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* vertical center */
+  align-items: center;     /* horizontal center */
+  gap: 15px;               /* spacing between h3, p, button */
+  text-align: center;
+  padding: 0 0px;         /* optional: horizontal padding */
+  transition: top 0.5s ease;
+}
+
+.overlay h3 {
+  font-size: 22px;
+  color: #061C40;
+  margin: 0; /* remove default margin for precise centering */
+}
+
+.overlay p {
+  font-size: 14px;
+  margin: 0; /* remove default margin */
+  line-height: 1.4;
+}
+
+/* Overlay Button */
+.overlay button {
+  padding: 10px 25px;
+  background: #FAF7D9;
+  color: #061C40;
+  border: none;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add arrow after text */
+.overlay button::after {
+  content: " >";
+  font-weight: bold;
+  margin-left: 8px; /* gap between text and arrow */
+}
+
+
+.overlay button:hover {
+  background: #FAF7D9;
+}
+
+
+
+
+    /* Hover effect */
+    .course-card:hover .overlay {
+      top: 0;
+    }
+
+    .course-card:hover .course-name {
+      opacity: 0;
+    }
+
+
+    /* ✅ Responsive (Mobile < 768px) */
+@media (max-width: 768px) {
+  .courses-row {
+    grid-template-columns: 1fr; /* ek row me ek hi card */
+    gap: 20px; /* thoda kam gap rakha */
+  }
+
+  .course-card img {
+    height: 200px; /* mobile pe thoda chhota height */
+  }
+
+  .overlay h3 {
+    font-size: 18px;
+  }
+
+  .overlay p {
+    font-size: 13px;
+  }
+}
+
+
+/* ✅ Responsive About Section (Mobile < 768px) */
+@media (max-width: 768px) {
+  .about-section {
+    padding: 20px;
+  }
+
+  /* left + right stack vertically */
+  .about-section > div {
+    flex-direction: column !important;
+  }
+
+  .left-column {
+    height: auto !important;
+    padding: 0 !important;
+    margin-bottom: 20px; /* space before cards */
+  }
+
+  .circle-bg {
+    width: 100% !important;
+    height: 250px !important; /* chhoti height mobile pe */
+    border-radius: 0 0 40% 40% !important; /* neeche round ho */
+    padding: 15px !important;
+  }
+
+  .circle-bg p {
+    font-size: 12px !important; /* text chhota */
+    line-height: 1.4;
+  }
+
+  .right-column {
+    height: 400px !important; /* cards ke liye chhoti height */
+    flex-direction: column;
+  }
+}
+
+
+  </style>
+</head>
+<body>
+<!-- ✅ Navbar -->
+<div class="navbar">
+  <!-- Logo Left -->
+  <div class="logo">
+    <h4>Ｔｈｅ Ｃｈｅｆ Ａｃａｄｅｍｙ</h4>
+  </div>
+
+  <!-- Toggle Button (Mobile Only) -->
+  <div class="menu-toggle" id="menu-toggle">☰</div>
+
+  <!-- Nav Links -->
+  <div class="nav-links" id="nav-links" style="margin-right: 20px;">
+    <a href="#about">Ａｂｏｕｔ</a>
+    <a href="#courses">Ｃｏｕｒｓｅｓ</a>
+    <a href="contact us.html">Ｃｏｎｔａｃｔ</a>
+  </div>
+</div>
+
+<style>
+/* Navbar */
+.navbar {
+  width: 100%;
+  height: 70px;
+  background: transparent;
+  color: #061C40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+/* Logo */
+.navbar .logo h4 {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* ✅ By default hidden (for mobile) */
+.navbar .nav-links {
+  display: none;
+  gap: 15px;
+}
+
+/* ✅ Links styling */
+.navbar .nav-links a {
+  color: #061C40;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.navbar .nav-links a:hover {
+  background: #FFD700;
+  color: #061C40;
+}
+
+/* ✅ Toggle Button */
+.menu-toggle {
+  display: none;
+  font-size: 26px;
+  cursor: pointer;
+  user-select: none;
+  color: #061C40;
+  margin-right: 15px;
+}
+
+/* ✅ Desktop (nav-links visible, toggler hidden) */
+@media (min-width: 769px) {
+  .navbar .nav-links {
+    display: flex;
+  }
+  .menu-toggle {
+    display: none;
+  }
+}
+
+/* ✅ Mobile (nav-links hidden until toggle) */
+@media (max-width: 768px) {
+  .nav-links {
+    flex-direction: column;
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    background: #FAF7D9;
+    width: 200px;
+    padding: 15px;
+    border-radius: 8px;
+    color: gold;
+  }
+
+  .nav-links a {
+    color: #fff;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .nav-links a:hover {
+    background: #FFD700;
+    color: gold;
+  }
+
+  /* ✅ Toggle open hone pe show kare */
+  .nav-links.show {
+    display: flex;
+  }
+
+  /* ✅ Toggler show in mobile */
+  .menu-toggle {
+    display: block;
+    margin-right: 25px; /* 🔹 pehle 15px tha, ab zyada right ki taraf */
+  }
+}
+</style>
+
+<script>
+const toggleBtn = document.getElementById("menu-toggle");
+const navLinks = document.getElementById("nav-links");
+
+toggleBtn.addEventListener("click", () => {
+  navLinks.classList.toggle("show");
+  toggleBtn.textContent = navLinks.classList.contains("show") ? "✖" : "☰";
+});
+</script>
+
+
+
+
+
+
+
+<!-- Hero Section -->
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-container">
+
+    <!-- Left Column -->
+    <div class="hero-left">
+      <div class="register-container">
+        <div class="buttons-left">
+          <button class="register-btn"><span data-text="Courses">Courses</span></button>
+          <button class="register-btn"><span data-text="About Us">About Us</span></button>
+          <button class="register-btn"><span data-text="Registration">Registration</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column (Video/Canvas) -->
+    <div class="hero-right">
+      <canvas id="hero-canvas" aria-hidden="true"></canvas>
+      <div class="video-overlay">
+        <h2>Ｃｕｌｉｎａｒｙ Ａｒｔｓ</h2>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+/* Hero Section */
+.hero {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background: #FAF7D9;
+}
+.hero-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* ✅ Desktop: 2 columns */
+  width: 100%;
+  max-width: 1200px;
+}
+.hero-left {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 100px; /* navbar space */
+  padding-left: 30px;
+  background: #FAF7D9;
+}
+.buttons-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.register-btn {
+  padding: 12px 58px;
+  background: linear-gradient(90deg, #FAF7D9 50%, #FFD700 50%);
+  background-size: 200% 100%;
+  background-position: left center;
+  color: #061C40;
+  border: 1px solid gold;
+  /* border-radius: 30px; */
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-position 0.6s ease;
+  /* position: relative; */
+  overflow: hidden;
+}
+.register-btn:hover {
+  background-position: right center;
+}
+.register-btn::after {
+  content: " >";
+  margin-left: 40px;
+  font-weight: bold;
+}
+
+/* Right column (video/canvas) */
+.hero-right {
+  position: relative;
+  width: 100%;
+  height: 100vh; /* ✅ full height */
+  overflow: hidden;
+}
+.hero-right canvas {
+  width: 100%;
+  height: 100%;
+}
+.video-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(6,28,64,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.video-overlay h2 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #fff;
+}
+
+/* ✅ Responsive (Mobile < 768px) */
+@media (max-width: 768px) {
+  .hero-container {
+    grid-template-columns: 1fr; /* ✅ 1 column layout */
+  }
+
+  .hero-left {
+    padding: 80px 20px 30px 20px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .buttons-left {
+    width: 100%;
+    max-width: 320px;  /* ✅ buttons ka size barhaya */
+  }
+
+  .register-btn {
+    width: 100%;       /* ✅ buttons full width ho jayenge */
+    font-size: 18px;   /* ✅ text thoda bada */
+    padding: 15px 35px;
+  }
+
+  .hero-right {
+    margin-top: 130px;  /* ✅ neeche push kiya video ko */
+    height: 50vh;      /* ✅ half screen height */
+  }
+}
+
+</style>
+
+
+
+
+
+<script>
+document.querySelectorAll(".register-btn").forEach(button => {
+  const span = button.querySelector("span");
+
+  button.addEventListener("mouseenter", () => {   // 🔹 poore button pe hover
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let originalText = span.dataset.text;
+    let iteration = 0;
+
+    clearInterval(span.animation);
+
+    span.animation = setInterval(() => {
+      span.innerText = originalText
+        .split("")
+        .map((letter, index) => {
+          if(index < iteration) {
+            return originalText[index];
+          }
+          return letters[Math.floor(Math.random() * 26)];
+        })
+        .join("");
+
+      if(iteration >= originalText.length) {
+        clearInterval(span.animation);
+      }
+
+      iteration += 1/3; // speed
+    }, 30);
+  });
+});
+</script>
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+  <!-- Courses Section -->
+  <section class="courses-section" id="courses" style="margin-bottom: 10px;height: 300px;">
+   <h2 class="section-title">Ｄｉｓｃｏｖｅｒ Ｏｕｒ Ｃｏｕｒｓｅｓ</h2>
+
+
+    <div class="courses-row">
+      <!-- Course 1 -->
+      <div class="course-card">
+        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500" alt="Gourmet Cooking">
+        <div class="overlay">
+          <h3>Culinary Arts</h3>
+          <p>Master fine dining techniques and elevate your culinary skills.</p>
+          <button>Apply Now</button>
+        </div>
+        <div class="course-name">Culinary Arts</div>
+      </div>
+
+      <!-- Course 2 -->
+      <div class="course-card">
+        <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=500" alt="Baking & Pastry">
+        <div class="overlay">
+          <h3>Coffee Art</h3>
+          <p>Learn artisan bread, cakes, and pastries with expert chefs.</p>
+          <button>Apply Now</button>
+        </div>
+        <div class="course-name">Coffee Art</div>
+      </div>
+
+      <!-- Course 3 -->
+      <div class="course-card">
+        <img src="full img.jpg" alt="International Cuisine">
+        <div class="overlay">
+          <h3>Professional Chef Training</h3>
+          <p>Explore flavors from around the globe in one program.</p>
+          <button>Apply Now</button>
+        </div>
+        <div class="course-name">Professional Chef Training</div>
+      </div>
+
+      <!-- Course 4 -->
+      <div class="course-card">
+        <img src="https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500" alt="Food Styling">
+        <div class="overlay">
+          <h3>Food Styling</h3>
+          <p>Learn how to plate, present, and style food like a pro.</p>
+          <button>Apply Now</button>
+        </div>
+        <div class="course-name">Food Styling</div>
+      </div>
+    </div>
+  </section>
+  <!-- js for buttons  -->
+
+  <script>
+document.querySelectorAll(".overlay button").forEach(button => {
+  let originalText = button.textContent.trim();
+
+  button.addEventListener("mouseenter", () => {
+    let iterations = 0;
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    const interval = setInterval(() => {
+      button.innerText = originalText
+        .split("")
+        .map((char, index) => {
+          if (index < iterations) {
+            return originalText[index];
+          }
+          return letters[Math.floor(Math.random() * 26)];
+        })
+        .join("");
+
+      iterations += 1 / 3; // speed of reveal
+      if (iterations >= originalText.length) {
+        clearInterval(interval);
+        button.innerText = originalText; // reset back to normal
+      }
+    }, 50);
+  });
+});
+</script>
+
+
+
+
+<!-- <script>
+const canvas = document.getElementById("culinaryCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = 600;
+canvas.height = 400;
+
+// Cup image
+const cupImg = new Image();
+cupImg.src = "cup img.png"; // <-- aapki local cup image path
+
+// Coffee drops array
+let coffeeDrops = [];
+
+// Steam particles array
+let steamParticles = [];
+
+// Cup properties (thoda upar)
+const cupWidth = 300;
+const cupHeight = 300;
+const cupX = canvas.width / 2 - cupWidth / 2;
+const cupY = canvas.height / 2 - 40; // upar shift
+
+// Create coffee drop (center top of cup)
+function createCoffeeDrop() {
+  coffeeDrops.push({
+    x: cupX + cupWidth/2 + (Math.random() - 0.5) * 40,
+    y: cupY - 50,
+    size: 8 + Math.random() * 4,
+    speedY: 2 + Math.random() * 2,
+    speedX: (Math.random() - 0.5) * 0.5
+  });
+}
+
+// Create steam particle
+function createSteam(x, y) {
+  steamParticles.push({
+    x: x + (Math.random() - 0.5) * 10,
+    y: y,
+    size: 10 + Math.random() * 10,
+    alpha: 0.3 + Math.random() * 0.4,
+    riseSpeed: 1 + Math.random() * 1,
+    driftX: (Math.random() - 0.5) * 0.5
+  });
+}
+
+// Animate function
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw cup
+  ctx.drawImage(cupImg, cupX, cupY, cupWidth, cupHeight);
+
+  // Generate coffee drops
+  if (Math.random() < 0.2) createCoffeeDrop();
+
+  // Draw coffee drops
+  coffeeDrops.forEach((drop, i) => {
+    drop.x += drop.speedX;
+    drop.y += drop.speedY;
+
+    ctx.fillStyle = "#6F4E37";
+    ctx.beginPath();
+    ctx.arc(drop.x, drop.y, drop.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // When drop reaches cup top
+    if (drop.y >= cupY + cupHeight*0.25) {
+      // Create multiple steam particles for realistic smoke
+      for (let s = 0; s < 3; s++) {
+        createSteam(drop.x, cupY + cupHeight*0.25);
+      }
+      coffeeDrops.splice(i, 1);
+    }
+  });
+
+  // Draw steam particles (realistic smoke effect)
+  steamParticles.forEach((p, i) => {
+    const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+    gradient.addColorStop(0, `rgba(255,255,255,${p.alpha})`);
+    gradient.addColorStop(0.5, `rgba(255,255,255,${p.alpha*0.3})`);
+    gradient.addColorStop(1, `rgba(255,255,255,0)`);
+    ctx.fillStyle = gradient;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fill();
+
+    p.y -= p.riseSpeed;
+    p.x += p.driftX;
+    p.size += 0.05; // smoke expands as rises
+    p.alpha -= 0.005; // slowly fade out
+
+    if (p.alpha <= 0 || p.y + p.size < 0) steamParticles.splice(i, 1);
+  });
+
+  requestAnimationFrame(animate);
+}
+
+// Start animation when cup image loaded
+cupImg.onload = () => {
+  animate();
+};
+</script> -->
+
+
+<!-- about section  -->
+
+<section class="about-section" style="display:flex; flex-direction:column; align-items:center; padding:20px 50px; background:inherit;margin-top: 50px;">
+
+  <!-- 🔹 Section Heading -->
+  <h1 style="font-size:40px; font-weight:700; color: #061C40; margin-bottom:40px; text-align:center; letter-spacing:-2px;">
+  Ａｂｏｕｔ Ｔｈｅ Ｃｈｅｆ’ｓ Ａｃａｄｅｍｙ
+</h1>
+
+
+  <!-- 🔹 Section Content -->
+  <div style="display:flex; width:100%; align-items:flex-start;">
+
+    <!-- 🔹 Left Column: Half Circle Image with Text -->
+      <div class="left-column" style="flex:1; padding-right:0px; height:600px; display:flex; justify-content:flex-start; align-items:center;">
+        <div class="circle-bg" style="
+          width:100%; 
+          height:400px; 
+          border-radius:0 40% 40% 0; 
+          background:url('ful\ img\ 1.jpeg') center/cover no-repeat; 
+          display:flex; 
+          flex-direction:column; 
+          justify-content:center; 
+          align-items:center; 
+          text-align:center; 
+          padding:30px;
+          margin-top: -40px;
+        ">
+      
+  <p style="font-size:16px; color:gold; line-height:1.6;">
+    The Chef Academy is a premier culinary institute dedicated to excellence in cooking, presentation, and hospitality.
+  </p>
+  <p style="font-size:14px; color:gold; line-height:1.5; margin-top:15px;">
+    We provide world-class training in culinary techniques, food styling, and modern kitchen management.
+  </p>
+  <p style="font-size:16px; color:gold; line-height:1.6; margin-top:15px;">
+    Our expert chefs guide students through hands-on experiences, creative recipes, and professional plating.
+  </p>
+  <p style="font-size:14px; color:gold; line-height:1.5; margin-top:15px;">
+    Join The Chef Academy to transform your passion for cooking into a career of creativity, flavor, and innovation.
+  </p>
+
+        </div>
+      </div>
+
+
+  <!-- Right Column: Scrolling Cards -->
+  <div class="right-column" style="flex:1; height:500px; overflow:hidden; display:flex; gap:10px; position:relative;">
+
+  <!-- Column 1: Top → Bottom -->
+  <div class="card-column" style="flex:1; position:relative;">
+    <div class="cards-scroll top-bottom" style="position:absolute; width:100%;">
+
+      <!-- Company Excellence -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card1.jpg" alt="Company Excellence" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Company Excellence</strong><p style="font-size:12px; margin:0;">Courses on gourmet cooking and plating.</p></div>
+      </div>
+
+      <!-- Professional Training -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card2.webp" alt="Professional Training" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Professional Training</strong><p style="font-size:12px; margin:0;">Learn dessert preparation and food styling.</p></div>
+      </div>
+
+      <!-- Expert Guidance -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card3.jpg" alt="Expert Guidance" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Expert Guidance</strong><p style="font-size:12px; margin:0;">Hands-on cooking with professional chefs.</p></div>
+      </div>
+
+      <!-- Creative Plating -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card4.jpg" alt="Creative Plating" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Creative Plating</strong><p style="font-size:12px; margin:0;">Learn plating and presentation techniques.</p></div>
+      </div>
+
+      <!-- Dessert Mastery -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card5.jpg" alt="Dessert Mastery" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Dessert Mastery</strong><p style="font-size:12px; margin:0;">Specialized courses for pastries and sweets.</p></div>
+      </div>
+
+      <!-- Food Styling -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card6.jpeg" alt="Food Styling" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Food Styling</strong><p style="font-size:12px; margin:0;">Enhance your dishes with professional styling.</p></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Column 2: Bottom → Top -->
+  <div class="card-column" style="flex:1; position:relative;">
+    <div class="cards-scroll bottom-top" style="position:absolute; width:100%;">
+
+      <!-- Hands-on Experience -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card1.jpg" alt="Hands-on Experience" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Hands-on Experience</strong><p style="font-size:12px; margin:0;">Interactive culinary workshops and recipes.</p></div>
+      </div>
+
+      <!-- Expert Chefs -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card2.webp" alt="Expert Chefs" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Expert Chefs</strong><p style="font-size:12px; margin:0;">Learn plating and kitchen management.</p></div>
+      </div>
+
+      <!-- Recipe Innovation -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card6.jpeg" alt="Recipe Innovation" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Recipe Innovation</strong><p style="font-size:12px; margin:0;">Create new dishes and flavor combinations.</p></div>
+      </div>
+
+      <!-- Cooking Techniques -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card5.jpg" alt="Cooking Techniques" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Cooking Techniques</strong><p style="font-size:12px; margin:0;">Learn various cooking methods and tips.</p></div>
+      </div>
+
+      <!-- Kitchen Management -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card4.jpg" alt="Kitchen Management" style="width:80px; height=80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Kitchen Management</strong><p style="font-size:12px; margin:0;">Learn to manage kitchen and team effectively.</p></div>
+      </div>
+
+      <!-- Food Presentation -->
+      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
+        <img src="card3.jpg" alt="Food Presentation" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
+        <div><strong>Food Presentation</strong><p style="font-size:12px; margin:0;">Style your dishes like a professional chef.</p></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</section>
+
+<style>
+
+  @media (max-width: 768px) {
+  .about-section h1 {
+    font-size: 22px !important; /* ✅ smaller for mobile */
+    line-height: 1.3;
+    letter-spacing: -1px;
+    margin-bottom: 25px;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .circle-bg p {
+    font-size: 10px !important;   /* ✅ font chhota */
+    line-height: 1.3;             /* ✅ spacing tight */
+    margin-top: 8px !important;   /* ✅ gap kam */
+  }
+}
+
+
+
+  .about-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 50px;
+  background: inherit;
+  margin-top: 50px; /* sirf desktop ke liye */
+}
+
+.about-section > div {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.left-column {
+  flex: 1;
+  min-height: 400px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 20px;
+}
+
+.circle-bg {
+  width: 100%;
+  height: 100%;
+  border-radius: 0 40% 40% 0;
+  background: url("ful img 1.jpeg") center/cover no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 30px;
+}
+
+.right-column {
+  flex: 1;
+  min-height: 400px;
+  display: flex;
+  gap: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .about-section {
+    margin-top: 650px !important; /* ✅ overlap fix */
+    flex-direction: column;
+  }
+
+  .about-section > div {
+    flex-direction: column; /* ✅ img upar, cards neeche */
+  }
+
+  .left-column {
+    width: 100%;
+    min-height: 250px; /* ✅ thoda chhota mobile ke liye */
+    margin-bottom: 20px;
+  }
+
+  .circle-bg {
+    border-radius: 0 0 40% 40%;
+    height: 250px;
+    padding: 20px;
+  }
+
+  .right-column {
+    width: 100%;
+    flex-direction: row; /* ✅ 2 columns me hi rahe */
+    gap: 15px;
+    height: 350px; /* ✅ scrolling area visible */
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card-column {
+    flex: 1;
+    width: 50%;
+    overflow: hidden;
+  }
+
+  .cards-scroll {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* ✅ Left column (upar scroll) */
+  .card-column.left .cards-scroll {
+    animation: scroll-up 20s linear infinite;
+  }
+
+  /* ✅ Right column (neeche scroll) */
+  .card-column.right .cards-scroll {
+    animation: scroll-down 20s linear infinite;
+  }
+
+  .card {
+    height: 160px; /* ✅ mobile size */
+  }
+}
+
+/* ✅ Animations same as desktop */
+@keyframes scroll-up {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes scroll-down {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+
+</style>
+
+<script>
+  function seamlessScroll(scrollElement, direction='up') {
+    const items = Array.from(scrollElement.children);
+    const itemHeight = items[0].offsetHeight + 10; // include margin-bottom
+    let offset = direction==='up' ? 0 : itemHeight;
+
+    function animate() {
+      if(direction==='up') {
+        offset += 1;
+        if(offset >= itemHeight) {
+          offset = 0;
+          scrollElement.appendChild(items[0]);
+          items.push(items.shift());
+        }
+        scrollElement.style.transform = `translateY(-${offset}px)`;
+      } else {
+        offset -= 1;
+        if(offset <= 0) {
+          offset = itemHeight;
+          scrollElement.insertBefore(items[items.length-1], scrollElement.firstChild);
+          items.unshift(items.pop());
+        }
+        scrollElement.style.transform = `translateY(-${offset}px)`;
+      }
+      requestAnimationFrame(animate);
+    }
+    animate();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const topBottom = document.querySelector('.cards-scroll.top-bottom');
+    const bottomTop = document.querySelector('.cards-scroll.bottom-top');
+    seamlessScroll(topBottom, 'down'); // top→bottom
+    seamlessScroll(bottomTop, 'up'); // bottom→top
+  });
+</script>
+
+
+<!-- WHY CHOOSE US SECTION -->
+<section class="why-choose-us" id="why-choose-us">
+  <div class="container">
+
+    <!-- LEFT + RIGHT in one row -->
+    <div class="why-row">
+      <!-- WHY CHOOSE US Circle (Left) -->
+      <div class="big-circle-left">
+  <h2 style="font-size:35px; font-weight:600; text-align:center; letter-spacing:-2px;">
+    ＷＨＹ <br> ＣＨＯＯＳＥ <br> ＵＳ
+  </h2>
+</div>
+
+
+      <!-- Right Big Circle -->
+      <div class="why-right">
+        <div class="big-circle-right">
+
+          <!-- ✅ Text inside big circle -->
+          <div class="circle-center-text">
+            <h3>We Deliver the Best</h3>
+            <p>Providing quality, flexibility, accessibility, and trusted support for learners worldwide.</p>
+          </div>
+
+          <!-- Small Circles with Line + Text -->
+          <div class="feature sc1">
+            <div class="small-circle"><i class="fas fa-graduation-cap"></i></div>
+            <div class="line"></div>
+            <div class="text-box">
+              <h4>Quality Training</h4>
+              <p>High-quality courses and resources.</p>
+            </div>
+          </div>
+
+          <div class="feature sc2">
+            <div class="small-circle"><i class="fas fa-clock"></i></div>
+            <div class="line"></div>
+            <div class="text-box">
+              <h4>Flexible Timing</h4>
+              <p>Learn at your own pace.</p>
+            </div>
+          </div>
+
+          <div class="feature sc3">
+            <div class="small-circle"><i class="fas fa-laptop-code"></i></div>
+            <div class="line"></div>
+            <div class="text-box">
+              <h4>Easy Access</h4>
+              <p>Available anywhere, anytime.</p>
+            </div>
+          </div>
+
+          <div class="feature sc4">
+            <div class="small-circle"><i class="fas fa-headset"></i></div>
+            <div class="line"></div>
+            <div class="text-box">
+              <h4>Trusted Support</h4>
+              <p>24/7 help whenever you need.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ✅ CSS -->
+<style>
+.why-choose-us {
+  padding: 80px 0;
+  font-family: Arial, sans-serif;
+  background-color: #FAF7D9;
+}
+
+.why-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 100px;
+}
+
+.big-circle-left {
+  width: 250px;
+  height: 250px;
+  background: linear-gradient(135deg, gold, gold);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #061C40;
+  text-align: center;
+  font-weight: bold;
+  font-size: 22px;
+  z-index: 2;
+  margin-left: 50px;
+  transform: translateX(40px);
+}
+
+.why-right {
+  position: relative;
+  transform: translateX(-160px);
+}
+
+.big-circle-right {
+  width: 450px;
+  height: 450px;
+  background: #FAF7D9;
+  border-radius: 50%;
+  position: relative;
+  margin-right: 70px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  /* ✅ Gol shadow */
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+}
+
+
+/* ✅ Center text inside big circle */
+.circle-center-text {
+  position: absolute;
+  max-width: 260px;
+  text-align: center;
+  color: gold;
+}
+
+.circle-center-text h3 {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.circle-center-text p {
+  font-size: 14px;
+  color: gold;
+  line-height: 1.4;
+}
+
+/* Features (default hidden for animation) */
+.feature {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+/* When visible */
+.feature.show {
+  opacity: 1;
+}
+
+/* ✅ Animate only the small circle */
+.small-circle {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: #061C40;
+  color: gold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  transform: scale(0.5);          /* start small */
+  transition: transform 0.6s ease;
+}
+.feature.show .small-circle {
+  transform: scale(1);            /* zoom in */
+}
+
+/* Line to text */
+.line {
+  height: 2px;
+  background: #333;
+  flex-grow: 1;
+  margin: 0 10px;
+}
+
+.text-box {
+  min-width: 140px;
+}
+
+.text-box h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.text-box p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+/* ✅ Position small circles on border */
+.sc1 { transform: rotate(-60deg) translateX(260px) rotate(60deg); }
+.sc2 { transform: rotate(-20deg) translateX(230px) rotate(20deg); }
+.sc3 { transform: rotate(20deg)  translateX(210px) rotate(-20deg); }
+.sc4 { transform: rotate(60deg)  translateX(200px) rotate(-60deg); }
+
+/* ✅ Responsive Media Queries */
+@media (max-width: 768px) {
+  .big-circle-left {
+    width: 190px;   /* width barhayi */
+    height: 100px;  /* height kam ki */
+    font-size: 16px;
+    transform: translateX(0);
+    margin-left: 0;
+  }
+
+  .big-circle-left h2 {
+    font-size: 20px !important;
+    line-height: 1.3;
+  }
+
+  .big-circle-right {
+    width: 320px;
+    height: 320px;
+    margin-right: 0;
+  }
+
+  .circle-center-text {
+    max-width: 200px;
+    padding-left: 15px; /* ✅ text ko thoda right shift kiya */
+  }
+
+  .circle-center-text h3 {
+    font-size: 16px;
+  }
+
+  .circle-center-text p {
+    font-size: 12px;
+  }
+
+  .small-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 16px;
+  }
+
+  .text-box h4 {
+    font-size: 10px;
+  }
+
+  .text-box p {
+    font-size: 11px;
+  }
+
+  /* ✅ Adjust small circles closer */
+  .sc1 { transform: rotate(-60deg) translateX(190px) rotate(60deg); }
+  .sc2 { transform: rotate(-20deg) translateX(170px) rotate(20deg); }
+  .sc3 { transform: rotate(20deg)  translateX(160px) rotate(-20deg); }
+  .sc4 { transform: rotate(60deg)  translateX(150px) rotate(-60deg); }
+}
+
+@media (max-width: 480px) {
+  .big-circle-left {
+    width: 160px;   /* width barhayi */
+    height: 90px;   /* height kam ki */
+    font-size: 14px;
+  }
+
+  .big-circle-left h2 {
+    font-size: 12px !important;
+  }
+
+  .big-circle-right {
+    width: 180px;
+    height: 180px;
+  }
+
+  .circle-center-text {
+    max-width: 120px;
+    padding-left: 50px; /* ✅ text ko thoda right shift kiya */
+  }
+
+  .circle-center-text h3 {
+    font-size: 12px;
+  }
+
+  .circle-center-text p {
+    font-size: 11px;
+  }
+
+  .small-circle {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+
+  .text-box h4 {
+    font-size: 10px;
+  }
+
+  .text-box p {
+    font-size: 8px;
+  }
+
+  /* ✅ Mobile positioning even tighter */
+  .sc1 { transform: rotate(-60deg) translateX(140px) rotate(60deg); }
+  .sc2 { transform: rotate(-20deg) translateX(125px) rotate(20deg); }
+  .sc3 { transform: rotate(20deg)  translateX(115px) rotate(-20deg); }
+  .sc4 { transform: rotate(60deg)  translateX(105px) rotate(-60deg); }
+}
+
+
+@media (max-width: 480px) {
+  /* ✅ Line ko hide kar do mobile pe */
+  .feature .line {
+    display: none;
+  }
+
+  /* ✅ Text ko circle ke bilkul sath lao */
+  .feature {
+    gap: 6px; /* thoda spacing chhota */
+  }
+
+  .text-box {
+    min-width: auto;
+  }
+
+  .text-box h4 {
+    font-size: 10px;
+  }
+
+  .text-box p {
+    font-size: 8px;
+  }
+}
+
+
+</style>
+
+<!-- ✅ JS for scroll-triggered animation -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const features = document.querySelectorAll(".feature");
+  const section = document.querySelector("#why-choose-us");
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        features.forEach((feature, i) => {
+          setTimeout(() => {
+            feature.classList.add("show");
+          }, i * 400); // one by one
+        });
+        observer.unobserve(section); // run only once
+      }
+    });
+  }, { threshold: 0.4 });
+
+  observer.observe(section);
+});
+</script>
+
+
+
+
+<!-- 🔹 Footer Section -->
+<footer style="background:#061C40; color:#fff; padding:50px 20px; font-family:'Poppins', sans-serif;">
+  <div style="max-width:1200px; margin:0 auto; display:flex; flex-wrap:wrap; gap:40px; justify-content:space-between;">
+
+    <!-- 🔹 Left Column -->
+    <div style="flex:1; min-width:250px;">
+      <!-- Logo -->
+      <h2 style="font-size:24px; font-weight:700; margin-bottom:20px; color:#FFD700;">
+        Ｔｈｅ Ｃｈｅｆ Ａｃａｄｅｍｙ
+      </h2>
+      <!-- Location -->
+      <p style="font-size:14px; line-height:1.8; color:#ccc; margin-bottom:15px;">
+        📍 123 Culinary Street,<br>
+        Lahore, Pakistan
+      </p>
+      <!-- Contact -->
+      <p style="font-size:14px; color:#ccc; margin:5px 0;">📞 +92 300 1234567</p>
+      <p style="font-size:14px; color:#ccc; margin:5px 0;">✉️ info@thechefacademy.com</p>
+    </div>
+
+    <!-- 🔹 Social Media (Images instead of icons) -->
+    <div style="min-width:200px;">
+      <h4 style="font-size:16px; font-weight:600; margin-bottom:15px; color:#FFD700;">Follow Us</h4>
+      <div style="display:flex; gap:15px; font-size:22px;">
+        <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="28"></a>
+        <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="28"></a>
+        <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" width="28"></a>
+        <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="28"></a>
+      </div>
+    </div>
+
+    <!-- 🔹 Newsletter Form -->
+    <div style="min-width:280px;">
+      <h4 style="font-size:16px; font-weight:600; margin-bottom:15px; color:#FFD700;">Stay Connected</h4>
+      <form>
+        <input type="text" placeholder="Your Name" 
+          style="width:100%; padding:12px; margin-bottom:12px; border:none; border-radius:6px; font-size:14px;">
+        <input type="email" placeholder="Your Email" 
+          style="width:100%; padding:12px; margin-bottom:12px; border:none; border-radius:6px; font-size:14px;">
+        <button type="submit" 
+          style="width:100%; padding:12px; background:#FFD700; color:#061C40; border:none; border-radius:6px; font-weight:600; font-size:14px; cursor:pointer;">
+          Subscribe
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 🔹 Bottom Bar -->
+  <div style="text-align:center; margin-top:40px; font-size:13px; color:#888; border-top:1px solid #333; padding-top:15px;">
+    © 2025 The Chef Academy. All rights reserved.
+  </div>
+</footer>
+
+
+
+
+</body>
+</html>

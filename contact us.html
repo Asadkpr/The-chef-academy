@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us | The Chef Academy</title>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" 
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: #f9f9f9;
+      color: #061C40;
+    }
+
+    /* Back Button */
+    /* Back Button */
+.back-home {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: linear-gradient(135deg, #FFD700, #FFC107);
+  color: #061C40;
+  padding: 12px 22px;
+  font-weight: 600;
+  border-radius: 50px;
+  text-decoration: none;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: all 0.3s ease;
+}
+.back-home i {
+  transition: transform 0.3s ease;
+}
+.back-home:hover {
+  background: linear-gradient(135deg, #FFC107, #FFD700);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+.back-home:hover i {
+  transform: translateX(-4px); /* arrow thoda left move hoga */
+}
+
+
+    /* Hero Section */
+    .contact-hero {
+      position: relative;
+      background: linear-gradient(rgba(6,28,64,0.8), rgba(6,28,64,0.8)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1500&q=80') center/cover;
+      color: #fff;
+      text-align: center;
+      padding: 100px 20px;
+      animation: fadeIn 1.5s ease;
+    }
+    .contact-hero h1 {
+      font-size: 48px;
+      margin-bottom: 15px;
+      letter-spacing: 2px;
+      color: #FFD700;
+    }
+    .contact-hero p {
+      font-size: 18px;
+      color: #f1f1f1;
+    }
+
+    /* Contact Section */
+    .contact-section {
+      max-width: 1200px;
+      margin: 60px auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      padding: 0 20px;
+      animation: slideUp 1.2s ease;
+    }
+
+    /* Contact Info */
+    .contact-info {
+      background: #061C40;
+      color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      animation: fadeInLeft 1.5s ease;
+    }
+    .contact-info h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #FFD700;
+    }
+    .contact-info p {
+      margin: 10px 0;
+      font-size: 15px;
+      color: #ddd;
+    }
+    .contact-info i {
+      margin-right: 10px;
+      color: #FFD700;
+    }
+
+    /* Contact Form */
+    .contact-form {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      animation: fadeInRight 1.5s ease;
+    }
+    .contact-form h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #061C40;
+    }
+    .contact-form input, .contact-form textarea {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+    .contact-form input:focus, .contact-form textarea:focus {
+      border-color: #FFD700;
+      outline: none;
+      box-shadow: 0 0 8px rgba(255,215,0,0.4);
+    }
+    .contact-form button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 6px;
+      background: #FFD700;
+      color: #061C40;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .contact-form button:hover {
+      background: #e6c200;
+      transform: scale(1.03);
+    }
+
+    /* Animations */
+    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
+    @keyframes slideUp { from {transform: translateY(50px); opacity:0;} to {transform: translateY(0); opacity:1;} }
+    @keyframes fadeInLeft { from {transform: translateX(-50px); opacity:0;} to {transform: translateX(0); opacity:1;} }
+    @keyframes fadeInRight { from {transform: translateX(50px); opacity:0;} to {transform: translateX(0); opacity:1;} }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .contact-section {
+        grid-template-columns: 1fr;
+      }
+      .contact-hero h1 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🔹 Hero Section -->
+  <section class="contact-hero">
+    <!-- Back to Home Button -->
+   <!-- Back to Home Button -->
+<a href="index.html" class="back-home">
+  <i class="fas fa-arrow-left"></i> Go Back to Home
+</a>
+
+    
+    <h1>Contact Us</h1>
+    <p>We’d love to hear from you! Get in touch with The Chef Academy today.</p>
+  </section>
+
+  <!-- 🔹 Contact Section -->
+  <section class="contact-section">
+    
+    <!-- Contact Info -->
+    <div class="contact-info">
+      <h2>Get In Touch</h2>
+      <p><i class="fas fa-map-marker-alt"></i> 123 Culinary Street, Lahore, Pakistan</p>
+      <p><i class="fas fa-phone"></i> +92 300 1234567</p>
+      <p><i class="fas fa-envelope"></i> info@thechefacademy.com</p>
+      <p><i class="fas fa-clock"></i> Mon - Sat: 9:00 AM - 7:00 PM</p>
+    </div>
+
+    <!-- Contact Form -->
+    <div class="contact-form">
+      <h2>Send Us a Message</h2>
+      <form>
+        <input type="text" placeholder="Your Name" required>
+        <input type="email" placeholder="Your Email" required>
+        <input type="text" placeholder="Subject" required>
+        <textarea rows="5" placeholder="Your Message" required></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+    </div>
+
+  </section>
+
+</body>
+</html>
