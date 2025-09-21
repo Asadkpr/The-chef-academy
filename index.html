@@ -467,24 +467,17 @@ document.addEventListener("DOMContentLoaded", () => {
 <section class="hero">
   <div class="hero-container">
 
-    <!-- ✅ Left Column (Animation) -->
+    <!-- Left Column (Animation) -->
     <div class="hero-left">
       <div class="cap-container">
 
-        <!-- Buttons in CURVE above cap -->
-        <svg viewBox="0 0 700 160" class="buttons-svg">
-          <defs>
-            <path id="buttonsCurve" d="M 40,120 A 310,90 0 0,1 660,120" />
-          </defs>
-          <text width="700" text-anchor="middle">
-            <textPath href="#buttonsCurve" startOffset="50%" id="buttonsPath">
-              <tspan class="btn-span" id="btn1">Bakery & Desserts </tspan>
-              <tspan dx="25" class="btn-span" id="btn2">Culinary Arts </tspan>
-              <tspan dx="25" class="btn-span" id="btn3">Barista Skills </tspan>
-              <tspan dx="25" class="btn-span" id="btn4">Professional Chef Training </tspan>
-            </textPath>
-          </text>
-        </svg>
+        <!-- Buttons Container -->
+        <div class="buttons-container">
+          <div class="btn" id="btn1">Bakery & Desserts</div>
+          <div class="btn" id="btn2">Culinary Arts</div>
+          <div class="btn" id="btn3">Barista Skills</div>
+          <div class="btn" id="btn4">Professional Chef Training</div>
+        </div>
 
         <!-- Cap -->
         <img src="cap-removebg-preview.png" alt="Chef Cap" class="chef-cap">
@@ -492,7 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <!-- Curved Text under cap -->
         <svg viewBox="0 0 320 120" class="curved-svg">
           <defs>
-            <path id="curvePath" d="M 30,40 A 140,100 0 0,0 290,40" />
+            <path id="curvePath" d="M 30,80 A 140,60 0 0,0 290,80" />
           </defs>
           <text width="320" text-anchor="middle">
             <textPath href="#curvePath" startOffset="50%" id="offer-text"></textPath>
@@ -504,7 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     </div>
 
-    <!-- ✅ Right Column (Video) -->
+    <!-- Right Column (Video) -->
     <div class="hero-video-wrapper">
       <video autoplay muted loop playsinline class="hero-video-bg">
         <source src="https://cms.culinaryartsswitzerland.com/sites/default/files/2021-04/CAA.mp4" type="video/mp4">
@@ -518,7 +511,6 @@ document.addEventListener("DOMContentLoaded", () => {
 .hero {
   width: 100%;
   min-height: 100vh;
-  position: relative;
   display: flex;
   justify-content: center;
   overflow: hidden;
@@ -526,10 +518,9 @@ document.addEventListener("DOMContentLoaded", () => {
   padding: 0;
 }
 
-/* Layout (desktop default) */
 .hero-container {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* ✅ Desktop side by side */
+  grid-template-columns: 1fr 1fr;
   width: 100%;
 }
 
@@ -543,32 +534,34 @@ document.addEventListener("DOMContentLoaded", () => {
   object-fit: cover;
 }
 
-/* Left (Animation area) */
+/* Left Column */
 .hero-left {
   background: #061C40;
   color: #FAF7D9;
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-direction: column;
   padding: 60px 20px;
   position: relative;
+  text-align: center;
 }
 
 /* Cap */
 .chef-cap {
   width: 300px;
   display: block;
-  margin: 0 auto 5px;
-  transform: translateY(-200px);
+  margin: 180px auto 0; /* cap aur neeche shift kiya */
+  transform: translateY(0px);
   opacity: 0;
+  transition: all 1s ease;
 }
 
 /* Curved Text */
 .curved-svg {
   width: 450px;
-  height: 200px;
-  margin: -40px auto 0;
-  margin-left: 60px;
+  height: 140px;
+  margin: -60px auto 0; /* cap ke neeche text ke sath align */
 }
 .curved-svg text {
   fill: #FAF7D9;
@@ -578,21 +571,32 @@ document.addEventListener("DOMContentLoaded", () => {
   text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
 }
 
-/* Buttons */
-.buttons-svg {
-  width: 100%;
-  height: 180px;
-  margin-bottom: -10px;
+/* Buttons Container */
+.buttons-container {
+  position: absolute;
+  top: 80px; /* buttons ko thoda neeche shift */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 15px;
 }
-.btn-span {
-  fill: #fff;
-  background: #FFD700;
-  font-size: 13px;
+
+/* Button Style */
+.btn {
+  padding: 0px 30px;
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  border: 2px solid rgba(255,255,255,0.6);
+  border-radius: 25px;
   font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 6px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.3);
-  opacity: 0;
+  font-size: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+  opacity: 0; /* initially invisible */
+}
+.btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.5);
 }
 
 /* Lines Layer */
@@ -609,71 +613,70 @@ document.addEventListener("DOMContentLoaded", () => {
 /* Arrow style */
 .arrow {
   stroke: #FFD700;
-  stroke-width: 2;
+  stroke-width: 1.5; 
   fill: none;
   marker-end: url(#arrowhead);
 }
 
-/* 🔹 Responsive Hero Section */
-/* 🔹 Responsive Hero Section */
-@media (max-width: 768px) {
-  .hero {
-    min-height: 120vh;
-  }
+/* Arrow marker */
+.lines-layer defs marker polygon {
+  points: "0 0, 8 3.5, 0 7"; 
+  fill: #FFD700;
+}
 
+/* Responsive */
+@media (max-width: 768px) {
   .hero-container {
     display: flex;
     flex-direction: column;
   }
 
+  /* ✅ Video upar full width */
   .hero-video-wrapper {
     order: 1;
+    width: 100%;
   }
-
   .hero-video-bg {
     width: 100%;
-    height: 250px;
+    height: 230px; /* mobile par height fix */
+    object-fit: cover;
   }
 
-  .hero-left {
+  /* ✅ Animation neeche */
+  .animation-wrapper {
     order: 2;
-    padding: 40px 10px;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 70vh;
+    text-align: center;
+    margin-top: 20px;
   }
 
-  /* Cap smaller */
+  /* ✅ Cap aur text alignment */
   .chef-cap {
-    width: 200px;
-    margin-top: -20px;
-  }
-
-  /* Curved text just below cap */
-  .curved-svg {
-    width: 300px;
-    height: 120px;
-    margin: -35px auto 0 auto;  /* ✅ thoda upar pull */
+    width: 180px;
+    margin: 30px auto 10px; /* cap ko thoda neeche aur text ke paas */
     display: block;
   }
+  .curved-svg {
+    width: 280px;
+    height: 100px;
+    margin: 0 auto 10px;
+  }
   .curved-svg text {
-    font-size: 25px;
-    letter-spacing: 2px;
+    font-size: 18px;
+    letter-spacing: 1px;
   }
 
-  /* Buttons smaller */
-  .buttons-svg {
-    height: 120px;
-    margin-top: -5px; /* ✅ buttons ko bhi thoda cap ke paas lao */
+  /* ✅ Buttons ek line me, chhote aur cut na ho */
+  .buttons-container {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;  /* wrap allow taake cut na ho */
+    gap: 6px;
   }
-  .btn-span {
+  .btn {
     font-size: 10px;
-    padding: 2px 6px;
-  }
-
-  /* Arrows thinner */
-  .arrow {
-    stroke-width: 1.5;
+    padding: 5px 10px;
+    min-width: fit-content;
   }
 }
 
@@ -695,20 +698,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // Arrow marker
   linesLayer.innerHTML = `
     <defs>
-      <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-        <polygon points="0 0, 10 3.5, 0 7" fill="#FFD700"/>
+      <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#FFD700"/>
       </marker>
     </defs>
   `;
 
-  // Step 1: Cap slide in
-  cap.style.transition = "all 1s ease";
+  // Cap slide in
   setTimeout(() => {
-    cap.style.transform = "translateY(0)";
     cap.style.opacity = "1";
+    cap.style.transform = "translateY(0)";
   }, 500);
 
-  // Step 2: Type "What We Offer"
+  // Type "What We Offer"
   const text = "What We Offer";
   let i = 0;
   setTimeout(() => {
@@ -719,39 +721,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 120);
   }, 2000);
 
-  // Step 3: Animate arrows + buttons
+  // Animate arrows and buttons together
   btns.forEach((btn, idx) => {
     setTimeout(() => {
-      // Cap center position
       const capBox = cap.getBoundingClientRect();
       const svgBox = linesLayer.getBoundingClientRect();
       const startX = capBox.left + capBox.width / 2 - svgBox.left;
-      const startY = capBox.top + capBox.height / 4 - svgBox.top; // top-center of cap
+      const startY = capBox.top - svgBox.top + 10; // cap top se arrows start
 
-      // Button center
       const btnBox = btn.getBoundingClientRect();
       const targetX = btnBox.left + btnBox.width / 2 - svgBox.left;
       const targetY = btnBox.top + btnBox.height / 2 - svgBox.top;
 
-      // Create line
+      // Arrow line
       let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
       line.setAttribute("x1", startX);
       line.setAttribute("y1", startY);
+      const shortenedY = startY + (targetY - startY) * 0.7; // arrow length thodi kam
       line.setAttribute("x2", startX);
       line.setAttribute("y2", startY);
       line.setAttribute("class", "arrow");
       linesLayer.appendChild(line);
 
-      // Animate line
       setTimeout(() => {
         line.setAttribute("x2", targetX);
-        line.setAttribute("y2", targetY);
+        line.setAttribute("y2", shortenedY);
 
-        // Show button
-        btn.style.transition = "opacity 0.6s ease";
+        // Show button one by one
         btn.style.opacity = "1";
       }, 100);
-    }, 4000 + idx * 1500); // stagger each arrow
+    }, 4000 + idx * 1500);
   });
 });
 </script>
@@ -762,8 +761,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+
+
+
+
+
+
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
- <!-- Courses Section -->
+<!-- Courses Section -->
+<!-- Courses Section -->
 <section class="courses-section" id="courses">
   <div class="courses-container">
 
@@ -772,7 +778,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!-- Diamond Cards Center -->
     <div class="courses-right">
-      <div class="courses-row"  style="margin-top: 80px;">
+      <div class="courses-row" style="margin-top: 80px;">
 
         <!-- Course 1 -->
         <div class="course-card">
@@ -826,7 +832,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <!-- Course 4 -->
         <div class="course-card">
           <div class="card-inner">
-            <img  src="https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800" alt="Food Styling">
+            <img src="https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800" alt="Food Styling">
             <div class="course-label">Food Styling</div>
             <div class="overlay">
               <h3>Food Styling</h3>
@@ -870,24 +876,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
 .courses-row {
   display: grid;
-  grid-template-columns: repeat(2, 240px);
-  grid-template-rows: repeat(2, 240px);
-  gap: 50px;
+  grid-template-columns: repeat(2, 280px);
+  grid-template-rows: repeat(2, 280px);
+  gap: 60px;
   transform: rotate(45deg);
 }
 
 .course-card {
-  width: 240px;
-  height: 240px;
+  width: 280px;  
+  height: 280px; 
   position: relative;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
+
 .card-inner {
   width: 100%;
   height: 100%;
   transform: rotate(-45deg);
   overflow: hidden;
   border-radius: 22px;
-  box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+  background: transparent;
+  box-shadow: none;
+  border: none;
   position: relative;
 }
 
@@ -896,10 +908,10 @@ document.addEventListener("DOMContentLoaded", () => {
   height: 100%;
   object-fit: cover;
   display: block;
-  transform: scale(1.1);
+  transform: scale(1.5);
+  border-radius: 22px;
 }
 
-/* Course name center */
 .course-label {
   position: absolute;
   top: 50%;
@@ -915,10 +927,10 @@ document.addEventListener("DOMContentLoaded", () => {
   z-index: 2;
 }
 
-/* Overlay */
+/* ===== Overlay fix to prevent text cut ===== */
 .overlay {
   position: absolute;
-  top: -100%;
+  top: 0;
   left: 0;
   width: 100%;
   height: 100%;
@@ -928,18 +940,26 @@ document.addEventListener("DOMContentLoaded", () => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 12px;
   text-align: center;
   padding: 20px;
-  transition: top 0.5s ease;
+  box-sizing: border-box;
+  transform: translateY(-100%);
+  transition: transform 0.5s ease;
   z-index: 3;
-}
-.course-card:hover .overlay {
-  top: 0;
+  overflow-y: auto; /* ensures text stays inside */
 }
 
-.overlay h3 { font-size: 20px; margin: 0; }
-.overlay p { font-size: 14px; margin: 0; }
+.overlay h3 {
+  font-size: 20px;
+  margin: 0;
+  word-break: break-word;
+}
+
+.overlay p {
+  font-size: 14px;
+  margin: 0;
+  word-break: break-word;
+}
 
 .overlay button {
   padding: 10px 24px;
@@ -949,75 +969,35 @@ document.addEventListener("DOMContentLoaded", () => {
   color: #061C40;
   font-weight: bold;
   cursor: pointer;
+  margin-top: 10px;
 }
-.overlay button::after {
-  content: " >";
-  font-weight: bold;
-  margin-left: 6px;
+
+.course-card:hover .overlay {
+  transform: translateY(0);
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
-
-/* Tablets (≤992px) */
 @media (max-width: 992px) {
-  .section-title {
-    font-size: 32px;
-    margin-bottom: 40px;
-  }
-
-  .courses-row {
-    grid-template-columns: repeat(2, 180px);
-    grid-template-rows: repeat(2, 180px);
-    gap: 30px;
-  }
-
-  .course-card {
-    width: 180px;
-    height: 180px;
-  }
-
-  .course-label {
-    font-size: 13px;
-    padding: 6px 12px;
-  }
+  .section-title { font-size: 32px; margin-bottom: 40px; }
+  .courses-row { grid-template-columns: repeat(2, 220px); grid-template-rows: repeat(2, 220px); gap: 40px; }
+  .course-card { width: 220px; height: 220px; }
+  .course-label { font-size: 13px; padding: 6px 12px; }
 }
 
-/* Mobiles (≤600px) */
 @media (max-width: 600px) {
-  .section-title {
-    font-size: 26px;
-    margin-bottom: 30px;
-  }
-
-  .courses-row {
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    gap: 25px;
-    transform: none; /* ✅ Diamond layout hatao mobile me */
-  }
-
-  .course-card {
-    width: 100%;
-    max-width: 250px;
-    height: 250px;
-    margin: 0 auto;
-    transform: rotate(0deg); /* ✅ seedha card */
-  }
-
-  .card-inner {
-    transform: none; /* ✅ andar ka content bhi seedha */
-  }
-
-  .course-label {
-    font-size: 14px;
-    padding: 6px 10px;
-  }
+  .section-title { font-size: 26px; margin-bottom: 30px; }
+  .courses-row { grid-template-columns: 1fr; grid-template-rows: none; gap: 25px; transform: none; }
+  .course-card { width: 100%; max-width: 280px; height: 280px; margin: 0 auto; transform: rotate(0deg); }
+  .card-inner { transform: none; }
+  .course-card img { transform: scale(1); }
+  .course-label { font-size: 14px; padding: 6px 10px; }
+  .overlay { transform: translateY(-100%); }
+  .course-card:hover .overlay { transform: translateY(0); }
 }
 </style>
 
 
-
-  <script>
+<script>
 document.querySelectorAll(".overlay button").forEach(button => {
   let originalText = button.textContent.trim();
 
