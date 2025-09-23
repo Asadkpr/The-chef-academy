@@ -1,0 +1,146 @@
+<!-- ✅ Apply Now Form Section -->
+<section class="apply-form-section">
+  <div class="form-container">
+
+    <!-- ✅ Academy Header -->
+    <div class="form-header">
+      <img src="new logo.png" alt="Chef Academy Logo" />
+      <h2>The Chef's Academy Registration</h2>
+      <p>Fill out the form below to apply now</p>
+    </div>
+
+    <!-- ✅ Registration Form -->
+    <form class="apply-form">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" placeholder="Enter your full name" required />
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="Enter your email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" placeholder="Enter your phone number" required />
+      </div>
+
+      <div class="form-group">
+        <label for="course">Select Course</label>
+        <select id="course" required>
+          <option value="">-- Choose a Course --</option>
+          <option value="culinary">Culinary Arts</option>
+          <option value="bakery">Bakery & Desserts</option>
+          <option value="chef-training">Professional Chef Training</option>
+          <option value="barista">Barista Skills</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="message">Message (Optional)</label>
+        <textarea id="message" rows="4" placeholder="Write any special requirements..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-btn">Apply Now</button>
+    </form>
+
+  </div>
+</section>
+
+<style>
+.apply-form-section {
+  background: #f8f9fa;
+  padding: 60px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.form-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 30px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  text-align: center;
+}
+
+/* ✅ Header */
+.form-header img {
+  max-width: 100px;
+  margin-bottom: 15px;
+}
+.form-header h2 {
+  font-size: 26px;
+  margin: 10px 0;
+  color: #0D2235;
+}
+.form-header p {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 25px;
+}
+
+/* ✅ Form */
+.apply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  text-align: left;
+}
+.form-group label {
+  font-weight: 600;
+  color: #0D2235;
+  margin-bottom: 6px;
+  display: block;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #FF9900;
+  outline: none;
+  box-shadow: 0 0 6px rgba(255,153,0,0.4);
+}
+
+/* ✅ Submit Button */
+.submit-btn {
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  color: #0D2235;
+  font-weight: 700;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+.submit-btn:hover {
+  background: linear-gradient(135deg, #FFDD44, #FF9933);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+/* ✅ Responsive */
+@media (max-width: 600px) {
+  .form-container {
+    padding: 30px 20px;
+  }
+  .form-header h2 {
+    font-size: 22px;
+  }
+}
+</style>

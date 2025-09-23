@@ -324,7 +324,7 @@
   <div class="nav-links" id="nav-links" style="margin-right: 20px;">
     <a href="#about">Ａｂｏｕｔ</a>
     <a href="#courses">Ｃｏｕｒｓｅｓ</a>
-    <a href="#contact">Ｃｏｎｔａｃｔ</a>
+    <a href="contact us.html">Ｃｏｎｔａｃｔ</a>
   </div>
 </div>
 
@@ -484,7 +484,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="cap-container">
 
         <!-- Cap -->
-        <img src="cap-removebg-preview.png" alt="Chef Cap" class="chef-cap">
+        <img src="cap-removebg-preview-removebg-preview.png" alt="Chef Cap" class="chef-cap">
 
         <!-- ✅ Course Buttons -->
         <div class="course-buttons">
@@ -504,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="icon">
               <img src="chef icon.webp" alt="Chef Training Icon">
             </span>
-            <span>Professional Chef Training</span>
+            <span>Professional Chef </span>
           </button>
           <button class="course-btn">
             <span class="icon">
@@ -751,7 +751,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </section>
 
 <style>
-.image-logo-section {
+  .image-logo-section {
   width: 100%;
   display: flex;
   margin: 60px 0;
@@ -760,18 +760,19 @@ document.addEventListener("DOMContentLoaded", () => {
 .container-flex {
   display: flex;
   width: 100%;
+  align-items: stretch; /* ✅ dono equal height */
 }
 
 .left-image, 
 .right-logo {
   width: 50%;
-  height: 600px; /* adjust as needed */
+  min-height: 500px; /* ✅ equal height ensure */
 }
 
 .left-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* ✅ image poora area cover kare */
+  object-fit: cover; 
   display: block;
 }
 
@@ -779,16 +780,40 @@ document.addEventListener("DOMContentLoaded", () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0D2235; /* 🔵 Blue background */
+  background: #0D2235;
+  position: relative;
+  top: -60px; /* ✅ upar shift */
+  min-height: 500px; /* ✅ left k baraber */
 }
 
 .right-logo img {
   max-width: 60%;
   height: auto;
 }
+
+/* ✅ Responsive Fix */
+@media (max-width: 992px) {
+  .container-flex {
+    flex-direction: column;
+  }
+
+  .left-image, 
+  .right-logo {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .right-logo {
+    top: 0; /* ✅ mobile par upar shift remove */
+    padding: 40px 0;
+  }
+
+  .right-logo img {
+    max-width: 70%;
+  }
+}
+
 </style>
-
-
 
 
 
@@ -815,7 +840,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="overlay">
             <h3>Culinary Arts</h3>
             <p>Master fine dining techniques and elevate your culinary skills.</p>
-            <button>Apply Now</button>
+           <a href="Registration From.html"> <button>Apply Now</button></a>
           </div>
         </div>
       </div>
@@ -828,7 +853,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="overlay">
             <h3>Bakery & Desserts</h3>
             <p>Learn artisan breads, cakes, and pastries with expert chefs.</p>
-            <button>Apply Now</button>
+           <a href="Registration From.html"> <button>Apply Now</button></a>
           </div>
         </div>
       </div>
@@ -841,7 +866,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="overlay">
             <h3>Professional Chef</h3>
             <p>Explore flavors from around the globe in one program.</p>
-            <button>Apply Now</button>
+           <a href="Registration From.html"> <button>Apply Now</button></a>
           </div>
         </div>
       </div>
@@ -854,7 +879,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="overlay">
             <h3>Barista Skills</h3>
             <p>Perfect your coffee-making and latte art with pro baristas.</p>
-            <button>Apply Now</button>
+           <a href="Registration From.html"> <button>Apply Now</button></a>
           </div>
         </div>
       </div>
@@ -1444,6 +1469,195 @@ cupImg.onload = () => {
 </script>
 
 
+
+<!-- our idealogy  -->
+
+<!-- ✅ Ideology Section -->
+<section class="ideology-section">
+  <div class="ideology-container">
+    <h2 style="font-size:40px; font-weight:700; color:#FAF7D9; margin-top: -50px; margin-bottom:60px; text-align:center; letter-spacing:-2px;">
+  Ｏｕｒ　Ｉｄｅｏｌｏｇｙ
+</h2>
+
+
+    
+    <!-- ✅ Cards -->
+    <div class="ideology-grid">
+      <div class="ideology-card">
+        <div class="icon">🎓</div>
+        <h3>Practical Learning</h3>
+        <p>Learning should be <span>practical, creative,</span> and real.</p>
+      </div>
+      <div class="ideology-card">
+        <div class="icon">🚪</div>
+        <h3>Opportunities</h3>
+        <p>Culinary education should <span>open doors,</span> not close them.</p>
+      </div>
+      <div class="ideology-card">
+        <div class="icon">🤝</div>
+        <h3>Equal Chance</h3>
+        <p>Every passionate learner deserves a chance, no matter their background.</p>
+      </div>
+      <div class="ideology-card">
+        <div class="icon">⭐</div>
+        <h3>Reward Skill</h3>
+        <p><span>Skill</span> should be rewarded with opportunity.</p>
+      </div>
+      <div class="ideology-card">
+        <div class="icon">📑</div>
+        <h3>Certified</h3>
+        <p>We’re registered with <span>SECP</span> and built for the next generation of chefs, baristas, and food innovators.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ✅ Background */
+.ideology-section {
+  position: relative;
+  padding: 100px 20px;
+  background: linear-gradient(135deg, #0D2235, #1C3A5F);
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Floating animation bg */
+.ideology-section::before,
+.ideology-section::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+  animation: float 12s infinite ease-in-out;
+}
+.ideology-section::before {
+  width: 400px; height: 400px;
+  top: -100px; left: -150px;
+}
+.ideology-section::after {
+  width: 300px; height: 300px;
+  bottom: -120px; right: -100px;
+}
+
+/* ✅ Container */
+.ideology-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+/* ✅ Title */
+.ideology-title {
+  font-size: 42px;
+  font-weight: 800;
+  margin-bottom: 60px;
+  color: #FAF7D9;   /* 🔄 Cream color */
+  animation: fadeInDown 1s ease forwards;
+}
+
+/* ✅ Grid Layout */
+.ideology-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+}
+
+/* ✅ Cards */
+.ideology-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0 50px 0 50px; /* 🔄 Asymmetric rounded */
+  padding: 30px 25px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  transform: translateY(40px);
+  opacity: 0;
+  animation: fadeUp 0.8s ease forwards;
+}
+.ideology-card:nth-child(1) { animation-delay: 0.2s; }
+.ideology-card:nth-child(2) { animation-delay: 0.4s; }
+.ideology-card:nth-child(3) { animation-delay: 0.6s; }
+.ideology-card:nth-child(4) { animation-delay: 0.8s; }
+.ideology-card:nth-child(5) { animation-delay: 1s; }
+
+.ideology-card .icon {
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+.ideology-card h3 {
+  font-size: 22px;
+  margin-bottom: 10px;
+  color: #FAF7D9; /* 🔄 Cream heading */
+}
+.ideology-card p {
+  font-size: 16px;
+  line-height: 1.5;
+  color: #eee;
+}
+.ideology-card span {
+  color: #FAF7D9; /* 🔄 Cream highlight */
+  font-weight: 600;
+}
+
+/* ✅ Hover effect */
+.ideology-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  transition: all 0.4s ease;
+  border-color: rgba(250, 247, 217, 0.5); /* 🔄 Cream glow */
+}
+
+/* ✅ Animations */
+@keyframes fadeUp {
+  0% {opacity: 0; transform: translateY(40px);}
+  100% {opacity: 1; transform: translateY(0);}
+}
+@keyframes fadeInDown {
+  0% {opacity: 0; transform: translateY(-40px);}
+  100% {opacity: 1; transform: translateY(0);}
+}
+@keyframes float {
+  0%, 100% {transform: translateY(0);}
+  50% {transform: translateY(-40px);}
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ideology-title {font-size: 32px;}
+  .ideology-card h3 {font-size: 20px;}
+  .ideology-card p {font-size: 15px;}
+}
+
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const lines = document.querySelectorAll(".ideology-lines p");
+  lines.forEach((line, i) => {
+    setTimeout(() => {
+      line.style.animation = "fadeInUp 0.8s ease forwards";
+      line.querySelector("::before")
+    }, i * 600); // har line delay ke sath
+    setTimeout(() => {
+      line.querySelector("::before");
+      line.style.setProperty("--bar-height", "100%");
+      line.style.opacity = "1";
+      line.style.transform = "translateY(0)";
+      line.style.setProperty("--bar-animate", "true");
+      line.style.transition = "all 0.6s ease";
+      line.style.position = "relative";
+      line.style.zIndex = "1";
+      line.style.setProperty("counter-increment", "line-counter");
+      line.style.setProperty("counter-reset", "line-counter");
+    }, i * 600 + 400);
+  });
+});
+</script>
+
+
+
 <!-- WHY CHOOSE US SECTION -->
 <section class="why-choose-us" id="why-choose-us">
   <div class="container">
@@ -1822,8 +2036,8 @@ document.addEventListener("DOMContentLoaded", () => {
       </h2>
       <!-- Location -->
       <p style="font-size:14px; line-height:1.8; color:#ccc; margin-bottom:15px;">
-        📍 123 Culinary Street,<br>
-        Lahore, Pakistan
+        📍 79-B3 Gulberg III, Lahore 
+
       </p>
       <!-- Contact -->
       <p style="font-size:14px; color:#ccc; margin:5px 0;">📞 +92 300 1234567</p>
