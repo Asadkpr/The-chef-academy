@@ -476,56 +476,95 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- Hero Section -->
 <!-- ✅ HERO SECTION -->
+<!-- ✅ HERO SECTION -->
 <section class="hero">
   <div class="hero-container">
 
-    <!-- ✅ Left Column (Cap + Buttons) -->
+    <!-- ✅ Left Column (Cap Watermark + Buttons) -->
     <div class="hero-left">
-      <div class="cap-container">
 
-        <!-- Cap -->
-        <img src="cap-removebg-preview-removebg-preview.png" alt="Chef Cap" class="chef-cap">
+      <!-- ✅ Heading -->
+      <!-- ✅ Google Font Include -->
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 
-        <!-- ✅ Course Buttons -->
-        <div class="course-buttons">
-          <button class="course-btn">
-            <span class="icon">
-              <img src="culinary icon.jpg" alt="Culinary Icon">
-            </span>
-            <span>Culinary Arts</span>
-          </button>
-          <button class="course-btn">
-            <span class="icon">
-              <img src="cake.png" alt="Bakery Icon">
-            </span>
-            <span>Bakery & Desserts</span>
-          </button>
-          <button class="course-btn">
-            <span class="icon">
-              <img src="chef icon.webp" alt="Chef Training Icon">
-            </span>
-            <span>Professional Chef </span>
-          </button>
-          <button class="course-btn">
-            <span class="icon">
-              <img src="barista icon.webp" alt="Barista Icon">
-            </span>
-            <span>Barista Skills</span>
-          </button>
-        </div>
+<h2 class="offer-heading">What We Offer</h2>
 
+<style>
+  .offer-heading {
+  margin: 0;
+  line-height: 1.5;
+  font-family: "Georgia", serif;
+ font-weight: 700;
+  text-align: center;
+  font-size: 38px;
+  color: white;
+  margin-bottom: 40px;
+  letter-spacing: 6px; /* 🔹 noticeable spacing */
+}
+
+</style>
+
+</style>
+
+
+
+
+
+      <!-- ✅ Buttons Grid -->
+      <div class="course-buttons-grid">
+        <button class="course-btn">
+          <span class="icon">
+            <!-- Culinary Icon (Knife & Fork) -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="white" viewBox="0 0 24 24">
+              <path d="M7 2v20h2V2H7zm4 0v20h2V12h2v10h2V12h2V2h-2v8h-2V2h-2v8h-2V2h-2z"/>
+            </svg>
+          </span>
+          <span>Culinary Arts</span>
+          <span class="arrow">›</span>
+        </button>
+        <button class="course-btn">
+          <span class="icon">
+            <!-- Cake Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="white" viewBox="0 0 24 24">
+              <path d="M12 2c-1.1 0-2 .9-2 2v1.1c0 .6-.4 1.2-1 1.4-2.9 1-5 3.7-5 6.9v7.6c0 1.6 1.3 3 3 3h10c1.7 0 3-1.4 3-3v-7.6c0-3.2-2.1-5.9-5-6.9-.6-.2-1-.8-1-1.4V4c0-1.1-.9-2-2-2z"/>
+            </svg>
+          </span>
+          <span>Bakery & Desserts</span>
+          <span class="arrow">›</span>
+        </button>
+        <button class="course-btn">
+          <span class="icon">
+            <!-- Chef Hat Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="white" viewBox="0 0 24 24">
+              <path d="M12 2c-2.8 0-5 2.2-5 5 0 .6.1 1.2.3 1.7-1.2.5-2.3 1.7-2.3 3.3 0 1.4.7 2.6 1.8 3.2V22h11v-6.8c1.1-.6 1.8-1.8 1.8-3.2 0-1.6-1.1-2.8-2.3-3.3.2-.5.3-1.1.3-1.7 0-2.8-2.2-5-5-5z"/>
+            </svg>
+          </span>
+          <span>Professional Chef</span>
+          <span class="arrow">›</span>
+        </button>
+        <button class="course-btn">
+          <span class="icon">
+            <!-- Coffee Cup Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="white" viewBox="0 0 24 24">
+              <path d="M18 8h-1V6H5v8c0 2.2 1.8 4 4 4h5c2.2 0 4-1.8 4-4V8zm-2 6c0 1.1-.9 2-2 2H9c-1.1 0-2-.9-2-2V8h9v6zm2-4h1c1.1 0 2 .9 2 2s-.9 2-2 2h-1v-4zM4 18h14v2H4z"/>
+            </svg>
+          </span>
+          <span>Barista Skills</span>
+          <span class="arrow">›</span>
+        </button>
       </div>
     </div>
 
     <!-- ✅ Right Column (Video) -->
     <div class="hero-video-wrapper">
       <video autoplay muted loop playsinline class="hero-video-bg">
-        <source src="IMG_0235.MP4" type="video/mp4">
+        <source src="chef video.mp4" type="video/mp4">
       </video>
     </div>
 
   </div>
 </section>
+
 
 <style>
 .hero {
@@ -544,7 +583,120 @@ document.addEventListener("DOMContentLoaded", () => {
   width: 100%;
 }
 
-/* Video */
+/* ✅ Left Column with BG color + Cap Watermark */
+.hero-left {
+  background: #0D2235; /* bg color wapis */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  position: relative;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* ✅ Cap Watermark */
+.hero-left::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 420px;
+  height: 420px;
+  background: url("cap-removebg-preview-removebg-preview.png") no-repeat center center;
+  background-size: contain;
+  opacity: 0.12;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+
+/* ✅ Heading */
+
+
+/* ✅ Buttons Grid */
+.course-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 480px;
+  width: 100%;
+  z-index: 2;
+  position: relative;
+}
+
+/* ✅ Buttons (Transparent BG) */
+.course-btn {
+  position: relative;
+  background: transparent; /* bg hata diya */
+  border: 2px solid #FFD700;
+  padding: 15px 20px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+/* ✅ Button text ek line me force */
+.course-btn {
+  font-size: 14px;           /* thoda chhota kiya */
+  white-space: nowrap;       /* text wrap nahi hoga */
+  overflow: hidden;          /* agar zyada ho to cut na lage */
+  text-overflow: ellipsis;   /* zarurat par "..." dikhayega */
+}
+
+
+.course-btn span {
+  position: relative;
+  z-index: 2;
+}
+
+/* ✅ Icon container (BG hataya) */
+.course-btn .icon {
+  width: auto;      /* fix width hata diya */
+  height: auto;     /* fix height hata diya */
+  background: none; /* bg bilkul hata diya */
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* ✅ Icon image white me show */
+/* ✅ Icon image - force transparent look */
+.course-btn .icon img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  mix-blend-mode: screen;  /* background ke sath blend */
+  filter: brightness(1000%); /* icon ko zyada bright karo */
+}
+
+
+
+/* ✅ Arrow */
+.course-btn .arrow {
+  margin-left: 10px;
+  font-size: 20px;
+  color: #FFD700;
+  font-weight: bold;
+}
+
+/* ✅ Hover Effect */
+.course-btn:hover {
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+  border-color: #FF9933;
+}
+
+/* ✅ Right Column (Video) */
 .hero-video-wrapper {
   position: relative;
   display: flex;
@@ -561,145 +713,20 @@ document.addEventListener("DOMContentLoaded", () => {
   object-position: center center;
 }
 
-/* Left Column */
-.hero-left {
-  background: #0D2235;  
-  color: #FAF7D9;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex-direction: column;
-  padding: 60px 20px;
-  position: relative;
-  text-align: center;
-}
-
-/* Cap */
-.chef-cap {
-  width: 200px;
-  display: block;
-  margin: 20px auto 40px;
-  transition: all 0.8s ease;
-}
-
-/* ✅ Course Buttons */
-/* ✅ Course Buttons Wrapper */
-.course-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  max-width: 420px; /* 🔹 width barha di */
-}
-
-/* ✅ Button */
-.course-btn {
-  position: relative;
-  background: linear-gradient(135deg, #FFD700, #FF8C00);
-  border: none;
-  padding: 15px 70px; /* 🔹 left-right padding barha di */
-  border-radius: 20px;
-  font-size: 18px; /* 🔹 font thoda bada */
-  font-weight: 600;
-  color: #0D2235;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center; /* 🔹 text center ho gaya */
-  overflow: hidden;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.3);
-  transition: all 0.3s ease;
-  min-width: 360px; /* 🔹 har button ki min width barhi */
-}
-
-/* ✅ Text */
-.course-btn span:last-child {
-  position: relative;
-  z-index: 2;
-  transition: transform 0.5s ease;
-  text-align: center;
-}
-
-/* ✅ Circle Icon */
-.course-btn .icon {
-  position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
-  background: rgba(255,255,255,0.95);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.2);
-  transition: all 0.5s ease;
-}
-.course-btn .icon img {
-  width: 22px;
-  height: 22px;
-}
-
-/* ✅ Hover Effect */
-.course-btn:hover .icon {
-  left: calc(100% - 60px); /* 🔹 icon button ke right corner tak */
-}
-.course-btn:hover span:last-child {
-  transform: translateX(-25px); /* 🔹 text thoda left ho */
-}
-
-/* ✅ Hover Glow */
-.course-btn:hover {
-  transform: translateY(-6px) scale(1.05);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.45);
-  background: linear-gradient(135deg, #FFDD44, #FF9933);
-}
-
-
-
-/* Slide-in effect */
-@keyframes slideIn {
-  0% { transform: translateX(-80px); opacity: 0; }
-  100% { transform: translateX(0); opacity: 1; }
-}
-
-/* Responsive */
+/* ✅ Responsive */
 @media (max-width: 768px) {
   .hero-container {
     display: flex;
     flex-direction: column;
   }
-  .hero-video-wrapper {
-    order: 1;
-    width: 100%;
-  }
-  .hero-video-bg {
-    width: 100%;
-    height: 240px;
-  }
-  .chef-cap {
-    width: 150px;
-    margin: 10px auto 25px;
-  }
-  .course-buttons {
-    max-width: 260px;
-  }
-  .course-btn {
-    font-size: 14px;
-    padding: 12px 16px;
-  }
-  .course-btn .icon {
-    width: 32px;
-    height: 32px;
-  }
-  .course-btn .icon img {
-    width: 18px;
-    height: 18px;
+  .course-buttons-grid {
+    grid-template-columns: 1fr;
+    max-width: 280px;
   }
 }
 </style>
+
+
 
 
 
@@ -744,7 +771,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!-- Right Side (Logo) -->
     <div class="right-logo">
-      <img src="new logo.png" alt="Chef Academy Logo" />
+      <img src="new_logo1-removebg-preview.png" alt="Chef Academy Logo" />
     </div>
 
   </div>
@@ -760,13 +787,13 @@ document.addEventListener("DOMContentLoaded", () => {
 .container-flex {
   display: flex;
   width: 100%;
-  align-items: stretch; /* ✅ dono equal height */
+  align-items: flex-start; /* ✅ ab dono apni apni natural height lenge */
 }
 
 .left-image, 
 .right-logo {
   width: 50%;
-  min-height: 500px; /* ✅ equal height ensure */
+  min-height: 500px; /* ✅ left side ki apni min height */
 }
 
 .left-image img {
@@ -783,7 +810,7 @@ document.addEventListener("DOMContentLoaded", () => {
   background: #0D2235;
   position: relative;
   top: -60px; /* ✅ upar shift */
-  min-height: 500px; /* ✅ left k baraber */
+  min-height: 675px; /* ✅ sirf right side zyada */
 }
 
 .right-logo img {
@@ -795,12 +822,13 @@ document.addEventListener("DOMContentLoaded", () => {
 @media (max-width: 992px) {
   .container-flex {
     flex-direction: column;
+    align-items: center; /* ✅ mobile par center align */
   }
 
   .left-image, 
   .right-logo {
     width: 100%;
-    min-height: auto;
+    min-height: auto; /* ✅ mobile par height auto */
   }
 
   .right-logo {
@@ -818,14 +846,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 <!-- Courses Section -->
 <!-- ✅ COURSES SECTION -->
-<section class="courses-section" id="courses">
+<section class="courses-section" id="courses" style="margin-top: -130px;">
   <div class="container">
-    <h1 style="font-size:40px; font-weight:700; color:#061C40; margin-bottom:40px; text-align:center; letter-spacing:-2px;">
-  Ｄｉｓｃｏｖｅｒ Ｏｕｒ Ｃｏｕｒｓｅｓ
+   <h1 style="font-size:40px; font-weight:700; color:#061C40; margin-bottom:40px; text-align:center; letter-spacing:2px; font-family: Georgia, 'Times New Roman', Times, serif;">
+  <span style="color:#FAF7D9;">Discover O</span>ur Courses
 </h1>
 
 
@@ -848,7 +875,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- Bakery & Desserts -->
       <div class="course-card card-2">
         <div class="card-inner">
-          <img src="bakery.png" alt="Bakery & Desserts">
+          <img src="bakery 1.webp" alt="Bakery & Desserts">
           <div class="card-title">Bakery & Desserts</div>
           <div class="overlay">
             <h3>Bakery & Desserts</h3>
@@ -893,6 +920,13 @@ document.addEventListener("DOMContentLoaded", () => {
   background: #FAF7D9;
   padding: 60px 0 40px 0;
 }
+.courses-section {
+  background: linear-gradient(to right, #0D2235 50%, #FAF7D9 50%);
+  padding: 60px 0 0 0;   /* ✅ bottom padding 0 */
+  margin-bottom: 0;       /* ✅ bottom margin 0 */
+}
+
+
 .section-title {
   text-align: center;
   font-size: 2rem;
@@ -1134,246 +1168,178 @@ cupImg.onload = () => {
 </script> -->
 
 
-<!-- about section  -->
-
-<section class="about-section" style="display:flex; flex-direction:column; align-items:center; padding:20px 50px; background:inherit;margin-top: 50px;">
+<!-- about section -->
+<section class="about-section">
 
   <!-- 🔹 Section Heading -->
-  <h1 style="font-size:40px; font-weight:700; color: #061C40; margin-bottom:40px; text-align:center; letter-spacing:-2px;">
-  Ａｂｏｕｔ Ｔｈｅ Ｃｈｅｆ’ｓ Ａｃａｄｅｍｙ
+  <h1 class="offer-heading" style="color:#061C40; font-size:40px; font-weight:700; letter-spacing:2px; text-align:center;">
+  About The Chef's Academy
 </h1>
 
 
   <!-- 🔹 Section Content -->
-  <div style="display:flex; width:100%; align-items:flex-start;">
+  <div class="about-content">
 
-   <!-- 🔹 Left Column: Half Circle Image with Text -->
-<div class="left-column" style="flex:1; padding-right:0px; height:600px; display:flex; justify-content:flex-start; align-items:center; position: relative;">
+    <!-- 🔹 Left Column: Half Circle Image with Text -->
+    <div class="left-column">
+      <div class="circle-bg">
+        <!-- Overlay -->
+        <div class="overlay"></div>
 
-  <div class="circle-bg" style="
-    width:100%; 
-    height:400px; 
-    border-radius:0 40% 40% 0; 
-    background:url('ful img 1.jpeg') center/cover no-repeat; 
-    position: relative;
-    overflow: hidden;
-    display:flex; 
-    flex-direction:column; 
-    justify-content:center; 
-    align-items:center; 
-    text-align:center; 
-    padding:30px;
-    margin-top: -40px;
-  ">
+        <!-- Text Content -->
+        <div class="circle-text">
+          <p>The Chef Academy is a premier culinary institute dedicated to excellence in cooking, presentation, and hospitality.</p>
+          <p>We provide world-class training in culinary techniques, food styling, and modern kitchen management.</p>
+          <p>Our expert chefs guide students through hands-on experiences, creative recipes, and professional plating.</p>
+          <p>Join The Chef Academy to transform your passion for cooking into a career of creativity, flavor, and innovation.</p>
+        </div>
+      </div>
+    </div>
 
-   <!-- 🔹 Overlay -->
-<div style="
-  position:absolute;
-  top:0; left:0; 
-  width:100%; height:100%; 
-  background:rgba(255,255,255,0.15); /* halka transparent white */
-  backdrop-filter: blur(4px);        /* blur effect */
-  -webkit-backdrop-filter: blur(4px); /* Safari support */
-  z-index:1;
-"></div>
+    <!-- 🔹 Right Column: Cards -->
+    <div class="right-column">
+      <div class="card-column">
+        <div class="card"><img src="card1.jpg" alt=""><div><strong>Company Excellence</strong><p>Courses on gourmet cooking and plating.</p></div></div>
+        <div class="card"><img src="card2.webp" alt=""><div><strong>Professional Training</strong><p>Learn dessert preparation and food styling.</p></div></div>
+        <div class="card"><img src="card3.jpg" alt=""><div><strong>Expert Guidance</strong><p>Hands-on cooking with professional chefs.</p></div></div>
+        <div class="card"><img src="card4.jpg" alt=""><div><strong>Creative Plating</strong><p>Learn plating and presentation techniques.</p></div></div>
+      </div>
 
-    <!-- 🔹 Text Content -->
-    <div style="position:relative; z-index:2;">
-      <p style="font-size:16px; color: #061C40; line-height:1.6;">
-        The Chef Academy is a premier culinary institute dedicated to excellence in cooking, presentation, and hospitality.
-      </p>
-      <p style="font-size:14px; color: #061C40; line-height:1.5; margin-top:15px;">
-        We provide world-class training in culinary techniques, food styling, and modern kitchen management.
-      </p>
-      <p style="font-size:16px; color: #061C40; line-height:1.6; margin-top:15px;">
-        Our expert chefs guide students through hands-on experiences, creative recipes, and professional plating.
-      </p>
-      <p style="font-size:14px; color: #061C40; line-height:1.5; margin-top:15px;">
-        Join The Chef Academy to transform your passion for cooking into a career of creativity, flavor, and innovation.
-      </p>
+      <div class="card-column">
+        <div class="card"><img src="card5.jpg" alt=""><div><strong>Dessert Mastery</strong><p>Specialized courses for pastries and sweets.</p></div></div>
+        <div class="card"><img src="card6.jpeg" alt=""><div><strong>Food Styling</strong><p>Enhance your dishes with professional styling.</p></div></div>
+        <div class="card"><img src="card7.jpg" alt=""><div><strong>Hands-on Experience</strong><p>Interactive culinary workshops and recipes.</p></div></div>
+        <div class="card"><img src="card8.jpg" alt=""><div><strong>Expert Chefs</strong><p>Learn plating and kitchen management.</p></div></div>
+      </div>
     </div>
 
   </div>
-</div>
-
-
-
-  <!-- Right Column: Scrolling Cards -->
-  <div class="right-column" style="flex:1; height:500px; overflow:hidden; display:flex; gap:10px; position:relative;">
-
-  <!-- Column 1: Top → Bottom -->
-  <div class="card-column" style="flex:1; position:relative;">
-    <div class="cards-scroll top-bottom" style="position:absolute; width:100%;">
-
-      <!-- Company Excellence -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card1.jpg" alt="Company Excellence" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Company Excellence</strong><p style="font-size:12px; margin:0;">Courses on gourmet cooking and plating.</p></div>
-      </div>
-
-      <!-- Professional Training -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card2.webp" alt="Professional Training" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Professional Training</strong><p style="font-size:12px; margin:0;">Learn dessert preparation and food styling.</p></div>
-      </div>
-
-      <!-- Expert Guidance -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card3.jpg" alt="Expert Guidance" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Expert Guidance</strong><p style="font-size:12px; margin:0;">Hands-on cooking with professional chefs.</p></div>
-      </div>
-
-      <!-- Creative Plating -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card4.jpg" alt="Creative Plating" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Creative Plating</strong><p style="font-size:12px; margin:0;">Learn plating and presentation techniques.</p></div>
-      </div>
-
-      <!-- Dessert Mastery -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card5.jpg" alt="Dessert Mastery" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Dessert Mastery</strong><p style="font-size:12px; margin:0;">Specialized courses for pastries and sweets.</p></div>
-      </div>
-
-      <!-- Food Styling -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card6.jpeg" alt="Food Styling" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Food Styling</strong><p style="font-size:12px; margin:0;">Enhance your dishes with professional styling.</p></div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Column 2: Bottom → Top -->
-  <div class="card-column" style="flex:1; position:relative;">
-    <div class="cards-scroll bottom-top" style="position:absolute; width:100%;">
-
-      <!-- Hands-on Experience -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card1.jpg" alt="Hands-on Experience" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Hands-on Experience</strong><p style="font-size:12px; margin:0;">Interactive culinary workshops and recipes.</p></div>
-      </div>
-
-      <!-- Expert Chefs -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card2.webp" alt="Expert Chefs" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Expert Chefs</strong><p style="font-size:12px; margin:0;">Learn plating and kitchen management.</p></div>
-      </div>
-
-      <!-- Recipe Innovation -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card6.jpeg" alt="Recipe Innovation" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Recipe Innovation</strong><p style="font-size:12px; margin:0;">Create new dishes and flavor combinations.</p></div>
-      </div>
-
-      <!-- Cooking Techniques -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card5.jpg" alt="Cooking Techniques" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Cooking Techniques</strong><p style="font-size:12px; margin:0;">Learn various cooking methods and tips.</p></div>
-      </div>
-
-      <!-- Kitchen Management -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card4.jpg" alt="Kitchen Management" style="width:80px; height=80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Kitchen Management</strong><p style="font-size:12px; margin:0;">Learn to manage kitchen and team effectively.</p></div>
-      </div>
-
-      <!-- Food Presentation -->
-      <div class="card" style="margin-bottom:10px; height:120px; background:#FAF7D9; border-radius:10px; display:flex; align-items:center; padding:10px;">
-        <img src="card3.jpg" alt="Food Presentation" style="width:80px; height:80px; border-radius:10px; margin-right:10px;">
-        <div><strong>Food Presentation</strong><p style="font-size:12px; margin:0;">Style your dishes like a professional chef.</p></div>
-      </div>
-
-    </div>
-  </div>
-
-</div>
-
 </section>
 
 <style>
-
-  @media (max-width: 768px) {
-  .about-section h1 {
-    font-size: 22px !important; /* ✅ smaller for mobile */
-    line-height: 1.3;
-    letter-spacing: -1px;
-    margin-bottom: 25px;
-  }
-}
-
-
-@media (max-width: 768px) {
-  .circle-bg p {
-    font-size: 10px !important;   /* ✅ font chhota */
-    line-height: 1.3;             /* ✅ spacing tight */
-    margin-top: 8px !important;   /* ✅ gap kam */
-  }
-}
-
-
-
-  .about-section {
+/* ---------------- BASE ---------------- */
+.about-section {
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px 50px;
   background: inherit;
-  margin-top: 50px; /* sirf desktop ke liye */
+  margin-top: 50px;
 }
 
-.about-section > div {
+.about-section h1 {
+  font-size: 40px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  text-align: center;
+  letter-spacing: -2px;
+}
+
+.about-content {
   display: flex;
   width: 100%;
   align-items: flex-start;
-  flex-wrap: wrap;
+  gap: 20px;
 }
 
+/* ---------------- LEFT COLUMN ---------------- */
 .left-column {
   flex: 1;
   min-height: 400px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  padding: 20px;
+  margin-top: 60px;
 }
 
 .circle-bg {
   width: 100%;
-  height: 100%;
+  height: 400px;
   border-radius: 0 40% 40% 0;
   background: url("ful img 1.jpeg") center/cover no-repeat;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
   padding: 30px;
+  overflow: hidden;
 }
 
+.overlay {
+  position: absolute;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1;
+}
+
+.circle-text {
+  position: relative;
+  z-index: 2;
+  color: #061C40;
+}
+
+.circle-text p {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
+/* ---------------- RIGHT COLUMN ---------------- */
 .right-column {
   flex: 1;
-  min-height: 400px;
   display: flex;
   gap: 10px;
-  overflow: hidden;
-  position: relative;
 }
 
+.card-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  height: 120px;
+  background: #0D2235; /* 🔹 blue background */
+  color: #fff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  margin-right: 10px;
+}
+
+.card strong, .card p {
+  color: #fff;
+  margin: 0;
+}
+
+/* ---------------- RESPONSIVE ---------------- */
 @media (max-width: 768px) {
   .about-section {
-    margin-top: 650px !important; /* ✅ overlap fix */
+    margin-top: 50px;
+    padding: 20px;
+  }
+
+  .about-content {
     flex-direction: column;
   }
 
-  .about-section > div {
-    flex-direction: column; /* ✅ img upar, cards neeche */
-  }
-
-  .left-column {
+  .left-column, .right-column {
     width: 100%;
-    min-height: 250px; /* ✅ thoda chhota mobile ke liye */
-    margin-bottom: 20px;
   }
 
   .circle-bg {
@@ -1382,90 +1348,18 @@ cupImg.onload = () => {
     padding: 20px;
   }
 
-  .right-column {
-    width: 100%;
-    flex-direction: row; /* ✅ 2 columns me hi rahe */
-    gap: 15px;
-    height: 350px; /* ✅ scrolling area visible */
-    overflow: hidden;
-    position: relative;
-  }
-
-  .card-column {
-    flex: 1;
-    width: 50%;
-    overflow: hidden;
-  }
-
-  .cards-scroll {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  /* ✅ Left column (upar scroll) */
-  .card-column.left .cards-scroll {
-    animation: scroll-up 20s linear infinite;
-  }
-
-  /* ✅ Right column (neeche scroll) */
-  .card-column.right .cards-scroll {
-    animation: scroll-down 20s linear infinite;
+  .circle-text p {
+    font-size: 12px;
   }
 
   .card {
-    height: 160px; /* ✅ mobile size */
+    height: 160px;
   }
 }
-
-/* ✅ Animations same as desktop */
-@keyframes scroll-up {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-50%); }
-}
-
-@keyframes scroll-down {
-  0% { transform: translateY(-50%); }
-  100% { transform: translateY(0); }
-}
-
 </style>
 
 <script>
-  function seamlessScroll(scrollElement, direction='up') {
-    const items = Array.from(scrollElement.children);
-    const itemHeight = items[0].offsetHeight + 10; // include margin-bottom
-    let offset = direction==='up' ? 0 : itemHeight;
-
-    function animate() {
-      if(direction==='up') {
-        offset += 1;
-        if(offset >= itemHeight) {
-          offset = 0;
-          scrollElement.appendChild(items[0]);
-          items.push(items.shift());
-        }
-        scrollElement.style.transform = `translateY(-${offset}px)`;
-      } else {
-        offset -= 1;
-        if(offset <= 0) {
-          offset = itemHeight;
-          scrollElement.insertBefore(items[items.length-1], scrollElement.firstChild);
-          items.unshift(items.pop());
-        }
-        scrollElement.style.transform = `translateY(-${offset}px)`;
-      }
-      requestAnimationFrame(animate);
-    }
-    animate();
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const topBottom = document.querySelector('.cards-scroll.top-bottom');
-    const bottomTop = document.querySelector('.cards-scroll.bottom-top');
-    seamlessScroll(topBottom, 'down'); // top→bottom
-    seamlessScroll(bottomTop, 'up'); // bottom→top
-  });
+/* ❌ Scrolling JS remove kar diya, cards ab fixed rahenge */
 </script>
 
 
@@ -1473,14 +1367,13 @@ cupImg.onload = () => {
 <!-- our idealogy  -->
 
 <!-- ✅ Ideology Section -->
+<!-- ✅ Ideology Section -->
 <section class="ideology-section">
   <div class="ideology-container">
-    <h2 style="font-size:40px; font-weight:700; color:#FAF7D9; margin-top: -50px; margin-bottom:60px; text-align:center; letter-spacing:-2px;">
-  Ｏｕｒ　Ｉｄｅｏｌｏｇｙ
-</h2>
+    <h2 class="offer-heading" style="font-size:40px; font-weight:700; color:#FAF7D9; margin-top: -50px; margin-bottom:60px; text-align:center; letter-spacing:2px;">
+    Our Ideology
+    </h2>
 
-
-    
     <!-- ✅ Cards -->
     <div class="ideology-grid">
       <div class="ideology-card">
@@ -1508,9 +1401,24 @@ cupImg.onload = () => {
         <h3>Certified</h3>
         <p>We’re registered with <span>SECP</span> and built for the next generation of chefs, baristas, and food innovators.</p>
       </div>
+      <!-- ✅ New Card -->
+     <!-- ✅ New Card -->
+<div class="ideology-card">
+  <div class="icon">🏢</div>
+  <h3>Industry Linkages</h3>
+  <p>We are proud to be linked with:</p>
+  <ul style="margin-top:10px; text-align:left; padding-left:20px; color:#eee; font-size:15px; line-height:1.6;">
+    <li><span>DOT Coffee Shop</span></li>
+    <li><span>Ramada Hotel</span></li>
+    <li><span>Royal Swiss Hotel</span></li>
+    
+  </ul>
+</div>
+
     </div>
   </div>
 </section>
+
 
 <style>
   /* ✅ Background */
