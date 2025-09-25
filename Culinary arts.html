@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Culinary Arts - The Chef's Academy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Georgia&display=swap" rel="stylesheet">
+  <style>
+    /* =============== GLOBAL STYLES =============== */
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+    }
+    h2 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    /* =============== SECTION BASE =============== */
+    .course-section {
+      position: relative;
+      padding: 100px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 400px;
+    }
+    .course-section .content {
+      max-width: 800px;
+      animation: fadeUp 1.2s ease-in-out;
+    }
+
+    /* ✅ Background Split */
+    .section-light {
+      background: linear-gradient(
+        to right,
+        #FAF7D9 50%,  /* left */
+        #061C40 50%   /* right */
+      );
+      color: #061C40;
+    }
+    .section-dark {
+      background: linear-gradient(
+        to right,
+        #061C40 50%,  /* left */
+        #FAF7D9 50%   /* right */
+      );
+      color: #FAF7D9;
+    }
+
+    /* ✅ Animation */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ✅ Responsive */
+    @media (max-width: 768px) {
+      .course-section {
+        background: none !important;
+        background-color: #FAF7D9;
+        color: #061C40 !important;
+        padding: 60px 20px;
+      }
+    }
+
+    /* ✅ Navbar */
+    .navbar {
+      width: 100%;
+      height: 70px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(250, 247, 217, 0.3);
+      transition: border-color 0.3s ease;
+    }
+    .logo h4 { margin: 0; line-height: 1.1; font-family: "Georgia", serif; font-weight: 300; color: #FAF7D9; }
+    .logo .the-small { font-size: 14px; }
+    .logo .chef-bold { font-size: 22px; }
+    .logo .academy-bold { font-size: 22px; display: block; }
+
+    .menu-toggle { display: none; font-size: 28px; color: #FAF7D9; cursor: pointer; }
+    .nav-links { display: none; gap: 15px; }
+    .nav-links a {
+      color: #FAF7D9; text-decoration: none; padding: 6px 12px; border-radius: 20px;
+      font-size: 13px; font-weight: 600; transition: 0.3s;
+    }
+    .nav-links a:hover { background: #FFD700; color: #061C40; }
+    .nav-links a.active { color: #061C40 !important; }
+
+    @media (min-width: 769px) {
+      .nav-links { display: flex; }
+    }
+    @media (max-width: 768px) {
+      .menu-toggle { display: block; }
+      .nav-links {
+        flex-direction: column;
+        position: absolute;
+        top: 70px; right: 20px;
+        background: #FAF7D9; width: 200px; padding: 15px;
+        border-radius: 8px; display: none;
+      }
+      .nav-links.show { display: flex; }
+      .nav-links a { color: #061C40; }
+    }
+
+    /* ✅ Footer */
+    footer {
+      background:#061C40; color:#fff; padding:50px 20px; font-family:'Poppins', sans-serif;
+    }
+    footer h2, footer h4 { color:#FAF7D9; }
+    footer input, footer button {
+      width:100%; padding:12px; margin-bottom:12px; border:none; border-radius:6px; font-size:14px;
+    }
+    footer button { background:#FFD700; color:#061C40; font-weight:600; cursor:pointer; }
+    footer .bottom { text-align:center; margin-top:40px; font-size:13px; color:#888; border-top:1px solid #333; padding-top:15px; }
+  </style>
+</head>
+<body>
+
+  <!-- ✅ Navbar -->
+  <div class="navbar">
+    <div class="logo" id="logo-text">
+      <h4 style="color: #061C40;"><span class="the-small">The</span> <span class="chef-bold">Chef's</span><br>
+      <span class="academy-bold">Academy</span></h4>
+    </div>
+    <div class="menu-toggle" id="menu-toggle">☰</div>
+    <div class="nav-links" id="nav-links" style="margin-right: 20px;">
+      <a  href="#about">Ａｂｏｕｔ</a>
+      <a href="#modules">Ｃｏｕｒｓｅｓ</a>
+      <a href="contact.html">Ｃｏｎｔａｃｔ</a>
+    </div>
+  </div>
+
+  <!-- ✅ Sections -->
+  <section id="about" class="course-section section-light">
+    <div class="content">
+      <h2>About Culinary Arts</h2>
+      <p>Our Culinary Arts program blends traditional techniques with modern innovation. Learn professional cooking, presentation, food safety, and international cuisines with guidance from expert chefs.</p>
+    </div>
+  </section>
+
+  <section id="modules" class="course-section section-dark">
+    <div class="content">
+      <h2>Course Modules</h2>
+      <p>From knife skills to fine dining plating, explore baking, pastry, barista training, and global cuisines through hands-on sessions and chef-led workshops.</p>
+    </div>
+  </section>
+
+  <section class="course-section section-light">
+    <div class="content">
+      <h2>Hands-On Experience</h2>
+      <p>Practice in modern kitchens equipped with industry-standard tools. Participate in live cooking competitions and team projects that sharpen creativity and speed.</p>
+    </div>
+  </section>
+
+  <section class="course-section section-dark">
+    <div class="content">
+      <h2>Career Opportunities</h2>
+      <p>Graduates join top hotels, restaurants, and catering companies worldwide. We provide career support, internships, and industry linkages for real-world success.</p>
+    </div>
+  </section>
+
+  <section class="course-section section-light">
+    <div class="content">
+      <h2>Why Choose Us?</h2>
+      <p>With professional faculty, international-standard facilities, and globally recognized certifications, The Chef’s Academy ensures your passion becomes a career.</p>
+    </div>
+  </section>
+
+  <!-- ✅ Footer -->
+  <footer>
+    <div style="max-width:1200px; margin:0 auto; display:flex; flex-wrap:wrap; gap:40px; justify-content:space-between;">
+      <div style="flex:1; min-width:250px;">
+        <h2>The Chef's Academy</h2>
+        <p>📍 79-B3 Gulberg III, Lahore</p>
+        <p>📞 +92 300 1234567</p>
+        <p>✉️ info@thechefacademy.com</p>
+      </div>
+      <div style="min-width:200px;">
+        <h4>Follow Us</h4>
+        <div style="display:flex; gap:15px;">
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="28"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="28"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" width="28"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" width="28"></a>
+        </div>
+      </div>
+      <div style="min-width:280px;">
+        <h4>Stay Connected</h4>
+        <form>
+          <input type="text" placeholder="Your Name">
+          <input type="email" placeholder="Your Email">
+          <button type="submit">Subscribe</button>
+        </form>
+      </div>
+    </div>
+    <div class="bottom">© 2025 The Chef Academy. All rights reserved.</div>
+  </footer>
+
+  <!-- ✅ JS -->
+  <script>
+    const toggleBtn = document.getElementById("menu-toggle");
+    const navLinks = document.getElementById("nav-links");
+    toggleBtn.addEventListener("click", () => {
+      navLinks.classList.toggle("show");
+      toggleBtn.textContent = navLinks.classList.contains("show") ? "✖" : "☰";
+    });
+  </script>
+</body>
+</html>
