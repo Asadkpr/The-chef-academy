@@ -416,6 +416,7 @@
 }
 
 /* 🔹 Mobile (links hidden, toggle show) */
+/* 🔹 Mobile (links hidden, toggle show) */
 @media (max-width: 768px) {
   .nav-links {
     flex-direction: column;
@@ -429,10 +430,22 @@
     display: none;
   }
   .nav-links.show { display: flex; }
-  .nav-links a { color: #061C40; padding: 10px; font-size: 14px; }
-  .nav-links a:hover { background: #FFD700; color: #061C40; }
+
+  /* ✅ mobile links ka color hamesha fix blue */
+  .nav-links a { 
+    color: #061C40 !important;  
+    padding: 10px; 
+    font-size: 14px; 
+  }
+
+  .nav-links a:hover { 
+    background: #FFD700; 
+    color: #061C40; 
+  }
+
   .menu-toggle { display: block; }
 }
+
 </style>
 
 <script>
@@ -451,20 +464,52 @@ document.addEventListener("DOMContentLoaded", () => {
   const hero = document.querySelector(".hero");
   const navItems = document.querySelectorAll(".nav-links a");
 
+  function handleScroll() {
+    if (window.innerWidth > 768) {
+      // 👉 Desktop behavior
+      if (window.scrollY >= hero.offsetHeight) {
+        navbar.classList.add("scrolled");
+        navItems.forEach((link) => link.classList.add("active"));
+      } else {
+        navbar.classList.remove("scrolled");
+        navItems.forEach((link) => link.classList.remove("active"));
+      }
+    } else {
+      // 👉 Mobile behavior: fixed blue, no scroll effect
+      navbar.classList.remove("scrolled");
+      navItems.forEach((link) => {
+        link.classList.remove("active");
+        link.style.color = "blue"; // ✅ fix blue
+      });
+    }
+  }
+
+  // Run on scroll
+  window.addEventListener("scroll", handleScroll);
+
+  // Run once on page load
+  handleScroll();
+
+  // Run again on window resize
+  window.addEventListener("resize", handleScroll);
+});
+</script>
+
+<!-- js for mobile  -->
+
+<script>
   window.addEventListener("scroll", () => {
+  if (window.innerWidth > 768) { // ✅ sirf desktop par chalega
     if (window.scrollY >= hero.offsetHeight) {
       navbar.classList.add("scrolled");
-
-      // ✅ Hero ke neeche jaate hi 3no links blue
       navItems.forEach((link) => link.classList.add("active"));
     } else {
       navbar.classList.remove("scrolled");
-
-      // ✅ Hero ke upar normal color wapas
       navItems.forEach((link) => link.classList.remove("active"));
     }
-  });
+  }
 });
+
 </script>
 
 
@@ -715,17 +760,38 @@ document.addEventListener("DOMContentLoaded", () => {
   object-position: center center;
 }
 
-/* ✅ Responsive */
 @media (max-width: 768px) {
   .hero-container {
     display: flex;
     flex-direction: column;
   }
+
+  /* 👇 video upar chala jayega */
+  .hero-video-wrapper {
+    order: -1;
+    width: 100%;
+    height: auto;
+  }
+
+  .hero-video-bg {
+    width: 100%;
+    height: auto;
+    max-height: 280px; /* mobile pe thoda limit rakha */
+    object-fit: cover;
+  }
+
+  .hero-left {
+    order: 2;
+    padding: 30px 20px;
+  }
+
   .course-buttons-grid {
     grid-template-columns: 1fr;
     max-width: 280px;
+    margin: 20px auto 0 auto;
   }
 }
+
 </style>
 
 
@@ -822,20 +888,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ✅ Responsive Fix */
 @media (max-width: 992px) {
+  .image-logo-section {
+    margin: 20px 0; /* 👈 mobile/tablet par gap kam */
+    margin-top: -450px;
+  }
+
   .container-flex {
     flex-direction: column;
-    align-items: center; /* ✅ mobile par center align */
+    align-items: center;
   }
 
   .left-image, 
   .right-logo {
     width: 100%;
-    min-height: auto; /* ✅ mobile par height auto */
+    min-height: auto;
   }
 
   .right-logo {
-    top: 0; /* ✅ mobile par upar shift remove */
-    padding: 40px 0;
+    top: 0;
+    padding: 0px 0; /* 👈 padding bhi thodi kam */
   }
 
   .right-logo img {
@@ -1024,19 +1095,53 @@ document.addEventListener("DOMContentLoaded", () => {
 .card-4 { grid-column: 2 / span 2; grid-row: 2; }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .courses-layout {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    height: auto;
-  }
-  .card-1 { grid-column: 1 / span 2; height: 250px; }
-  .card-2, .card-3, .card-4 { grid-column: 1 / span 2; height: 200px; }
-}
+/* ✅ Mobile Responsive Fix */
 @media (max-width: 600px) {
-  .courses-layout { grid-template-columns: 1fr; }
-  .card-1, .card-2, .card-3, .card-4 { height: 200px; }
+  /* Section ka margin reset */
+  .courses-section {
+    margin-top: 0 !important;
+    padding-top: 40px; /* thoda space */
+  }
+
+  /* Heading style mobile ke liye */
+  .courses-section h1 {
+    font-size: 26px !important;
+    line-height: 1.3;
+    text-align: center;
+    margin-bottom: 25px !important;
+    letter-spacing: 1px;
+    color: #061C40;
+  }
+
+  /* Layout ek column */
+  .courses-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* Sabhi cards same height aur stacked */
+  .course-card {
+    width: 100%;
+    height: 220px !important; /* equal height */
+  }
+
+  .course-card img {
+    width: 100%;
+    height: 100% !important;
+    object-fit: cover; /* saare images fill kare */
+  }
+
+  /* Overlay text size adjust */
+  .overlay h3 { font-size: 16px; }
+  .overlay p { font-size: 13px; }
+  .overlay button {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
 }
+
+
 </style>
 
 
@@ -1292,13 +1397,15 @@ cupImg.onload = () => {
   }
   .video-container {
     max-width: 100%;
-    height: 250px;
+    width: 350px;          /* ✅ full width le */
+    height: 350px;        /* ✅ height barha di mobile pe */
   }
   .about-text {
     font-size: 16px;
     text-align: center;
   }
 }
+
 </style>
 
 
