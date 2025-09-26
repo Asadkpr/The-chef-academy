@@ -363,6 +363,15 @@ body {
   z-index: 2;
   max-width: 800px;
 }
+
+/* ✅ Mobile only adjustments */
+@media (max-width: 768px) {
+  .hero-video-wrapper .header-content h1 {
+    margin-top: 70px; 
+    font-size: 19px; /* 👈 jitna neeche chaiye utna adjust karo */
+  }
+}
+
 </style>
 
 
@@ -481,6 +490,26 @@ body {
   margin-right: 6px;
   vertical-align: middle;
 }
+
+/* ✅ Mobile only - center cards */
+@media (max-width: 768px) {
+  .courses-grid {
+    display: flex;
+    flex-direction: column; 
+    align-items: center;    
+  }
+
+  .course-card {
+    width: 90%;
+    max-width: 400px;
+    margin-bottom: 20px;
+
+    /* 👇 Thoda aur right ki taraf karne ke liye */
+    margin-left: 40px;  
+  }
+}
+
+
 </style>
 
 
