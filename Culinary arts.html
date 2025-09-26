@@ -52,7 +52,7 @@
       cursor: pointer;
       user-select: none;
       color: #FAF7D9;
-      margin-right: 20px;
+      margin-right: 40px;
       transition: color 0.3s ease;
     }
 
@@ -315,6 +315,24 @@
 </div>
 
 <style>
+
+    /* heading responsive  */
+
+    /* ✅ Mobile only - center text in header */
+@media (max-width: 768px) {
+  .hero-video-wrapper .header-content {
+    text-align: center;
+    margin-right: 30px;
+  
+    
+  }
+
+  .hero-video-wrapper .header-content p {
+    text-align: center;
+    margin: 0 auto; /* taake paragraph bhi properly center ho */
+  }
+}
+
 /* ✅ Reset */
 body {
   margin: 0;
@@ -505,9 +523,37 @@ body {
     margin-bottom: 20px;
 
     /* 👇 Thoda aur right ki taraf karne ke liye */
-    margin-left: 40px;  
+    margin-left: 0px;  
   }
 }
+
+
+
+
+
+/* ✅ Mobile overflow fix */
+html, body {
+  overflow-x: hidden;
+}
+
+.courses-grid::before,
+.courses-grid::after {
+  max-width: 100%;   /* line overflow fix */
+  overflow: hidden;
+}
+
+.social-fixed {
+  right: 10px; /* thoda andar kar diya */
+}
+
+
+@media (max-width: 768px) {
+  .courses-grid::before,
+  .courses-grid::after {
+    display: none;
+  }
+}
+
 
 
 </style>
