@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - The Chef's Academy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #061C40; /* 👈 Body wala bg */
+      color: #061C40;
+    }
+
+    /* 🔹 Logo Styling */
+    .logo h4 {
+      margin: 0;
+      line-height: 1.1;
+      font-family: "Georgia", serif;
+      font-weight: 300;
+    }
+    .logo .the-small { font-size: 14px; font-weight: 300; margin-right: 2px; }
+    .logo .chef-bold { font-size: 22px; font-weight: 400; }
+    .logo .academy-bold { font-size: 22px; font-weight: 400; display: block; margin-top: 0; }
+
+    /* 🔹 Navbar Base */
+    .navbar {
+      width: 100%;
+      height: 70px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(250, 247, 217, 0.3);
+      transition: border-color 0.3s ease;
+    }
+    .navbar .logo h4 { color: #FAF7D9; transition: color 0.3s ease; }
+    .menu-toggle {
+      display: none;
+      font-size: 28px;
+      cursor: pointer;
+      user-select: none;
+      color: #FAF7D9;
+      margin-right: 40px;
+      transition: color 0.3s ease;
+    }
+    .navbar.scrolled .logo h4 { color: #061C40; }
+    .navbar.scrolled .menu-toggle { color: #061C40; }
+    .navbar.scrolled { border-bottom: 1px solid #061C40; }
+    .navbar .nav-links { display: none; gap: 15px; }
+    .navbar .nav-links a {
+      color: #FAF7D9;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    .navbar .nav-links a:hover {
+      background: #FFD700;
+      color: #061C40;
+    }
+
+    @media (min-width: 769px) {
+      .navbar .nav-links { display: flex; }
+    }
+    @media (max-width: 768px) {
+      .nav-links {
+        flex-direction: column;
+        position: absolute;
+        top: 70px;
+        right: 20px;
+        background: #061C40;
+        width: 200px;
+        padding: 15px;
+        border-radius: 8px;
+        display: none;
+      }
+      .nav-links.show { display: flex; }
+      .nav-links a { color: #FAF7D9 !important; padding: 10px; font-size: 14px; }
+      .menu-toggle { display: block; }
+    }
+
+    /* 🔹 Page Content */
+    .policy-container {
+      max-width: 900px;
+      margin: 120px auto 50px auto;
+      padding: 30px;
+     
+      
+    }
+    .policy-container h1 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      color: #FAF7D9;
+    }
+    .policy-container h2 {
+      font-size: 20px;
+      margin-top: 25px;
+      margin-bottom: 10px;
+      color: #FAF7D9;
+    }
+    .policy-container p {
+      line-height: 1.8;
+      margin-bottom: 15px;
+      color: #FAF7D9;
+    }
+    .policy-container strong { color: #FAF7D9 }
+  </style>
+</head>
+<body>
+
+  <!-- 🔹 Navbar -->
+  <div class="navbar">
+    <div class="logo" id="logo-text">
+        <a href="index.html" style="text-decoration: none;">
+      <h4>
+        <span class="the-small">The</span> <span class="chef-bold">Chef's</span><br>
+        <span class="academy-bold">Academy</span>
+      </h4>
+      </a>
+    </div>
+    <div class="menu-toggle" id="menu-toggle">☰</div>
+    <div class="nav-links" id="nav-links" style="margin-right: 20px;">
+      <a href="index.html#about">Ａｂｏｕｔ</a>
+      <a href="index.html#courses">Ｃｏｕｒｓｅｓ</a>
+      <a href="contact us.html">Ｃｏｎｔａｃｔ</a>
+    </div>
+  </div>
+
+  <!-- 🔹 Privacy Policy Content -->
+  <div class="policy-container">
+    <h1>Privacy Policy</h1>
+    <p><strong>Last updated:</strong> 26/09/2025</p>
+
+    <p>At <strong>The Chef's Academy</strong>, we value your privacy and are committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and what rights you have.</p>
+
+    <h2>1. Information We Collect</h2>
+    <p>- Personal information (name, email, phone, etc.) when you register or contact us.<br>
+       - Technical data (IP address, browser type, device info) for analytics.<br>
+       - Cookies and usage data to improve your browsing experience.</p>
+
+    <h2>2. How We Use Your Information</h2>
+    <p>- To provide and improve our services.<br>
+       - To send important updates, newsletters, and promotional offers.<br>
+       - To analyze website usage and enhance user experience.</p>
+
+    <h2>3. Cookies</h2>
+    <p>We use cookies to remember preferences and analyze traffic. You can disable cookies in your browser settings, but some features may not function properly.</p>
+
+    <h2>4. Sharing of Data</h2>
+    <p>We do not sell or rent your data. Limited data may be shared with trusted third-party partners (such as payment processors or analytics providers) to operate our services.</p>
+
+    <h2>5. Data Security</h2>
+    <p>We use industry-standard measures to protect your data from unauthorized access, alteration, or disclosure. However, no online transmission is 100% secure.</p>
+
+    <h2>6. Children’s Privacy</h2>
+    <p>Our services are not directed to individuals under the age of 13. We do not knowingly collect personal data from children.</p>
+
+    <h2>7. Updates to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Any changes will be posted on this page with the updated date.</p>
+
+    <h2>8. Contact Us</h2>
+    <p>If you have any questions about this Privacy Policy, please contact us at:<br>
+       <strong>Email:</strong> info@thechefacademy.pk<br>
+       <strong>Phone:</strong> +92 328 8888907</p>
+  </div>
+
+  <!-- 🔹 Footer -->
+  <footer style="background:#061C40; color:#fff; padding:50px 20px; font-family:'Poppins', sans-serif;">
+    <div style="max-width:1200px; margin:0 auto; display:flex; flex-wrap:wrap; gap:40px; justify-content:space-between;">
+
+      <div style="flex:1; min-width:250px;">
+        <h2 style="font-size:24px; font-weight:700; margin-bottom:20px; color: #FAF7D9;font-family: Georgia, 'Times New Roman', Times, serif;">The Chef's Academy</h2>
+        <p style="font-size:14px; line-height:1.8; color:#ccc; margin-bottom:15px;">📍 79-B3 Gulberg III, Lahore</p>
+        <p style="font-size:14px; color:#ccc; margin:5px 0;">📞 +92 328 8888907</p>
+        <p style="font-size:14px; color:#ccc; margin:5px 0;">✉️ info@thechefacademy.pk</p>
+        <a href="privacy policy.html" style="font-size:14px; color:#ccc; margin:5px 0;">Privacy policy</a>
+      </div>
+
+      <div style="min-width:200px;">
+        <h4 style="font-size:16px; font-weight:600; margin-bottom:15px; color:#FAF7D9;font-family: Georgia, 'Times New Roman', Times, serif;">Follow Us</h4>
+        <div style="display:flex; gap:15px; font-size:22px;">
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="28"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="28"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" width="28"></a>
+          <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="28"></a>
+        </div>
+      </div>
+
+      <div style="min-width:280px;">
+        <h4 style="font-size:16px; font-weight:600; margin-bottom:15px; color:#FAF7D9;font-family: Georgia, 'Times New Roman', Times, serif;">Stay Connected</h4>
+        <form>
+          <input type="text" placeholder="Your Name" style="width:100%; padding:12px; margin-bottom:12px; border:none; border-radius:6px; font-size:14px;">
+          <input type="email" placeholder="Your Email" style="width:100%; padding:12px; margin-bottom:12px; border:none; border-radius:6px; font-size:14px;">
+          <button type="submit" style="width:100%; padding:12px; background:#FFD700; color:#061C40; border:none; border-radius:6px; font-weight:600; font-size:14px; cursor:pointer;">Subscribe</button>
+        </form>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:40px; font-size:13px; color:#888; border-top:1px solid #333; padding-top:15px;">
+      © 2025 The Chef Academy. All rights reserved.
+    </div>
+  </footer>
+  <script>
+  const menuToggle = document.getElementById("menu-toggle");
+  const navLinks = document.getElementById("nav-links");
+
+  menuToggle.addEventListener("click", () => {
+    navLinks.classList.toggle("show");
+  });
+</script>
+
+
+</body>
+</html>
