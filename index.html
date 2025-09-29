@@ -329,7 +329,7 @@
   <!-- Nav Links -->
   <div class="nav-links" id="nav-links" style="margin-right: 20px;">
     <a href="#about">Ａｂｏｕｔ</a>
-    <a href="#courses">Ｃｏｕｒｓｅｓ</a>
+    <a href="Culinary arts.html">Ｃｏｕｒｓｅｓ</a>
     <a href="contact us.html">Ｃｏｎｔａｃｔ</a>
 
 
@@ -977,7 +977,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
       </div>
-      
+
 
       <!-- Bakery & Desserts -->
       <div class="course-card card-2">
@@ -986,9 +986,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="card-title">Bakery & Desserts</div>
           <div class="overlay">
             <h3 style="color: #FAF7D9;">Bakery & Desserts</h3>
-            <p><strong>Duration:</strong> 3 Months</p>
+            <p><strong>Duration:</strong> 6 Months</p>
             <p><strong>Time Slot:</strong> 9 AM – 1 PM | 1 PM – 5 PM  | 5 PM – 9 PM</p>
-            <a href="" download>
+            <a href="BakingandPatisserie.pdf" download>
               <button class="download-btn">Download Outline</button>
             </a>
             <a href="Registration From.html">
@@ -1020,7 +1020,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- Barista Skills -->
       <div class="course-card card-4">
         <div class="card-inner">
-          <img src="barista skill.webp" alt="Barista Skills" 
+          <img src="barista img.jpg" alt="Barista Skills" 
                style="width:100%; height:auto; object-fit:contain; background:#fff;">
           <div class="card-title">Barista Skills</div>
           <div class="overlay">
@@ -1348,15 +1348,33 @@ cupImg.onload = () => {
 
   <div class="about-content">
     <!-- 🔹 Left Column: Video -->
-    <div class="left-column">
-      <div class="video-container">
-        <video autoplay muted loop playsinline>
-  <source src="IMG_0235.MP4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+   <div class="left-column">
+  <div class="video-container">
+    <video autoplay muted loop playsinline class="header-video">
+      <source src="IMG_0704.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+</div>
 
-      </div>
-    </div>
+<style>
+.video-container {
+  position: relative;
+  width: 100%;
+  height: 400px; /* 👈 jitni height chahiye utni adjust kar lo */
+  overflow: hidden;
+}
+
+.video-container .header-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* pura fill karega */
+}
+</style>
+
 
     <!-- 🔹 Right Column: Text -->
     <div class="right-column">
@@ -2051,7 +2069,57 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
+<!-- 🔹 Fixed Social Icons -->
+<div class="social-fixed">
+  <a href="https://wa.me/923288888907" target="_blank">
+    <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="WhatsApp">
+  </a>
+ 
+  <a href="https://www.instagram.com/thechefsacademy_?igsh=dDVnNzhkbjAxOHV6" target="_blank">
+    <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram">
+  </a>
+  <a href="https://www.facebook.com/profile.php?id=61579612976212&mibextid=ZbWKwL" target="_blank">
+    <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook">
+  </a>
+</div>
 
+<style>
+   /* 🔹 Floating Social Icons */
+.social-fixed {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 2000;
+}
+
+.social-fixed a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #FAF7D9;
+  transition: all 0.3s ease;
+}
+
+.social-fixed a img {
+  width: 22px;
+  height: 22px;
+}
+
+.social-fixed a:hover {
+  background: #061C40;
+}
+.social-fixed a:hover img {
+  filter: brightness(0) invert(1);
+}
+
+</style>
 
 <!-- 🔹 Footer Section -->
 <footer style="background:#061C40; color:#fff; padding:50px 20px; font-family:'Poppins', sans-serif;">
@@ -2076,14 +2144,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!-- 🔹 Social Media (Images instead of icons) -->
     <div style="min-width:200px;">
-      <h4 style="font-size:16px; font-weight:600; margin-bottom:15px; color:#FAF7D9;font-family: Georgia, 'Times New Roman', Times, serif;">Follow Us</h4>
-      <div style="display:flex; gap:15px; font-size:22px;">
-        <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="28"></a>
-        <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="28"></a>
-        <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" alt="Twitter" width="28"></a>
-        <a href="#"><img src="https://cdn-icons-png.flaticon.com/512/174/174857.png" alt="LinkedIn" width="28"></a>
-      </div>
-    </div>
+  <h4 style="font-size:16px; font-weight:600; margin-bottom:15px; color:#FAF7D9;font-family: Georgia, 'Times New Roman', Times, serif;">Follow Us</h4>
+  <div style="display:flex; gap:15px; font-size:22px;">
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/profile.php?id=61579612976212&mibextid=ZbWKwL"><img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" alt="Facebook" width="28"></a>
+    
+    <!-- Instagram -->
+    <a href="https://www.instagram.com/thechefsacademy_?igsh=dDVnNzhkbjAxOHV6"><img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" alt="Instagram" width="28"></a>
+    
+  <!-- WhatsApp Icon 1 (Official Green Logo) -->
+<a href="https://wa.me/923288888907" target="_blank">
+  <img src="https://cdn-icons-png.flaticon.com/512/124/124034.png" alt="WhatsApp" width="28">
+</a>
+
+  </div>
+</div>
 
     <!-- 🔹 Newsletter Form -->
     <div style="min-width:280px;">
