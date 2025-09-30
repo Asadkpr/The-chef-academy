@@ -265,11 +265,9 @@
 }
 
 .social-fixed a:hover {
-  background: #061C40;
+  background: gold;
 }
-.social-fixed a:hover img {
-  filter: brightness(0) invert(1);
-}
+
 
   </style>
 </head>
@@ -400,14 +398,10 @@ body {
 
   <!-- Course 1 - Culinary Arts (Black) -->
   <div class="course-card course-1">
-    <img class="icon black-icon" 
-         src="https://cdn-icons-png.flaticon.com/512/1046/1046857.png" 
-         alt="Culinary Icon">
     <h2>Culinary Arts</h2>
     <p>Learn the fundamentals of professional cooking, from knife skills to international cuisines. This 6-month program prepares you for a strong culinary career.</p>
     <div class="course-details">
       <div>
-        <!-- ✅ Black duration icon -->
         <img class="small-icon black-icon" src="duration icon.png"> 
         Duration: 6 Months
       </div>
@@ -426,9 +420,6 @@ body {
 
   <!-- Course 2 - Bakery (White) -->
   <div class="course-card course-2">
-    <img class="icon white-icon"
-         src="cake.png"
-         alt="Bakery Icon">
     <h2>Bakery & Desserts</h2>
     <p>Master the art of breads, cakes, pastries, and desserts. This course is perfect for aspiring bakers who want to create professional-quality baked goods.</p>
     <div class="course-details">
@@ -442,7 +433,6 @@ body {
 
   <!-- Course 3 - Professional Chef (White) -->
   <div class="course-card course-3">
-    <img class="icon white-icon" src="chef icon1.png" alt="Chef Icon">
     <h2>Professional Chef</h2>
     <p>A complete chef program combining cooking, baking, plating, and kitchen management. The ultimate path for those who want to become a professional chef.</p>
     <div class="course-details">
@@ -456,12 +446,10 @@ body {
 
   <!-- Course 4 - Barista (Black) -->
   <div class="course-card course-4">
-    <img class="icon black-icon" src="barista icon1.png" alt="Barista Icon">
     <h2>Barista Skills</h2>
     <p>Specialize in coffee-making, latte art, and café-style beverages. This course trains you for careers in coffee shops, restaurants, and cafés worldwide.</p>
     <div class="course-details">
       <div>
-        <!-- ✅ Black duration icon -->
         <img class="small-icon black-icon" src="duration icon.png"> 
         Duration: 3 Months
       </div>
@@ -481,22 +469,63 @@ body {
 </div>
 
 <style>
-/* Default icon size */
-.icon {
-  width: 60px;
-  height: 60px;
+  /* ✅ Common Card Setup */
+.course-card {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  border-radius: 12px;
 }
+
+/* ✅ Individual Background Colors */
+.course-1 { background: #FAF7D9; }   /* Culinary Arts */
+.course-2 { background: #0d2b46; }   /* Bakery */
+.course-3 { background: #0d2b46; }   /* Professional Chef */
+.course-4 { background: #FAF7D9; }   /* Barista */
+
+/* ✅ Watermark Setup (default: gray/blackish) */
+.course-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center 20%;
+  background-size: 240px auto;
+  opacity: 0.08; /* slightly more visible */
+  filter: grayscale(1);
+}
+
+/* Content always above watermark */
+.course-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ✅ Course-specific watermark icons */
+.course-1::before {
+  background-image: url("https://cdn-icons-png.flaticon.com/512/1046/1046857.png");
+}
+.course-2::before {
+  background-image: url("cake.png");
+  filter: brightness(0) invert(1);   /* 🔹 white watermark for dark bg */
+}
+.course-3::before {
+  background-image: url("chef icon1.png");
+  filter: brightness(0) invert(1);   /* 🔹 white watermark for dark bg */
+}
+.course-4::before {
+  background-image: url("barista icon1.png");
+}
+
+/* Hide top icons (since watermark is now bg) */
+.icon { display: none; }
 
 /* White icons */
-.white-icon {
-  filter: brightness(0) invert(1);
-}
-
+.white-icon { filter: brightness(0) invert(1); }
 /* Black icons */
-.black-icon {
-  filter: none !important;
-}
-
+.black-icon { filter: none !important; }
 /* Small icons */
 .small-icon {
   width: 18px;
@@ -512,50 +541,24 @@ body {
     flex-direction: column; 
     align-items: center;    
   }
-
   .course-card {
     width: 90%;
     max-width: 400px;
     margin-bottom: 20px;
-
-    /* 👇 Thoda aur right ki taraf karne ke liye */
     margin-left: 0px;  
   }
 }
 
-
-
-
-
 /* ✅ Mobile overflow fix */
-html, body {
-  overflow-x: hidden;
-}
-
+html, body { overflow-x: hidden; }
 .courses-grid::before,
-.courses-grid::after {
-  max-width: 100%;   /* line overflow fix */
-  overflow: hidden;
-}
-
-.social-fixed {
-  right: 10px; /* thoda andar kar diya */
-}
-
-
+.courses-grid::after { max-width: 100%; overflow: hidden; }
 @media (max-width: 768px) {
   .courses-grid::before,
-  .courses-grid::after {
-    display: none;
-  }
+  .courses-grid::after { display: none; }
 }
 
-
-
 </style>
-
-
-
 
   <!-- 🔹 Fixed Social Icons -->
 <div class="social-fixed">
