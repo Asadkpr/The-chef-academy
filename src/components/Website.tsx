@@ -534,7 +534,7 @@ export default function Website() {
               onClick={() => setView('portal')}
               className="bg-[#AE8C45] text-[#0C1B2C] hover:bg-[#C5A964] transition-all text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg"
             >
-              Admission Portal
+              Apply Now
             </button>
 
             <button 
@@ -542,7 +542,7 @@ export default function Website() {
               className="bg-slate-900/80 hover:bg-slate-800 border border-slate-700/50 text-[#C5A964] text-xs font-bold uppercase tracking-wider px-3.5 py-2.5 rounded-lg"
               title="Admin Portal Login"
             >
-              CMS Login
+              Login
             </button>
 
             {/* Hamburger for mobile */}
@@ -598,13 +598,10 @@ export default function Website() {
                 {websiteData.hero.eyebrow}
               </p>
               
-              <h1 className="text-white text-4xl sm:text-6xl font-serif max-w-[15ch] leading-none text-left">
-                Train like a professional. <em className="italic text-[#C5A964] font-light">Cook like one.</em>
+              <h1 className="text-white text-4xl sm:text-6xl font-serif leading-none text-left flex flex-col gap-2">
+                <span>Train like a professional.</span>
+                <em className="italic text-[#C5A964] font-light">Cook like one.</em>
               </h1>
-              
-              <p className="text-[#C9D1DC] text-lg sm:text-xl max-w-xl font-light leading-relaxed text-left">
-                {websiteData.hero.description}
-              </p>
 
               <div className="flex flex-wrap gap-4 mt-2 justify-start items-center">
                 <button 
@@ -1240,7 +1237,16 @@ export default function Website() {
           
           {/* Col 1 */}
           <div className="space-y-4">
-            <h4 className="text-lg font-serif text-[#F7F2DE] font-semibold">The Chef's Academy</h4>
+            <div className="flex items-center gap-2">
+              <img src={websiteData.logo || "/logo.png"} alt="The Chef's Academy Logo" className="brand-logo-img h-8 w-auto object-contain" />
+              <div className="brand-text-container text-white">
+                <div className="flex items-end gap-1">
+                  <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
+                  <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>
+                </div>
+                <div className="text-base text-[#F7F2DE] font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
+              </div>
+            </div>
             <p className="text-xs text-slate-400 leading-relaxed">
               An SECP-registered culinary & hospitality training academy in Gulberg, Lahore — built for the next generation of chefs, bakers, baristas, and food innovators.
             </p>

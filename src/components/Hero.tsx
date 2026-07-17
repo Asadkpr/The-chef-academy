@@ -93,15 +93,7 @@ export default function Hero() {
             </motion.h1>
           </div>
 
-          {/* Description Text */}
-          <motion.p 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
-            className="font-sans text-sm sm:text-base md:text-lg text-slate-300 font-light leading-relaxed max-w-2xl"
-          >
-            Hands-on culinary, baking, and barista programs taught in professional kitchens by working chefs — with industry partners waiting at the other end.
-          </motion.p>
+
 
           {/* Action CTAs Buttons */}
           <motion.div 

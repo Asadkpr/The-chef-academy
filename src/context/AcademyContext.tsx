@@ -32,6 +32,29 @@ const safeSetItem = (key: string, value: string) => {
   }
 };
 
+// ─── Smart Cache with TTL ───────────────────────────────────────────────────
+// Cache duration: 5 minutes (300,000 ms). Data older than this will be
+// re-fetched from Firebase in the background; fresher data loads instantly.
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+const setCacheItem = (key: string, data: unknown) => {
+  const payload = { data, ts: Date.now() };
+  safeSetItem(key, JSON.stringify(payload));
+};
+
+const getCacheItem = <T>(key: string): { data: T; isStale: boolean } | null => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    const isStale = Date.now() - ts > CACHE_TTL_MS;
+    return { data: data as T, isStale };
+  } catch {
+    return null;
+  }
+};
+// ───────────────────────────────────────────────────────────────────────────
+
 interface AcademyContextType {
   courses: Course[];
   admissions: Admission[];
@@ -132,6 +155,51 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.warn("Anonymous auth failed (enable it in Firebase Console → Authentication → Sign-in method). Continuing without auth — Firestore will still work if rules allow unauthenticated access:", authErr);
       }
 
+      // ── SMART CACHE CHECK ──────────────────────────────────────────────────
+      // Check if we have fresh cached data. If yes, load from cache instantly
+      // and skip Firebase calls for this session. Stale data triggers a
+      // background re-fetch to refresh the cache silently.
+      const cachedWebsite   = getCacheItem<WebsiteData>('cache_website_data');
+      const cachedPlans     = getCacheItem<CoursePlans>('cache_course_plans');
+      const cachedCourses   = getCacheItem<Course[]>('cache_courses');
+      const cachedTestimonials = getCacheItem<Testimonial[]>('cache_testimonials');
+      const cachedGallery   = getCacheItem<GalleryItem[]>('cache_gallery');
+      const cachedPasscode  = getCacheItem<string>('cache_admin_passcode');
+
+      const allCached = cachedWebsite && cachedPlans && cachedCourses && cachedTestimonials && cachedGallery;
+      const allFresh  = allCached && !cachedWebsite.isStale && !cachedPlans.isStale && !cachedCourses.isStale && !cachedTestimonials.isStale && !cachedGallery.isStale;
+
+      if (allCached) {
+        // Load UI instantly from cache
+        if (cachedPasscode) setAdminPasscode(cachedPasscode.data);
+        setWebsiteData(cachedWebsite.data);
+        setCoursePlans(cachedPlans.data);
+        setCourses(cachedCourses.data);
+        setTestimonials(cachedTestimonials.data);
+        setGallery(cachedGallery.data);
+        console.log(`[Cache] Loaded all data from localStorage cache (${allFresh ? 'fresh ✅' : 'stale — will refresh in background 🔄'})`);
+
+        if (allFresh) {
+          // Data is fresh — still setup the admissions real-time listener, then exit
+          // (admissions are always real-time so skip caching them)
+          try {
+            const admissionsRef = collection(db, 'admissions');
+            unsubscribeAdmissions = onSnapshot(admissionsRef, (snapshot) => {
+              if (!snapshot.empty) {
+                const loaded: Admission[] = [];
+                snapshot.forEach(d => loaded.push(d.data() as Admission));
+                loaded.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                setAdmissions(loaded);
+                safeSetItem('chef_admissions', JSON.stringify(loaded));
+              }
+            });
+          } catch (e) { console.warn('Admissions listener error:', e); }
+          return; // ← skip full Firebase fetch, cache is fresh
+        }
+        // If stale: continue to re-fetch from Firebase below (UI already showing cached data)
+      }
+      // ── END CACHE CHECK ────────────────────────────────────────────────────
+
       // Step 2: Load data from Firestore (works even without auth if rules are open)
       try {
         // 0. Load Admin Settings (Firestore is the MASTER source — always takes priority over localStorage)
@@ -142,6 +210,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             setAdminPasscode(adminDoc.data()!.passcode);
             // Keep localStorage in sync with what Firestore says
             safeSetItem('chef_admin_passcode', adminDoc.data()!.passcode);
+            setCacheItem('cache_admin_passcode', adminDoc.data()!.passcode);
             firestorePasscodeLoaded = true;
           } else {
             // First time: write default to Firestore
@@ -159,9 +228,12 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         try {
           const websiteDoc = await getDoc(doc(db, 'website_data', 'main'));
           if (websiteDoc.exists()) {
-            setWebsiteData(websiteDoc.data() as WebsiteData);
+            const data = websiteDoc.data() as WebsiteData;
+            setWebsiteData(data);
+            setCacheItem('cache_website_data', data);
           } else {
             setWebsiteData(INITIAL_WEBSITE_DATA);
+            setCacheItem('cache_website_data', INITIAL_WEBSITE_DATA);
             await setDoc(doc(db, 'website_data', 'main'), INITIAL_WEBSITE_DATA).catch(e => console.warn('Could not init website data:', e));
           }
         } catch (e) { console.error('Error loading website data:', e); throw e; }
@@ -170,9 +242,12 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         try {
           const plansDoc = await getDoc(doc(db, 'course_plans', 'main'));
           if (plansDoc.exists()) {
-            setCoursePlans(plansDoc.data() as CoursePlans);
+            const data = plansDoc.data() as CoursePlans;
+            setCoursePlans(data);
+            setCacheItem('cache_course_plans', data);
           } else {
             setCoursePlans(DEFAULT_COURSE_PLANS);
+            setCacheItem('cache_course_plans', DEFAULT_COURSE_PLANS);
             await setDoc(doc(db, 'course_plans', 'main'), DEFAULT_COURSE_PLANS).catch(e => console.warn('Could not init plans:', e));
           }
         } catch (e) { console.error('Error loading course plans:', e); throw e; }
@@ -186,8 +261,10 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
               loadedCourses.push(docSnap.data() as Course);
             });
             setCourses(loadedCourses);
+            setCacheItem('cache_courses', loadedCourses);
           } else {
             setCourses(INITIAL_COURSES);
+            setCacheItem('cache_courses', INITIAL_COURSES);
             for (const course of INITIAL_COURSES) {
               await setDoc(doc(db, 'courses', course.id), course).catch(e => console.warn('Could not init course:', e));
             }
@@ -203,8 +280,10 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
               loadedTestimonials.push(docSnap.data() as Testimonial);
             });
             setTestimonials(loadedTestimonials);
+            setCacheItem('cache_testimonials', loadedTestimonials);
           } else {
             setTestimonials(INITIAL_TESTIMONIALS);
+            setCacheItem('cache_testimonials', INITIAL_TESTIMONIALS);
             for (const test of INITIAL_TESTIMONIALS) {
               await setDoc(doc(db, 'testimonials', test.id), test).catch(e => console.warn('Could not init testimonial:', e));
             }
@@ -220,8 +299,10 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
               loadedGallery.push(docSnap.data() as GalleryItem);
             });
             setGallery(loadedGallery);
+            setCacheItem('cache_gallery', loadedGallery);
           } else {
             setGallery(INITIAL_GALLERY);
+            setCacheItem('cache_gallery', INITIAL_GALLERY);
             for (const gal of INITIAL_GALLERY) {
               await setDoc(doc(db, 'gallery', gal.id), gal).catch(e => console.warn('Could not init gallery:', e));
             }
@@ -388,6 +469,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = [...courses, freshCourse];
     setCourses(updated);
     safeSetItem('chef_courses', JSON.stringify(updated));
+    setCacheItem('cache_courses', updated);
 
     try {
       await setDoc(doc(db, 'courses', courseId), freshCourse);
@@ -400,6 +482,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = courses.map(c => c.id === updatedCourse.id ? updatedCourse : c);
     setCourses(updated);
     safeSetItem('chef_courses', JSON.stringify(updated));
+    setCacheItem('cache_courses', updated);
 
     try {
       await setDoc(doc(db, 'courses', updatedCourse.id), updatedCourse);
@@ -412,6 +495,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = courses.filter(c => c.id !== id);
     setCourses(updated);
     safeSetItem('chef_courses', JSON.stringify(updated));
+    setCacheItem('cache_courses', updated);
 
     try {
       await deleteDoc(doc(db, 'courses', id));
@@ -558,6 +642,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = [newTest, ...testimonials];
     setTestimonials(updated);
     safeSetItem('chef_testimonials', JSON.stringify(updated));
+    setCacheItem('cache_testimonials', updated);
 
     try {
       await setDoc(doc(db, 'testimonials', testId), newTest);
@@ -570,6 +655,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = testimonials.filter(t => t.id !== id);
     setTestimonials(updated);
     safeSetItem('chef_testimonials', JSON.stringify(updated));
+    setCacheItem('cache_testimonials', updated);
 
     try {
       await deleteDoc(doc(db, 'testimonials', id));
@@ -588,6 +674,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = [newItem, ...gallery];
     setGallery(updated);
     safeSetItem('chef_gallery', JSON.stringify(updated));
+    setCacheItem('cache_gallery', updated);
 
     try {
       await setDoc(doc(db, 'gallery', galleryId), newItem);
@@ -600,6 +687,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const updated = gallery.filter(g => g.id !== id);
     setGallery(updated);
     safeSetItem('chef_gallery', JSON.stringify(updated));
+    setCacheItem('cache_gallery', updated);
 
     try {
       await deleteDoc(doc(db, 'gallery', id));
@@ -634,6 +722,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateWebsiteData = async (newData: WebsiteData) => {
     setWebsiteData(newData);
     safeSetItem('chef_website_data', JSON.stringify(newData));
+    setCacheItem('cache_website_data', newData); // keep cache in sync
 
     try {
       await setDoc(doc(db, 'website_data', 'main'), newData);
@@ -650,6 +739,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateCoursePlans = async (plans: CoursePlans) => {
     setCoursePlans(plans);
     safeSetItem('chef_course_plans', JSON.stringify(plans));
+    setCacheItem('cache_course_plans', plans); // keep cache in sync
 
     try {
       await setDoc(doc(db, 'course_plans', 'main'), plans);
@@ -676,6 +766,13 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     safeSetItem('chef_website_data', JSON.stringify(INITIAL_WEBSITE_DATA));
     localStorage.removeItem('chef_admissions');
     localStorage.removeItem('chef_admin_auth');
+    // Also clear smart cache so next load re-fetches from Firebase
+    localStorage.removeItem('cache_website_data');
+    localStorage.removeItem('cache_course_plans');
+    localStorage.removeItem('cache_courses');
+    localStorage.removeItem('cache_testimonials');
+    localStorage.removeItem('cache_gallery');
+    localStorage.removeItem('cache_admin_passcode');
 
     try {
       // Clear and re-populate courses in Firestore

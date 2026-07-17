@@ -389,12 +389,8 @@ export default function AdmissionForm() {
         
         {/* Simple Brand Header */}
         <div className="text-center space-y-4 mb-10">
-          <div className="flex items-center justify-center space-x-2.5 text-[#c19d53]">
-            <GraduationCap className="h-8 w-8 stroke-[1.5]" />
-            <span className="text-sm font-sans font-bold uppercase tracking-[0.2em] text-[#c19d53]">The Chef's Academy</span>
-          </div>
           <h1 className="font-serif text-3xl sm:text-5xl font-normal tracking-tight text-white leading-tight">
-            Student Admission & Registration Portal
+            Registration portal
           </h1>
           <p className="font-sans text-slate-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
             Welcome to the official registration hub. Register for the upcoming professional batch, receive your email invoice, and submit payment slips for instant enrollment verification.
