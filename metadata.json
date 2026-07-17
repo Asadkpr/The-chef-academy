@@ -1,0 +1,6 @@
+{
+  "name": "The Chef's Academy Admission Portal",
+  "description": "Official online registration & application tracking portal for The Chef's Academy, offering admissions in Culinary Arts, Professional Chef, Baking & Desserts, and Barista Skills.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
