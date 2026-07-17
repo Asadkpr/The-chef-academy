@@ -42,7 +42,7 @@ const setCacheItem = (key: string, data: unknown) => {
   safeSetItem(key, JSON.stringify(payload));
 };
 
-const getCacheItem = <T>(key: string): { data: T; isStale: boolean } | null => {
+const getCacheItem = <T, >(key: string): { data: T; isStale: boolean } | null => {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
