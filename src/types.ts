@@ -122,8 +122,30 @@ export interface WebsiteFaq {
   a: string;
 }
 
+export interface PaymentSettings {
+  bankName: string;
+  accountTitle: string;
+  accountNumber: string;
+  iban: string;
+  mobileName: string;
+  mobileNumber: string;
+  mobileTitle: string;
+}
+
+export interface PopupSettings {
+  enabled: boolean;
+  title: string;
+  content: string;
+  image?: string;
+  link?: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface WebsiteData {
   logo?: string;
+  paymentSettings?: PaymentSettings;
+  popupSettings?: PopupSettings;
   hero: {
     video: string;
     eyebrow: string;

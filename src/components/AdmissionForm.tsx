@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAcademy } from '../context/AcademyContext';
+import { uploadFile } from '../lib/firebase';
 import { 
   GraduationCap, CheckCircle, ArrowLeft, ArrowRight, ClipboardCheck, 
   Landmark, CheckSquare, Search, SearchCode, ShieldCheck, User, 
@@ -32,7 +33,7 @@ const COURSE_PLANS: Record<string, { duration: string; fee: number; regFee: numb
 };
 
 export default function AdmissionForm() {
-  const { courses, admissions, addAdmission, updateAdmissionReceipt, updateAdmissionInvoiceHtml, coursePlans } = useAcademy();
+  const { courses, admissions, addAdmission, updateAdmissionReceipt, updateAdmissionInvoiceHtml, coursePlans, websiteData } = useAcademy();
   
   const [portalTab, setPortalTab] = useState<'apply' | 'status'>('apply');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -80,50 +81,28 @@ export default function AdmissionForm() {
 
   const activePlan = getSelectedPlan();
 
-  // Validate fields for the active step
   const validateStep = () => {
     const errors: Record<string, string> = {};
     
-    if (step === 1) {
-      if (!formData.selectedCourseName) errors.selectedCourseName = 'Please select a program.';
-      if (!formData.selectedDuration) errors.selectedDuration = 'Please select a course duration.';
-      if (!formData.shift) errors.shift = 'Please select your preferred shift.';
+    if (!formData.selectedCourseName) errors.selectedCourseName = 'Please select a program.';
+    if (!formData.selectedDuration) errors.selectedDuration = 'Please select a course duration.';
+    
+    if (!formData.studentName.trim()) errors.studentName = 'Student name is required.';
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      errors.email = 'Email address is required.';
+    } else if (!emailRegex.test(formData.email)) {
+      errors.email = 'Please enter a valid email address.';
     }
     
-    if (step === 2) {
-      if (!formData.studentName.trim()) errors.studentName = 'Full name is required.';
-      if (!formData.fatherName.trim()) errors.fatherName = "Father/Guardian name is required.";
-      
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!formData.email.trim()) {
-        errors.email = 'Email address is required.';
-      } else if (!emailRegex.test(formData.email)) {
-        errors.email = 'Please enter a valid email address.';
-      }
-      
-      const cleanPhone = formData.phone.replace(/[-\s]/g, '');
-      if (!formData.phone.trim()) {
-        errors.phone = 'Mobile number is required.';
-      } else if (cleanPhone.length < 10) {
-        errors.phone = 'Please enter a valid mobile number (e.g., 03331234567).';
-      }
-      
-      const cleanCnic = formData.cnic.replace(/[-\s]/g, '');
-      if (!formData.cnic.trim()) {
-        errors.cnic = 'CNIC/B-Form is required.';
-      } else if (cleanCnic.length < 13) {
-        errors.cnic = 'Enter a valid CNIC / B-Form Number (13 digits).';
-      }
-
-      if (!formData.dateOfBirth) errors.dateOfBirth = 'Date of birth is required.';
+    const cleanPhone = formData.phone.replace(/[-\s]/g, '');
+    if (!formData.phone.trim()) {
+      errors.phone = 'Mobile number is required.';
+    } else if (cleanPhone.length < 10) {
+      errors.phone = 'Please enter a valid mobile number (e.g., 03331234567).';
     }
     
-    if (step === 3) {
-      if (!formData.qualification) errors.qualification = 'Please select your academic qualification.';
-      if (!formData.city.trim()) errors.city = 'City is required.';
-      if (!formData.address.trim()) errors.address = 'Detailed postal address is required.';
-    }
-
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -221,7 +200,7 @@ export default function AdmissionForm() {
   };
 
   // Submit Receipt Slip
-  const handleUploadReceiptSubmit = (e: React.FormEvent) => {
+  const handleUploadReceiptSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchResult) return;
 
@@ -236,23 +215,29 @@ export default function AdmissionForm() {
     }
 
     setIsUploadingReceipt(true);
-    setTimeout(() => {
-      // Update local storage and context
-      updateAdmissionReceipt(searchResult.id, slipNumber, receiptBase64);
+    try {
+      // Upload the receipt to Firebase Storage and get URL
+      const downloadUrl = await uploadFile(receiptBase64, `receipt-${searchResult.id}.jpg`);
+      
+      // Update local storage and context with the URL
+      updateAdmissionReceipt(searchResult.id, slipNumber, downloadUrl);
       
       // Update the searched local object so the UI refreshes
-      setSearchResult(prev => ({
+      setSearchResult(prev => prev ? ({
         ...prev,
         receiptNumber: slipNumber,
-        receiptFile: receiptBase64,
+        receiptFile: downloadUrl,
         status: 'Pending'
-      }));
+      }) : prev);
 
       setIsUploadingReceipt(false);
-      setUploadMessage({ type: 'success', text: 'Alhamdulillah! Your payment slip has been uploaded successfully. Our accounts team will verify it shortly to approve your admission!' });
+      setUploadMessage({ type: 'success', text: 'Your payment slip has been uploaded successfully.' });
       setSlipNumber('');
       setReceiptBase64('');
-    }, 1200);
+    } catch (err) {
+      setIsUploadingReceipt(false);
+      setUploadMessage({ type: 'error', text: 'Failed to upload receipt. Please try again.' });
+    }
   };
 
   // Register & Trigger Invoice Mailing
@@ -306,7 +291,8 @@ export default function AdmissionForm() {
           shift: formData.shift,
           regFee: activePlan.regFee,
           tuitionFee: activePlan.fee,
-          totalFee: activePlan.fee + activePlan.regFee
+          totalFee: activePlan.fee + activePlan.regFee,
+          paymentSettings: websiteData?.paymentSettings
         })
       });
 
@@ -437,451 +423,130 @@ export default function AdmissionForm() {
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.25 }}
               >
-                {/* Step Indicators */}
-                <div className="mb-8 max-w-3xl mx-auto">
-                  <div className="flex items-center justify-between text-[11px] font-sans font-bold tracking-wider uppercase text-slate-400 mb-2.5">
-                    <span>Step {step} of 3</span>
-                    <span className="text-[#c19d53]">{stepLabels[step - 1]}</span>
-                  </div>
-                  
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                      <div className="w-full bg-slate-900 h-1 rounded-full"></div>
-                    </div>
-                    <div
-                      className="absolute left-0 top-0 bg-[#c19d53] h-1 rounded-full transition-all duration-300"
-                      style={{ width: `${((step - 1) / 2) * 100}%` }}
-                    ></div>
-                    
-                    <div className="relative flex justify-between">
-                      {[1, 2, 3].map((num) => (
-                        <div
-                          key={num}
-                          className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold font-sans transition-all duration-300 ${
-                            step >= num
-                              ? 'bg-[#c19d53] text-slate-950 ring-4 ring-[#c19d53]/10'
-                              : 'bg-slate-900 text-slate-500 border border-slate-800'
-                          }`}
-                        >
-                          {num}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Form fields */}
                 <div className="space-y-6">
-                  
-                  {/* STEP 1: Course Selection & Shift */}
-                  {step === 1 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="space-y-6"
+                  <div className="border-b border-slate-800/80 pb-4 flex items-center space-x-3">
+                    <CheckSquare className="h-5 w-5 text-[#c19d53]" />
+                    <div>
+                      <h3 className="font-serif text-lg text-slate-200">Registration Form</h3>
+                      <p className="text-slate-400 text-xs font-sans mt-0.5 font-light">Please fill in your details to register for the program.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Student Name */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">Student Full Name *</label>
+                      <input
+                        type="text"
+                        name="studentName"
+                        value={formData.studentName}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Zain Ahmed"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
+                      />
+                      {formErrors.studentName && <p className="text-red-400 text-[11px] font-sans">{formErrors.studentName}</p>}
+                    </div>
+
+                    {/* Father Name */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">Father/Guardian Name</label>
+                      <input
+                        type="text"
+                        name="fatherName"
+                        value={formData.fatherName}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Muhammad Yousaf"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Phone */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">WhatsApp / Mobile *</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 0333-9123456"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
+                      />
+                      {formErrors.phone && <p className="text-red-400 text-[11px] font-sans">{formErrors.phone}</p>}
+                    </div>
+
+                    {/* Email */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">Email Address *</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="e.g. zain.chef@gmail.com"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
+                      />
+                      {formErrors.email && <p className="text-red-400 text-[11px] font-sans">{formErrors.email}</p>}
+                    </div>
+
+                    {/* Course Name */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">
+                        Select Course Program *
+                      </label>
+                      <select
+                        name="selectedCourseName"
+                        value={formData.selectedCourseName}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none focus:ring-1 focus:ring-[#c19d53]/25 transition-all"
+                      >
+                        {Object.keys((coursePlans && Object.keys(coursePlans).length > 0) ? coursePlans : COURSE_PLANS).map(cName => (
+                          <option key={cName} value={cName}>{cName} Program</option>
+                        ))}
+                      </select>
+                      {formErrors.selectedCourseName && <p className="text-red-400 text-[11px] font-sans">{formErrors.selectedCourseName}</p>}
+                    </div>
+
+                    {/* Category / Duration */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">
+                        Select Category / Duration *
+                      </label>
+                      <select
+                        name="selectedDuration"
+                        value={formData.selectedDuration}
+                        onChange={handleInputChange}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none focus:ring-1 focus:ring-[#c19d53]/25 transition-all"
+                      >
+                        {((coursePlans && coursePlans[formData.selectedCourseName]) || COURSE_PLANS[formData.selectedCourseName] || []).map((plan) => (
+                          <option key={plan.duration} value={plan.duration}>
+                            {plan.duration} — Tuition: PKR {plan.fee.toLocaleString()}
+                          </option>
+                        ))}
+                      </select>
+                      {formErrors.selectedDuration && <p className="text-red-400 text-[11px] font-sans">{formErrors.selectedDuration}</p>}
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-6 flex justify-end">
+                    <button
+                      onClick={handleRegisterAndSendInvoice}
+                      className="px-8 py-3 rounded-lg bg-[#c19d53] text-slate-950 font-sans text-xs font-bold uppercase tracking-wider flex items-center space-x-2 transition-all hover:bg-[#d4b065] shadow-lg shadow-[#c19d53]/25 active:scale-95 cursor-pointer font-bold"
+                      disabled={isSendingEmail}
                     >
-                      <div className="border-b border-slate-800/80 pb-4 flex items-center space-x-3">
-                        <CheckSquare className="h-5 w-5 text-[#c19d53]" />
-                        <div>
-                          <h3 className="font-serif text-lg text-slate-200">Select Program & Category</h3>
-                          <p className="text-slate-400 text-xs font-sans mt-0.5 font-light">Pick your desired course program and duration category.</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Course Name */}
-                        <div className="space-y-2">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">
-                            Select Course Program *
-                          </label>
-                          <select
-                            name="selectedCourseName"
-                            value={formData.selectedCourseName}
-                            onChange={handleInputChange}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none focus:ring-1 focus:ring-[#c19d53]/25 transition-all"
-                          >
-                            {Object.keys((coursePlans && Object.keys(coursePlans).length > 0) ? coursePlans : COURSE_PLANS).map(cName => (
-                              <option key={cName} value={cName}>{cName} Program</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Category / Duration */}
-                        <div className="space-y-2">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">
-                            Select Category / Duration *
-                          </label>
-                          <select
-                            name="selectedDuration"
-                            value={formData.selectedDuration}
-                            onChange={handleInputChange}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none focus:ring-1 focus:ring-[#c19d53]/25 transition-all"
-                          >
-                            {((coursePlans && coursePlans[formData.selectedCourseName]) || COURSE_PLANS[formData.selectedCourseName] || []).map((plan) => (
-                              <option key={plan.duration} value={plan.duration}>
-                                {plan.duration} — Tuition: PKR {plan.fee.toLocaleString()}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Fee Structure Summary */}
-                      <div className="bg-slate-900/60 border border-slate-800/80 p-5 rounded-xl space-y-2.5">
-                        <div className="flex items-center justify-between text-xs font-sans">
-                          <span className="text-slate-400">Selected Program:</span>
-                          <span className="text-white font-medium">{formData.selectedCourseName} ({formData.selectedDuration})</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs font-sans">
-                          <span className="text-slate-400">Admission Registration Fee (Payable Now):</span>
-                          <span className="text-amber-400 font-bold">PKR {activePlan.regFee.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs font-sans">
-                          <span className="text-slate-400">Tuition Fee (Due at Batch Commencement):</span>
-                          <span className="text-slate-200 font-medium">PKR {activePlan.fee.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs font-sans border-t border-slate-800/60 pt-2.5">
-                          <span className="text-slate-400 font-bold">Total Admission Fee Program value:</span>
-                          <span className="text-[#c19d53] font-bold text-sm">PKR {(activePlan.fee + activePlan.regFee).toLocaleString()}</span>
-                        </div>
-                      </div>
-
-                      {/* Shift Selection */}
-                      <div className="space-y-3">
-                        <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">
-                          Select Preferred Shift *
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {[
-                            'Morning (09:00 AM - 12:00 PM)',
-                            'Afternoon (01:00 PM - 04:00 PM)',
-                            'Evening (05:00 PM - 08:00 PM)'
-                          ].map((shiftOption) => (
-                            <label
-                              key={shiftOption}
-                              className={`flex flex-col p-4.5 rounded-xl border cursor-pointer transition-all ${
-                                formData.shift === shiftOption
-                                  ? 'border-[#c19d53] bg-[#c19d53]/5 text-white'
-                                  : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700 hover:text-slate-300'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between w-full">
-                                <span className="font-sans text-xs font-bold uppercase tracking-wider">
-                                  {shiftOption.split(' ')[0]}
-                                </span>
-                                <input
-                                  type="radio"
-                                  name="shift"
-                                  value={shiftOption}
-                                  checked={formData.shift === shiftOption}
-                                  onChange={handleInputChange}
-                                  className="accent-[#c19d53] h-4 w-4"
-                                />
-                              </div>
-                              <span className="text-[11px] font-sans text-slate-400 mt-1.5">{shiftOption.substring(shiftOption.indexOf('('))}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Bottom action */}
-                      <div className="pt-4 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleNext}
-                          className="px-6 py-3 rounded-lg bg-[#c19d53] text-slate-950 font-sans text-xs font-bold uppercase tracking-wider flex items-center space-x-2 transition-all hover:brightness-110 active:scale-95 cursor-pointer"
-                        >
-                          <span>Fill Personal Profile</span>
-                          <ArrowRight className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* STEP 2: Personal Information */}
-                  {step === 2 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="space-y-6"
-                    >
-                      <div className="border-b border-slate-800/80 pb-4 flex items-center space-x-3">
-                        <User className="h-5 w-5 text-[#c19d53]" />
-                        <div>
-                          <h3 className="font-serif text-lg text-slate-200">Personal Information</h3>
-                          <p className="text-slate-400 text-xs font-sans mt-0.5 font-light">Please provide exact details as written on your CNIC / B-Form or educational certificates.</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        {/* Student Name */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">Student Full Name *</label>
-                          <input
-                            type="text"
-                            name="studentName"
-                            value={formData.studentName}
-                            onChange={handleInputChange}
-                            placeholder="e.g. Zain Ahmed"
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          />
-                          {formErrors.studentName && <p className="text-red-400 text-[11px] font-sans">{formErrors.studentName}</p>}
-                        </div>
-
-                        {/* Father Name */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">Father/Guardian Name *</label>
-                          <input
-                            type="text"
-                            name="fatherName"
-                            value={formData.fatherName}
-                            onChange={handleInputChange}
-                            placeholder="e.g. Muhammad Yousaf"
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          />
-                          {formErrors.fatherName && <p className="text-red-400 text-[11px] font-sans">{formErrors.fatherName}</p>}
-                        </div>
-
-                        {/* Phone */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">WhatsApp / Mobile Number *</label>
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            placeholder="e.g. 0333-9123456"
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          />
-                          {formErrors.phone && <p className="text-red-400 text-[11px] font-sans">{formErrors.phone}</p>}
-                        </div>
-
-                        {/* Email Address */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-300">Email Address (Invoice will be sent here) *</label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            placeholder="e.g. zain.chef@gmail.com"
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm border-amber-500/30 focus:border-[#c19d53]/80 focus:outline-none focus:ring-1 focus:ring-amber-500/20"
-                          />
-                          {formErrors.email && <p className="text-red-400 text-[11px] font-sans">{formErrors.email}</p>}
-                        </div>
-
-                        {/* CNIC or B-Form */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">CNIC or B-Form Number (13 Digits) *</label>
-                          <input
-                            type="text"
-                            name="cnic"
-                            value={formData.cnic}
-                            onChange={handleInputChange}
-                            placeholder="e.g. 17301-1234567-9"
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          />
-                          {formErrors.cnic && <p className="text-red-400 text-[11px] font-sans">{formErrors.cnic}</p>}
-                        </div>
-
-                        {/* DOB */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">Date of Birth *</label>
-                          <input
-                            type="date"
-                            name="dateOfBirth"
-                            value={formData.dateOfBirth}
-                            onChange={handleInputChange}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          />
-                          {formErrors.dateOfBirth && <p className="text-red-400 text-[11px] font-sans">{formErrors.dateOfBirth}</p>}
-                        </div>
-
-                        {/* Gender */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">Gender *</label>
-                          <select
-                            name="gender"
-                            value={formData.gender}
-                            onChange={handleInputChange}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          >
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                          </select>
-                        </div>
-
-                        {/* Academic Qualification */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">Academic Qualification *</label>
-                          <select
-                            name="qualification"
-                            value={formData.qualification}
-                            onChange={handleInputChange}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          >
-                            <option value="Matric">Matric / School Certificate</option>
-                            <option value="Intermediate (FSc/FA/ICom)">Intermediate (FSc/FA/ICom)</option>
-                            <option value="Bachelors (BA/BSc/BS/BBA)">Bachelors (BA/BSc/BS/BBA)</option>
-                            <option value="Masters or Higher">Masters or Higher</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="pt-4 flex justify-between">
-                        <button
-                          type="button"
-                          onClick={handlePrev}
-                          className="px-5 py-3 rounded-lg border border-slate-800 hover:bg-slate-900 text-slate-300 font-sans text-xs font-bold uppercase tracking-wider flex items-center space-x-2 transition-all"
-                        >
-                          <ArrowLeft className="h-4 w-4" />
-                          <span>Back</span>
-                        </button>
-                        
-                        <button
-                          type="button"
-                          onClick={handleNext}
-                          className="px-6 py-3 rounded-lg bg-[#c19d53] text-slate-950 font-sans text-xs font-bold uppercase tracking-wider flex items-center space-x-2 transition-all hover:brightness-110 active:scale-95 cursor-pointer"
-                        >
-                          <span>Review & Verify</span>
-                          <ArrowRight className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* STEP 3: Review and Generate Invoice */}
-                  {step === 3 && (
-                    <motion.div
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className="space-y-6"
-                    >
-                      <div className="border-b border-slate-800/80 pb-4 flex items-center space-x-3">
-                        <ClipboardCheck className="h-5 w-5 text-[#c19d53]" />
-                        <div>
-                          <h3 className="font-serif text-lg text-slate-200">Verify & Register Application</h3>
-                          <p className="text-slate-400 text-xs font-sans mt-0.5 font-light">Please verify all data before generating your official registration invoice.</p>
-                        </div>
-                      </div>
-
-                      {/* Live summary card */}
-                      <div className="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-sans">
-                        <div className="sm:col-span-2 border-b border-slate-800/50 pb-2.5">
-                          <span className="text-[#c19d53] font-bold text-[10px] uppercase tracking-wider">Course Choice Summary</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block">Selected Course:</span>
-                          <span className="text-white font-medium text-sm block mt-0.5">{formData.selectedCourseName} ({formData.selectedDuration})</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block">Shift Preference:</span>
-                          <span className="text-white font-medium text-sm block mt-0.5">{formData.shift}</span>
-                        </div>
-                        
-                        <div className="sm:col-span-2 border-b border-slate-800/50 pt-2 pb-2.5">
-                          <span className="text-[#c19d53] font-bold text-[10px] uppercase tracking-wider">Candidate Profile Summary</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block">Student Name:</span>
-                          <span className="text-white font-medium block mt-0.5">{formData.studentName}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block">Father/Guardian:</span>
-                          <span className="text-white font-medium block mt-0.5">{formData.fatherName}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block">WhatsApp Number:</span>
-                          <span className="text-white font-mono block mt-0.5">{formData.phone}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block">Email Address:</span>
-                          <span className="text-white block mt-0.5 select-all font-medium text-amber-300">{formData.email}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block">CNIC / B-Form:</span>
-                          <span className="text-white font-mono block mt-0.5">{formData.cnic}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block">Date of Birth:</span>
-                          <span className="text-white font-mono block mt-0.5">{formData.dateOfBirth}</span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        {/* City */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">Home City *</label>
-                          <input
-                            type="text"
-                            name="city"
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            placeholder="e.g. Peshawar, Lahore, Mardan"
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          />
-                          {formErrors.city && <p className="text-red-400 text-[11px] font-sans">{formErrors.city}</p>}
-                        </div>
-
-                        {/* Detailed Postal Address */}
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">Detailed Postal Address *</label>
-                          <input
-                            type="text"
-                            name="address"
-                            value={formData.address}
-                            onChange={handleInputChange}
-                            placeholder="Complete physical home address"
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none"
-                          />
-                          {formErrors.address && <p className="text-red-400 text-[11px] font-sans">{formErrors.address}</p>}
-                        </div>
-                      </div>
-
-                      {/* Notes / Special Requests */}
-                      <div className="space-y-1.5">
-                        <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">Special Requests / Experience Notes (Optional)</label>
-                        <textarea
-                          name="notes"
-                          rows={2}
-                          value={formData.notes}
-                          onChange={handleInputChange}
-                          placeholder="Tell us if you have any existing experience, physical disabilities, or specific batch timing requests."
-                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none resize-none"
-                        ></textarea>
-                      </div>
-
-                      <div className="p-4 bg-amber-500/5 border border-[#c19d53]/20 rounded-xl flex items-start space-x-3 text-xs leading-relaxed text-amber-200/90 font-sans">
-                        <ShieldCheck className="h-5 w-5 text-[#c19d53] flex-shrink-0 mt-0.5" />
-                        <span>
-                          <strong>Email Invoice Dispatch:</strong> Upon registration, our system will generate your official invoice and automatically send it to <strong>{formData.email}</strong>. You can pay the registration fee and return to upload the receipt at any time.
-                        </span>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="pt-4 flex justify-between">
-                        <button
-                          type="button"
-                          onClick={handlePrev}
-                          className="px-5 py-3 rounded-lg border border-slate-800 hover:bg-slate-900 text-slate-300 font-sans text-xs font-bold uppercase tracking-wider flex items-center space-x-2 transition-all"
-                        >
-                          <ArrowLeft className="h-4 w-4" />
-                          <span>Back</span>
-                        </button>
-                        
-                        <button
-                          onClick={handleRegisterAndSendInvoice}
-                          className="px-8 py-3 rounded-lg bg-[#c19d53] text-slate-950 font-sans text-xs font-bold uppercase tracking-wider flex items-center space-x-2 transition-all hover:bg-[#d4b065] shadow-lg shadow-[#c19d53]/25 active:scale-95 cursor-pointer font-bold"
-                        >
+                      {isSendingEmail ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Processing...</span>
+                        </>
+                      ) : (
+                        <>
                           <ClipboardCheck className="h-4 w-4" />
-                          <span>Submit & Email Invoice</span>
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-
+                          <span>Submit Registration</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ) : null}
@@ -900,7 +565,7 @@ export default function AdmissionForm() {
                   </div>
                   <h3 className="font-serif text-2xl sm:text-3xl text-white">Application Recorded Successfully!</h3>
                   <p className="font-sans text-slate-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-                    Alhamdulillah! Your online admission request for <span className="text-[#c19d53] font-bold">{formData.studentName}</span> is saved with Tracking Code <span className="text-amber-400 font-mono font-bold tracking-wider">{submittedId}</span>.
+                    Application submitted successfully! Tracking Code: <span className="text-amber-400 font-mono font-bold tracking-wider">{submittedId}</span>.
                   </p>
                 </div>
 
@@ -991,18 +656,21 @@ export default function AdmissionForm() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                       <div>
                         <span className="text-slate-400 block text-[10px] uppercase">Bank Account:</span>
-                        <span className="text-slate-800 font-semibold block">Bank Alfalah Ltd</span>
+                        <span className="text-slate-800 font-semibold block">{websiteData?.paymentSettings?.bankName || 'Bank Alfalah Ltd'}</span>
                       </div>
                       <div>
                         <span className="text-slate-400 block text-[10px] uppercase">Account Title:</span>
-                        <span className="text-slate-800 font-semibold block">The Chef's Academy Lahore</span>
+                        <span className="text-slate-800 font-semibold block">{websiteData?.paymentSettings?.accountTitle || "The Chef's Academy"}</span>
                       </div>
                       <div className="sm:col-span-2">
-                        <span className="text-slate-400 block text-[10px] uppercase">Account Number (Direct IBAN/Transfer):</span>
-                        <span className="text-slate-900 font-bold font-mono text-xs tracking-wider">5502-9018274619</span>
+                        <span className="text-slate-400 block text-[10px] uppercase">Account Number:</span>
+                        <span className="text-slate-900 font-bold font-mono text-xs tracking-wider">{websiteData?.paymentSettings?.accountNumber || '5502-9018274619'}</span>
+                        {websiteData?.paymentSettings?.iban && (
+                          <span className="text-slate-600 font-mono text-[10px] block mt-0.5">IBAN: {websiteData.paymentSettings.iban}</span>
+                        )}
                       </div>
                       <div className="sm:col-span-2 border-t border-slate-100 pt-2 text-[10px] text-slate-500">
-                        Easypaisa or JazzCash Wallet: <strong>0333-9123456</strong> (Title: The Chef's Academy)
+                        {websiteData?.paymentSettings?.mobileName || 'Easypaisa or JazzCash'} Wallet: <strong>{websiteData?.paymentSettings?.mobileNumber || '0333-9123456'}</strong> (Title: {websiteData?.paymentSettings?.mobileTitle || "The Chef's Academy"})
                       </div>
                     </div>
                   </div>

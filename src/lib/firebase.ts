@@ -32,7 +32,7 @@ export const storageBackup = getStorage(app, `gs://${backupBucket}`);
 /**
  * Helper to upload bytes with a timeout to prevent hanging forever
  */
-const uploadBytesWithTimeout = async (storageInstance: any, path: string, blob: Blob, fileType: string, timeoutMs = 3000): Promise<string> => {
+const uploadBytesWithTimeout = async (storageInstance: any, path: string, blob: Blob, fileType: string, timeoutMs = 30000): Promise<string> => {
   const storageRef = ref(storageInstance, path);
   
   const uploadPromise = (async () => {
@@ -72,43 +72,15 @@ export const uploadFile = async (fileOrBase64: File | string, fileName: string):
     const cleanName = finalFileName.replace(/[^a-zA-Z0-9.-]/g, '_');
     const storagePath = `uploads/${timestamp}_${cleanName}`;
 
-    // 1. Try Primary Firebase Storage (firebasestorage.app suffix)
-    try {
-      console.log(`Attempting upload to Primary Firebase Storage: ${defaultBucket}`);
-      const downloadUrl = await uploadBytesWithTimeout(storage, storagePath, fileBlob, finalFileType, 3000);
-      console.log("Uploaded successfully to Primary Firebase Storage:", downloadUrl);
-      return downloadUrl;
-    } catch (primaryError: any) {
-      console.warn("Primary Firebase Storage upload failed or timed out:", primaryError.message || primaryError);
-
-      // 2. Try Backup Firebase Storage (appspot.com suffix)
-      try {
-        console.log(`Attempting upload to Backup Firebase Storage: ${backupBucket}`);
-        const downloadUrl = await uploadBytesWithTimeout(storageBackup, storagePath, fileBlob, finalFileType, 3000);
-        console.log("Uploaded successfully to Backup Firebase Storage:", downloadUrl);
-        return downloadUrl;
-      } catch (backupError: any) {
-        console.warn("Backup Firebase Storage upload also failed or timed out:", backupError.message || backupError);
-        throw new Error("All Firebase Storage attempts failed or timed out");
-      }
-    }
-  } catch (storageError: any) {
-    console.warn("Firebase Storage upload completely failed. Falling back to local server raw binary upload...", storageError.message || storageError);
-    
-    // 3. Fallback to local raw binary upload (fast, but ephemeral on server restarts)
+    // 1. Try local raw binary upload first (Fastest!)
     try {
       const response = await fetch('/api/upload-raw', {
         method: 'POST',
         headers: {
           'x-file-name': encodeURIComponent(fileName),
-          'content-type': fileOrBase64 instanceof File ? fileOrBase64.type : 'image/jpeg',
+          'content-type': finalFileType,
         },
-        body: fileOrBase64 instanceof File 
-          ? fileOrBase64 
-          : await (async () => {
-              const res = await fetch(fileOrBase64);
-              return await res.blob();
-            })(),
+        body: fileBlob,
       });
 
       if (response.ok) {
@@ -120,45 +92,68 @@ export const uploadFile = async (fileOrBase64: File | string, fileName: string):
       }
       throw new Error(`Server raw upload status: ${response.status}`);
     } catch (rawError: any) {
-      console.warn("Local raw binary upload also failed, falling back to base64 upload:", rawError);
-      
-      // 4. Fallback to base64 JSON /api/upload as final resort
-      let base64Data: string;
-      if (fileOrBase64 instanceof File) {
-        base64Data = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => reject(new Error("Failed to read file for fallback upload"));
-          reader.readAsDataURL(fileOrBase64);
-        });
-      } else {
-        base64Data = fileOrBase64;
-      }
+      console.warn("Local raw binary upload failed, falling back to Firebase Storage:", rawError);
+    }
 
-      const fallbackResponse = await fetch('/api/upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName: fileName,
-          fileType: fileOrBase64 instanceof File ? fileOrBase64.type : 'image/jpeg',
-          fileData: base64Data,
-        }),
+    // 2. Try Primary Firebase Storage (firebasestorage.app suffix)
+    try {
+      console.log(`Attempting upload to Primary Firebase Storage: ${defaultBucket}`);
+      const downloadUrl = await uploadBytesWithTimeout(storage, storagePath, fileBlob, finalFileType, 30000);
+      console.log("Uploaded successfully to Primary Firebase Storage:", downloadUrl);
+      return downloadUrl;
+    } catch (primaryError: any) {
+      console.warn("Primary Firebase Storage upload failed or timed out:", primaryError.message || primaryError);
+
+      // 3. Try Backup Firebase Storage (appspot.com suffix)
+      try {
+        console.log(`Attempting upload to Backup Firebase Storage: ${backupBucket}`);
+        const downloadUrl = await uploadBytesWithTimeout(storageBackup, storagePath, fileBlob, finalFileType, 30000);
+        console.log("Uploaded successfully to Backup Firebase Storage:", downloadUrl);
+        return downloadUrl;
+      } catch (backupError: any) {
+        console.warn("Backup Firebase Storage upload also failed or timed out:", backupError.message || backupError);
+        throw new Error("All Firebase Storage attempts failed or timed out");
+      }
+    }
+  } catch (storageError: any) {
+    console.warn("Firebase Storage upload completely failed. Falling back to local base64 upload...", storageError.message || storageError);
+    
+    // 4. Fallback to base64 JSON /api/upload as final resort
+    let base64Data: string;
+    if (fileOrBase64 instanceof File) {
+      base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file for fallback upload"));
+        reader.readAsDataURL(fileOrBase64);
       });
+    } else {
+      base64Data = fileOrBase64;
+    }
 
-      if (!fallbackResponse.ok) {
-        const errData = await fallbackResponse.json();
-        throw new Error(errData.error || 'All upload methods failed');
-      }
+    const fallbackResponse = await fetch('/api/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fileName: fileName,
+        fileType: typeof fileOrBase64 === 'string' ? 'image/jpeg' : (fileOrBase64 as File).type,
+        fileData: base64Data,
+      }),
+    });
 
-      const result = await fallbackResponse.json();
-      if (result.success && result.url) {
-        console.log("Uploaded successfully to local server fallback base64:", result.url);
-        return result.url;
-      } else {
-        throw new Error('Invalid fallback base64 response');
-      }
+    if (!fallbackResponse.ok) {
+      const errData = await fallbackResponse.json();
+      throw new Error(errData.error || 'All upload methods failed');
+    }
+
+    const result = await fallbackResponse.json();
+    if (result.success && result.url) {
+      console.log("Uploaded successfully to local server fallback base64:", result.url);
+      return result.url;
+    } else {
+      throw new Error('Invalid fallback base64 response');
     }
   }
 };

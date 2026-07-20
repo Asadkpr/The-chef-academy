@@ -75,11 +75,11 @@ function MediaUploader({ onUpload, allowedTypes, label = 'Upload', helperText }:
       return;
     }
 
-    // Support up to 100MB for video files to match the server limit, and 45MB for images/others
+    // Support up to 15MB for video files and 10MB for images/others
     const sizeInMB = file.size / (1024 * 1024);
-    const maxLimit = fileType.startsWith('video/') ? 100 : 45;
+    const maxLimit = fileType.startsWith('video/') ? 15 : 10;
     if (sizeInMB > maxLimit) {
-      alert(`File is too large (${sizeInMB.toFixed(1)}MB). Please upload a file smaller than ${maxLimit}MB.`);
+      alert(`File is too large (${sizeInMB.toFixed(1)}MB). Maximum allowed size is ${maxLimit}MB.\n\nFor videos, please compress your video to under 5MB for best results.`);
       return;
     }
 
@@ -99,13 +99,16 @@ function MediaUploader({ onUpload, allowedTypes, label = 'Upload', helperText }:
 
         try {
           const compressed = await compressImage(base64);
-          uploadPayload = compressed;
+          // Return base64 directly to avoid Firebase Storage timeout issues for images
+          onUpload(compressed);
+          setIsUploading(false);
+          return;
         } catch (err) {
-          console.warn('Image compression failed, using original file', err);
+          console.warn('Image compression failed', err);
         }
       }
 
-      // Upload file directly using the powerful raw binary uploader
+      // Upload file directly using the powerful raw binary uploader for videos
       const downloadUrl = await uploadFile(uploadPayload, file.name);
       onUpload(downloadUrl);
     } catch (uploadError: any) {
@@ -359,12 +362,10 @@ export default function WebsiteCMSEditor() {
     triggerSuccess('Faculty section headers saved!');
   };
 
-  const handleUpdateInstructor = (index: number, key: 'name' | 'role' | 'bio' | 'image', val: string) => {
-    const updatedInstructors = [...websiteData.faculty.instructors];
-    updatedInstructors[index] = {
-      ...updatedInstructors[index],
-      [key]: val
-    };
+  const handleUpdateInstructor = (id: string, key: 'name' | 'role' | 'bio' | 'image', val: string) => {
+    const updatedInstructors = websiteData.faculty.instructors.map(inst => 
+      inst.id === id ? { ...inst, [key]: val } : inst
+    );
     updateWebsiteData({
       ...websiteData,
       faculty: { ...websiteData.faculty, instructors: updatedInstructors }
@@ -417,12 +418,10 @@ export default function WebsiteCMSEditor() {
     triggerSuccess('Competitions header settings saved!');
   };
 
-  const handleUpdateCompVideo = (index: number, key: 'title' | 'video', val: string) => {
-    const updatedItems = [...websiteData.competitions.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [key]: val
-    };
+  const handleUpdateCompVideo = (id: string, key: 'title' | 'video', val: string) => {
+    const updatedItems = websiteData.competitions.items.map(item => 
+      item.id === id ? { ...item, [key]: val } : item
+    );
     updateWebsiteData({
       ...websiteData,
       competitions: { ...websiteData.competitions, items: updatedItems }
@@ -471,12 +470,10 @@ export default function WebsiteCMSEditor() {
     triggerSuccess('Testimonials section titles saved successfully!');
   };
 
-  const handleUpdateTestimonialVideo = (index: number, key: 'name' | 'role' | 'video', val: string) => {
-    const updatedItems = [...websiteData.testimonials.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [key]: val
-    };
+  const handleUpdateTestimonialVideo = (id: string, key: 'name' | 'role' | 'video', val: string) => {
+    const updatedItems = websiteData.testimonials.items.map(test => 
+      test.id === id ? { ...test, [key]: val } : test
+    );
     updateWebsiteData({
       ...websiteData,
       testimonials: { ...websiteData.testimonials, items: updatedItems }
@@ -900,7 +897,7 @@ export default function WebsiteCMSEditor() {
                     <MediaUploader 
                       allowedTypes="video"
                       label="Upload Tour Video"
-                      helperText="Accepts .mp4 up to 15MB"
+                      helperText="Recommended: under 5MB — max 15MB"
                       onUpload={(base64) => {
                         setWhyVideo(base64);
                         // Auto-save to make it dynamic and immediate
@@ -1082,7 +1079,7 @@ export default function WebsiteCMSEditor() {
                         <input 
                           type="text" 
                           value={inst.image} 
-                          onChange={(e) => handleUpdateInstructor(idx, 'image', e.target.value)}
+                          onChange={(e) => handleUpdateInstructor(inst.id, 'image', e.target.value)}
                           placeholder="Photo link" 
                           className="w-full bg-slate-900 border border-slate-800 rounded p-1 text-[10px] font-mono text-center truncate mb-1" 
                         />
@@ -1091,7 +1088,7 @@ export default function WebsiteCMSEditor() {
                           label="Upload Photo"
                           helperText="JPG/PNG up to 2MB"
                           onUpload={(base64) => {
-                            handleUpdateInstructor(idx, 'image', base64);
+                            handleUpdateInstructor(inst.id, 'image', base64);
                             triggerSuccess(`Instructor photo uploaded for ${inst.name || 'instructor'}!`);
                           }}
                         />
@@ -1103,7 +1100,7 @@ export default function WebsiteCMSEditor() {
                           <input 
                             type="text" 
                             value={inst.name} 
-                            onChange={(e) => handleUpdateInstructor(idx, 'name', e.target.value)}
+                            onChange={(e) => handleUpdateInstructor(inst.id, 'name', e.target.value)}
                             className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-bold" 
                           />
                         </div>
@@ -1112,7 +1109,7 @@ export default function WebsiteCMSEditor() {
                           <input 
                             type="text" 
                             value={inst.role} 
-                            onChange={(e) => handleUpdateInstructor(idx, 'role', e.target.value)}
+                            onChange={(e) => handleUpdateInstructor(inst.id, 'role', e.target.value)}
                             className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-amber-500 font-semibold" 
                           />
                         </div>
@@ -1120,7 +1117,7 @@ export default function WebsiteCMSEditor() {
                           <label className="text-slate-500 font-bold uppercase text-[9px]">Brief Biography (Intro Quotes)</label>
                           <textarea 
                             value={inst.bio} 
-                            onChange={(e) => handleUpdateInstructor(idx, 'bio', e.target.value)}
+                            onChange={(e) => handleUpdateInstructor(inst.id, 'bio', e.target.value)}
                             rows={2} 
                             className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-300 resize-none font-light"
                           ></textarea>
@@ -1178,7 +1175,7 @@ export default function WebsiteCMSEditor() {
                           <input 
                             type="text" 
                             value={item.title} 
-                            onChange={(e) => handleUpdateCompVideo(idx, 'title', e.target.value)}
+                            onChange={(e) => handleUpdateCompVideo(item.id, 'title', e.target.value)}
                             className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-bold" 
                           />
                         </div>
@@ -1187,15 +1184,15 @@ export default function WebsiteCMSEditor() {
                           <input 
                             type="text" 
                             value={item.video} 
-                            onChange={(e) => handleUpdateCompVideo(idx, 'video', e.target.value)}
+                            onChange={(e) => handleUpdateCompVideo(item.id, 'video', e.target.value)}
                             className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 font-mono mb-2" 
                           />
                           <MediaUploader 
                             allowedTypes="video"
                             label="Upload Video"
-                            helperText="MP4 up to 15MB"
+                            helperText="Recommended: under 5MB — max 15MB"
                             onUpload={(base64) => {
-                              handleUpdateCompVideo(idx, 'video', base64);
+                              handleUpdateCompVideo(item.id, 'video', base64);
                               triggerSuccess(`Uploaded video for ${item.title || 'competition'}!`);
                             }}
                           />
@@ -1253,7 +1250,7 @@ export default function WebsiteCMSEditor() {
                           <input 
                             type="text" 
                             value={test.name} 
-                            onChange={(e) => handleUpdateTestimonialVideo(idx, 'name', e.target.value)}
+                            onChange={(e) => handleUpdateTestimonialVideo(test.id, 'name', e.target.value)}
                             className="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-slate-200 font-bold" 
                           />
                         </div>
@@ -1262,7 +1259,7 @@ export default function WebsiteCMSEditor() {
                           <input 
                             type="text" 
                             value={test.role} 
-                            onChange={(e) => handleUpdateTestimonialVideo(idx, 'role', e.target.value)}
+                            onChange={(e) => handleUpdateTestimonialVideo(test.id, 'role', e.target.value)}
                             className="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-amber-500 font-semibold" 
                           />
                         </div>
@@ -1271,15 +1268,15 @@ export default function WebsiteCMSEditor() {
                           <input 
                             type="text" 
                             value={test.video} 
-                            onChange={(e) => handleUpdateTestimonialVideo(idx, 'video', e.target.value)}
+                            onChange={(e) => handleUpdateTestimonialVideo(test.id, 'video', e.target.value)}
                             className="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-slate-300 font-mono mb-2" 
                           />
                           <MediaUploader 
                             allowedTypes="video"
                             label="Upload Video"
-                            helperText="MP4 up to 15MB"
+                            helperText="Recommended: under 5MB — max 15MB"
                             onUpload={(base64) => {
-                              handleUpdateTestimonialVideo(idx, 'video', base64);
+                              handleUpdateTestimonialVideo(test.id, 'video', base64);
                               triggerSuccess(`Uploaded video review for ${test.name || 'student'}!`);
                             }}
                           />

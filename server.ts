@@ -101,6 +101,7 @@ function generateInvoiceHtml(data: {
   tuitionFee: number;
   totalFee: number;
   discount?: number;
+  paymentSettings?: any;
 }) {
   const dateStr = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -378,11 +379,12 @@ function generateInvoiceHtml(data: {
               <h3 class="bank-title">Official Payment Instructions</h3>
               <div class="bank-info">
                 Please transfer/deposit the registration fee of <strong>PKR ${data.regFee.toLocaleString()}</strong> to the official academy account below to secure your workspace seat:<br><br>
-                <strong>Bank Name:</strong> Bank Alfalah Ltd<br>
-                <strong>Account Title:</strong> The Chef's Academy Lahore<br>
-                <strong>Account Number:</strong> 5502-9018274619<br><br>
+                <strong>Bank Name:</strong> ${data.paymentSettings?.bankName || 'Bank Alfalah Ltd'}<br>
+                <strong>Account Title:</strong> ${data.paymentSettings?.accountTitle || "The Chef's Academy Lahore"}<br>
+                <strong>Account Number:</strong> ${data.paymentSettings?.accountNumber || '5502-9018274619'}<br>
+                ${data.paymentSettings?.iban ? `<strong>IBAN:</strong> ${data.paymentSettings.iban}<br>` : ''}<br>
                 <em>Alternatively, transfer via:</em><br>
-                <strong>Easypaisa / JazzCash:</strong> 0333-9123456 (Title: The Chef's Academy)
+                <strong>${data.paymentSettings?.mobileName || 'Easypaisa / JazzCash'}:</strong> ${data.paymentSettings?.mobileNumber || '0333-9123456'} (Title: ${data.paymentSettings?.mobileTitle || "The Chef's Academy"})
               </div>
             </div>
             
@@ -420,7 +422,8 @@ app.post('/api/send-invoice', async (req, res) => {
     regFee,
     tuitionFee,
     totalFee,
-    discount
+    discount,
+    paymentSettings
   } = req.body;
 
   if (!email || !studentName || !trackingId) {
@@ -439,7 +442,8 @@ app.post('/api/send-invoice', async (req, res) => {
     regFee,
     tuitionFee,
     totalFee,
-    discount: discount ? Number(discount) : 0
+    discount: discount ? Number(discount) : 0,
+    paymentSettings
   });
 
   const isSmtpConfigured = !!(

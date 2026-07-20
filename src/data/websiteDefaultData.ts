@@ -133,5 +133,14 @@ export const INITIAL_WEBSITE_DATA: WebsiteData = {
     instagram: 'https://www.instagram.com/thechefsacademy_',
     whatsapp: 'https://wa.me/923288888907',
     mapUrl: 'https://maps.google.com/maps?q=79-B3%20Gulberg%20III%20Lahore&t=&z=15&ie=UTF8&iwloc=&output=embed'
+  },
+  popupSettings: {
+    enabled: false,
+    title: 'Admissions Now Open!',
+    content: 'New batches are starting soon for Culinary Arts, Professional Chef, Baking & Desserts, and Barista Skills programs. Limited seats available — apply now to secure your spot!',
+    image: '',
+    link: '',
+    startDate: '',
+    endDate: ''
   }
 };

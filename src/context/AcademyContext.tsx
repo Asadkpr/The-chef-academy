@@ -185,13 +185,12 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
           try {
             const admissionsRef = collection(db, 'admissions');
             unsubscribeAdmissions = onSnapshot(admissionsRef, (snapshot) => {
+              const loaded: Admission[] = [];
               if (!snapshot.empty) {
-                const loaded: Admission[] = [];
                 snapshot.forEach(d => loaded.push(d.data() as Admission));
                 loaded.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-                setAdmissions(loaded);
-                safeSetItem('chef_admissions', JSON.stringify(loaded));
               }
+              setAdmissions(loaded);
             });
           } catch (e) { console.warn('Admissions listener error:', e); }
           return; // ← skip full Firebase fetch, cache is fresh
@@ -320,7 +319,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
               });
               loadedAdmissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
               setAdmissions(loadedAdmissions);
-              safeSetItem('chef_admissions', JSON.stringify(loadedAdmissions));
             } else {
               // Initialize mock admissions for live demo
               const mockAdmissions: Admission[] = [
@@ -387,7 +385,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 }
               ];
               setAdmissions(mockAdmissions);
-              safeSetItem('chef_admissions', JSON.stringify(mockAdmissions));
               mockAdmissions.forEach(async (adm) => {
                 await setDoc(doc(db, 'admissions', adm.id), adm).catch(e => console.warn('Could not init admission:', e));
               });
@@ -516,30 +513,27 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       createdAt: new Date().toISOString()
     };
 
-    const updatedAdmissions = [freshAdmission, ...admissions];
-    setAdmissions(updatedAdmissions);
-    safeSetItem('chef_admissions', JSON.stringify(updatedAdmissions));
+    // Update React in-memory state immediately (always works, no quota issues)
+    setAdmissions(prev => [freshAdmission, ...prev]);
 
     // Decrement available seats for the course
-    const updatedCourses = courses.map(c => {
+    setCourses(prev => prev.map(c => {
       if (c.id === newAdmission.selectedCourseId && c.seatsAvailable > 0) {
         return { ...c, seatsAvailable: c.seatsAvailable - 1 };
       }
       return c;
-    });
-    setCourses(updatedCourses);
-    safeSetItem('chef_courses', JSON.stringify(updatedCourses));
+    }));
 
-    // Async write to Firebase
+    // Async write to Firebase (primary storage - always attempt this)
     (async () => {
       try {
         await setDoc(doc(db, 'admissions', admissionId), freshAdmission);
-        const selectedCourse = updatedCourses.find(c => c.id === newAdmission.selectedCourseId);
-        if (selectedCourse) {
-          await setDoc(doc(db, 'courses', newAdmission.selectedCourseId), selectedCourse);
-        }
+        console.log('✅ Admission saved to Firebase:', admissionId);
+        // Try localStorage after Firebase succeeds (best effort, ignore quota errors)
+        safeSetItem('chef_admissions_last_id', admissionId);
       } catch (err) {
-        console.error('Failed to sync admission and course seats to Firestore:', err);
+        console.error('Failed to sync admission to Firestore:', err);
+        // Still works in-memory for this session even if Firebase fails
       }
     })();
 
@@ -554,7 +548,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return adm;
     });
     setAdmissions(updated);
-    safeSetItem('chef_admissions', JSON.stringify(updated));
 
     try {
       const targetAdm = updated.find(a => a.id === id);
@@ -574,7 +567,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return adm;
     });
     setAdmissions(updated);
-    safeSetItem('chef_admissions', JSON.stringify(updated));
 
     try {
       const targetAdm = updated.find(a => a.id === id);
@@ -594,7 +586,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return adm;
     });
     setAdmissions(updated);
-    safeSetItem('chef_admissions', JSON.stringify(updated));
 
     try {
       const targetAdm = updated.find(a => a.id === id);
@@ -620,7 +611,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return adm;
     });
     setAdmissions(updated);
-    safeSetItem('chef_admissions', JSON.stringify(updated));
 
     try {
       const targetAdm = updated.find(a => a.id === id);

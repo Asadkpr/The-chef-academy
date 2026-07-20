@@ -6,7 +6,7 @@ import {
   Users, BookOpen, GraduationCap, DollarSign, Plus, Edit, Trash2, 
   CheckCircle, XCircle, AlertCircle, Eye, LogOut, RefreshCw, 
   Image as ImageIcon, Star, MessageSquare, ClipboardList, Printer, Mail,
-  Globe, Upload
+  Globe, Upload, CreditCard, Save, Megaphone, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import WebsiteCMSEditor from './WebsiteCMSEditor';
@@ -107,7 +107,7 @@ export default function CMSAdmin() {
     logoutAdmin,
     changeAdminPasscode,
     resetAllData, coursePlans, updateCoursePlans,
-    updateAdmissionDiscountAndFees
+    updateAdmissionDiscountAndFees, websiteData, updateWebsiteData
   } = useAcademy();
 
   const [passcode, setPasscode] = useState('');
@@ -119,8 +119,32 @@ export default function CMSAdmin() {
   const [newPlanData, setNewPlanData] = useState<Record<string, { duration: string; fee: number; regFee: number }>>({});
   const [newCourseName, setNewCourseName] = useState('');
 
-  // CMS Views: 'dashboard' | 'courses' | 'admissions' | 'content' | 'settings' | 'website'
-  const [cmsTab, setCmsTab] = useState<'dashboard' | 'courses' | 'admissions' | 'content' | 'settings' | 'website'>('dashboard');
+  // CMS Views
+  const [cmsTab, setCmsTab] = useState<'dashboard' | 'courses' | 'admissions' | 'content' | 'settings' | 'website' | 'payment' | 'popup'>('dashboard');
+
+  // Payment Settings state
+  const [paymentSettings, setPaymentSettings] = useState({
+    bankName: websiteData?.paymentSettings?.bankName || 'Bank Alfalah Ltd',
+    accountTitle: websiteData?.paymentSettings?.accountTitle || "The Chef's Academy",
+    accountNumber: websiteData?.paymentSettings?.accountNumber || '5502-9018274619',
+    iban: websiteData?.paymentSettings?.iban || '',
+    mobileName: websiteData?.paymentSettings?.mobileName || 'JazzCash / Easypaisa',
+    mobileNumber: websiteData?.paymentSettings?.mobileNumber || '0333-9123456',
+    mobileTitle: websiteData?.paymentSettings?.mobileTitle || "The Chef's Academy",
+  });
+  const [paymentSaveMsg, setPaymentSaveMsg] = useState('');
+
+  // Popup Settings state
+  const [popupDraft, setPopupDraft] = useState({
+    enabled: websiteData?.popupSettings?.enabled ?? false,
+    title: websiteData?.popupSettings?.title || 'Admissions Now Open!',
+    content: websiteData?.popupSettings?.content || '',
+    image: websiteData?.popupSettings?.image || '',
+    link: websiteData?.popupSettings?.link || '',
+    startDate: websiteData?.popupSettings?.startDate || '',
+    endDate: websiteData?.popupSettings?.endDate || '',
+  });
+  const [popupSaveMsg, setPopupSaveMsg] = useState('');
 
   const [newPasscode, setNewPasscode] = useState('');
   const [confirmPasscode, setConfirmPasscode] = useState('');
@@ -243,7 +267,8 @@ export default function CMSAdmin() {
     updated[courseName][index] = {
       duration: editingPlanData.duration,
       fee: Number(editingPlanData.fee),
-      regFee: Number(editingPlanData.regFee)
+      regFee: Number(editingPlanData.regFee),
+      detail: editingPlanData.detail || ''
     };
     updateCoursePlans(updated);
     setEditingPlanKey(null);
@@ -259,7 +284,7 @@ export default function CMSAdmin() {
 
   // Add a brand new plan duration option under a course
   const handleAddPlanRow = (courseName: string) => {
-    const data = newPlanData[courseName] || { duration: '', fee: 0, regFee: 0 };
+    const data = newPlanData[courseName] || { duration: '', fee: 0, regFee: 0, detail: '' };
     if (!data.duration.trim() || data.fee <= 0 || data.regFee <= 0) {
       alert('Please enter a valid duration name, tuition fee, and registration fee.');
       return;
@@ -269,13 +294,14 @@ export default function CMSAdmin() {
     updated[courseName].push({
       duration: data.duration,
       fee: Number(data.fee),
-      regFee: Number(data.regFee)
+      regFee: Number(data.regFee),
+      detail: data.detail || ''
     });
     updateCoursePlans(updated);
     // Clear the specific inputs
     setNewPlanData(prev => ({
       ...prev,
-      [courseName]: { duration: '', fee: 0, regFee: 0 }
+      [courseName]: { duration: '', fee: 0, regFee: 0, detail: '' }
     }));
   };
 
@@ -598,7 +624,8 @@ export default function CMSAdmin() {
           regFee: selectedRegFee,
           tuitionFee: selectedTuitionFee,
           totalFee: selectedTuitionFee + selectedRegFee - selectedDiscount,
-          discount: selectedDiscount
+          discount: selectedDiscount,
+          paymentSettings: websiteData?.paymentSettings
         })
       });
 
@@ -717,16 +744,25 @@ export default function CMSAdmin() {
         
         {/* Admin Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-slate-800 pb-6 mb-8 gap-4">
-          <div className="space-y-1.5">
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white flex items-center space-x-2">
-              <span>The Chef's Academy CMS</span>
-              <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-                Admin Console
-              </span>
-            </h1>
-            <p className="text-xs text-slate-400">
-              Manage courses catalog, review submitted student registrations, verify payments, and curate media.
-            </p>
+          <div className="flex items-center gap-4">
+            {websiteData?.logo && (
+              <img 
+                src={websiteData.logo} 
+                alt="Academy Logo" 
+                className="h-12 w-auto object-contain bg-white/5 p-1.5 rounded-lg border border-white/10"
+              />
+            )}
+            <div className="space-y-1.5">
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white flex items-center space-x-2">
+                <span>The Chef's Academy CMS</span>
+                <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                  Admin Console
+                </span>
+              </h1>
+              <p className="text-xs text-slate-400">
+                Manage courses catalog, review submitted student registrations, verify payments, and curate media.
+              </p>
+            </div>
           </div>
 
           <button
@@ -787,6 +823,18 @@ export default function CMSAdmin() {
             </button>
 
             <button
+              onClick={() => setCmsTab('fees')}
+              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                cmsTab === 'fees'
+                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <DollarSign className="h-4 w-4" />
+              <span>Student Fees Info</span>
+            </button>
+
+            <button
               onClick={() => setCmsTab('content')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'content'
@@ -808,6 +856,30 @@ export default function CMSAdmin() {
             >
               <Globe className="h-4 w-4" />
               <span>Website CMS Editor</span>
+            </button>
+
+            <button
+              onClick={() => setCmsTab('payment')}
+              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                cmsTab === 'payment'
+                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <CreditCard className="h-4 w-4" />
+              <span>Payment Settings</span>
+            </button>
+
+            <button
+              onClick={() => setCmsTab('popup')}
+              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                cmsTab === 'popup'
+                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <Megaphone className="h-4 w-4" />
+              <span>Popup Announcement</span>
             </button>
 
             <button
@@ -1168,6 +1240,110 @@ export default function CMSAdmin() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* TAB: STUDENT FEES INFO */}
+            {cmsTab === 'fees' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800 flex items-center justify-between">
+                    <span>Student Fee Management</span>
+                    <span className="text-sm font-sans text-slate-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
+                      Total Records: {admissions.length}
+                    </span>
+                  </h2>
+                  <p className="text-slate-400 text-xs mt-2 font-light">
+                    Track all student fee submissions, verified payments, and pending dues across all courses.
+                  </p>
+                </div>
+
+                <div className="bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-inner">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs sm:text-sm">
+                      <thead className="bg-slate-900/80 text-slate-400 text-[10px] uppercase tracking-wider">
+                        <tr>
+                          <th className="py-3 px-4 font-bold border-b border-slate-800">Student Name</th>
+                          <th className="py-3 px-4 font-bold border-b border-slate-800">Course & Shift</th>
+                          <th className="py-3 px-4 font-bold border-b border-slate-800">Total Fee (PKR)</th>
+                          <th className="py-3 px-4 font-bold border-b border-slate-800">Receipt</th>
+                          <th className="py-3 px-4 font-bold border-b border-slate-800">Payment Status</th>
+                          <th className="py-3 px-4 font-bold border-b border-slate-800 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/50">
+                        {admissions.map(adm => (
+                          <tr key={adm.id} className="hover:bg-slate-900/50 transition-colors">
+                            <td className="py-3 px-4">
+                              <span className="font-semibold text-slate-200 block">{adm.studentName}</span>
+                              <span className="text-[10px] text-slate-500 font-mono block">{adm.id}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="block text-slate-300 font-medium truncate max-w-[150px]" title={adm.selectedCourseTitle}>{adm.selectedCourseTitle}</span>
+                              <span className="block text-[10px] text-slate-500">{adm.shift}</span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-amber-500">
+                                  {((adm.tuitionFee || 0) + (adm.regFee || 0) - (adm.discountAmount || 0)).toLocaleString()}
+                                </span>
+                                {(adm.discountAmount || 0) > 0 && (
+                                  <span className="text-[9px] text-emerald-400">Discount: -{adm.discountAmount}</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              {adm.receiptFile ? (
+                                <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1" title="Slip File is Uploaded">
+                                  📎 Uploaded
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                                  ○ Missing
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                adm.feeStatus === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                adm.feeStatus === 'Uploaded' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 blink' :
+                                'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                              }`}>
+                                {adm.feeStatus === 'Paid' ? 'Verified' :
+                                 adm.feeStatus === 'Uploaded' ? 'Reviewing' :
+                                 'Pending'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <button
+                                onClick={() => {
+                                  setSelectedAdmission(adm);
+                                  setAdminRemarks(adm.remarks || '');
+                                  setSelectedTuitionFee(adm.tuitionFee || 0);
+                                  setSelectedRegFee(adm.regFee || 0);
+                                  setSelectedDiscount(adm.discountAmount || 0);
+                                  setSelectedFeeStatus(adm.feeStatus || 'Pending');
+                                  setResendInvoiceMessage(null);
+                                }}
+                                className="inline-flex items-center space-x-1 bg-slate-900 border border-slate-800 text-amber-500 hover:text-slate-950 hover:bg-amber-500 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                <span>View Detail</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {admissions.length === 0 && (
+                          <tr>
+                            <td colSpan={6} className="py-8 text-center text-slate-500 text-xs italic">
+                              No student records found.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1700,6 +1876,249 @@ export default function CMSAdmin() {
 
             {cmsTab === 'website' && (
               <WebsiteCMSEditor />
+            )}
+
+            {/* TAB: PAYMENT SETTINGS */}
+            {cmsTab === 'payment' && (
+              <div className="space-y-8 max-w-2xl">
+                <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800">
+                  Payment & Bank Account Settings
+                </h2>
+                <p className="text-xs text-slate-400">These details appear on the student's admission invoice. Update them here and they'll reflect immediately on all new invoices.</p>
+
+                {/* Bank Account Section */}
+                <div className="bg-slate-950 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-lg">
+                  <h3 className="font-sans font-bold text-base text-white flex items-center gap-2">
+                    <span className="text-amber-400">🏦</span> Bank Account Details
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold block">Bank Name</label>
+                      <input
+                        type="text"
+                        value={paymentSettings.bankName}
+                        onChange={e => setPaymentSettings(p => ({ ...p, bankName: e.target.value }))}
+                        placeholder="e.g. Bank Alfalah Ltd"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold block">Account Title</label>
+                      <input
+                        type="text"
+                        value={paymentSettings.accountTitle}
+                        onChange={e => setPaymentSettings(p => ({ ...p, accountTitle: e.target.value }))}
+                        placeholder="e.g. The Chef's Academy"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold block">Account Number</label>
+                      <input
+                        type="text"
+                        value={paymentSettings.accountNumber}
+                        onChange={e => setPaymentSettings(p => ({ ...p, accountNumber: e.target.value }))}
+                        placeholder="e.g. 5502-9018274619"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold block">IBAN (Optional)</label>
+                      <input
+                        type="text"
+                        value={paymentSettings.iban}
+                        onChange={e => setPaymentSettings(p => ({ ...p, iban: e.target.value }))}
+                        placeholder="e.g. PK36ALFA0123456789012345"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Wallet Section */}
+                <div className="bg-slate-950 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-lg">
+                  <h3 className="font-sans font-bold text-base text-white flex items-center gap-2">
+                    <span className="text-amber-400">📱</span> Mobile Wallet (JazzCash / Easypaisa)
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold block">Wallet Name / Label</label>
+                      <input
+                        type="text"
+                        value={paymentSettings.mobileName}
+                        onChange={e => setPaymentSettings(p => ({ ...p, mobileName: e.target.value }))}
+                        placeholder="e.g. JazzCash / Easypaisa"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold block">Mobile Number</label>
+                      <input
+                        type="text"
+                        value={paymentSettings.mobileNumber}
+                        onChange={e => setPaymentSettings(p => ({ ...p, mobileNumber: e.target.value }))}
+                        placeholder="e.g. 0333-9123456"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold block">Account Title</label>
+                      <input
+                        type="text"
+                        value={paymentSettings.mobileTitle}
+                        onChange={e => setPaymentSettings(p => ({ ...p, mobileTitle: e.target.value }))}
+                        placeholder="e.g. The Chef's Academy"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {paymentSaveMsg && (
+                  <p className="text-emerald-400 text-xs font-bold">{paymentSaveMsg}</p>
+                )}
+
+                <button
+                  onClick={() => {
+                    updateWebsiteData({ ...websiteData, paymentSettings });
+                    setPaymentSaveMsg('✅ Payment settings saved successfully!');
+                    setTimeout(() => setPaymentSaveMsg(''), 4000);
+                  }}
+                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  <Save className="h-4 w-4" />
+                  Save Payment Settings
+                </button>
+              </div>
+            )}
+
+            {/* TAB: POPUP ANNOUNCEMENT SETTINGS */}
+            {cmsTab === 'popup' && (
+              <div className="space-y-6 max-w-2xl">
+                <div>
+                  <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800 flex items-center gap-2">
+                    <Megaphone className="h-5 w-5" />
+                    Popup Announcement Settings
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-2">Configure the popup that appears when visitors open the website. Set active dates, write the announcement, and save.</p>
+                </div>
+
+                {/* Enable / Disable toggle */}
+                <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-white text-sm">Enable Popup</p>
+                      <p className="text-slate-400 text-xs mt-0.5">Turn the popup on or off for all website visitors.</p>
+                    </div>
+                    <button
+                      onClick={() => setPopupDraft(p => ({ ...p, enabled: !p.enabled }))}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none cursor-pointer ${
+                        popupDraft.enabled ? 'bg-amber-500' : 'bg-slate-700'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                        popupDraft.enabled ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
+
+                  {/* Active date range */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold flex items-center gap-1.5"><Calendar className="h-3 w-3" /> Start Date</label>
+                      <input
+                        type="date"
+                        value={popupDraft.startDate}
+                        onChange={e => setPopupDraft(p => ({ ...p, startDate: e.target.value }))}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-slate-400 uppercase text-[10px] font-bold flex items-center gap-1.5"><Calendar className="h-3 w-3" /> End Date</label>
+                      <input
+                        type="date"
+                        value={popupDraft.endDate}
+                        onChange={e => setPopupDraft(p => ({ ...p, endDate: e.target.value }))}
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Popup Content */}
+                <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-4">
+                  <h3 className="font-bold text-white text-sm">Popup Content</h3>
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 uppercase text-[10px] font-bold block">Title / Heading</label>
+                    <input
+                      type="text"
+                      value={popupDraft.title}
+                      onChange={e => setPopupDraft(p => ({ ...p, title: e.target.value }))}
+                      placeholder="e.g. Admissions Now Open!"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 uppercase text-[10px] font-bold block">Main Content / Body Text</label>
+                    <textarea
+                      value={popupDraft.content}
+                      onChange={e => setPopupDraft(p => ({ ...p, content: e.target.value }))}
+                      rows={5}
+                      placeholder="Describe the announcement in detail. e.g. which courses are open, batch dates, seat limits..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 resize-y"
+                    />
+                    <p className="text-slate-600 text-[10px]">Tip: Use a new line to separate information.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 uppercase text-[10px] font-bold block">Image URL (Optional)</label>
+                    <input
+                      type="text"
+                      value={popupDraft.image}
+                      onChange={e => setPopupDraft(p => ({ ...p, image: e.target.value }))}
+                      placeholder="Paste an image URL to show at the top of the popup"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400 uppercase text-[10px] font-bold block">Apply Now Link (Optional)</label>
+                    <input
+                      type="text"
+                      value={popupDraft.link}
+                      onChange={e => setPopupDraft(p => ({ ...p, link: e.target.value }))}
+                      placeholder="Leave blank to open the Admission Portal, or paste a URL"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 font-mono"
+                    />
+                    <p className="text-slate-600 text-[10px]">Leave blank → opens admission portal. Paste an external URL → opens in new tab.</p>
+                  </div>
+                </div>
+
+                {/* Live Preview badge */}
+                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 text-xs text-amber-300/80 leading-relaxed">
+                  <strong className="text-amber-400">How it works:</strong> When enabled and the current date is within the start/end range, the popup will automatically appear for every visitor when they open the website. They must click Close or the X button before they can scroll through the page.
+                </div>
+
+                {popupSaveMsg && (
+                  <p className="text-emerald-400 text-xs font-bold">{popupSaveMsg}</p>
+                )}
+
+                <button
+                  onClick={() => {
+                    updateWebsiteData({ ...websiteData, popupSettings: popupDraft });
+                    setPopupSaveMsg('✅ Popup settings saved successfully!');
+                    setTimeout(() => setPopupSaveMsg(''), 4000);
+                  }}
+                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  <Save className="h-4 w-4" />
+                  Save Popup Settings
+                </button>
+              </div>
             )}
 
             {cmsTab === 'settings' && (
@@ -2517,13 +2936,36 @@ export default function CMSAdmin() {
                 {selectedAdmission.receiptFile && (
                   <div className="bg-slate-900/40 p-4 rounded-xl border border-slate-900 space-y-2">
                     <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block">Uploaded Payment Proof / Receipt</span>
-                    <div className="relative rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-2 max-h-80 flex justify-center items-center">
-                      <img 
-                        src={selectedAdmission.receiptFile} 
-                        alt="Uploaded payment receipt slip" 
-                        className="max-h-72 object-contain w-auto h-auto rounded shadow-lg"
-                        referrerPolicy="no-referrer"
-                      />
+                    <div className="relative rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-2 max-h-[500px] flex justify-center items-center">
+                      {(selectedAdmission.receiptFile.startsWith('data:application/pdf') || selectedAdmission.receiptFile.toLowerCase().endsWith('.pdf') || selectedAdmission.receiptFile.includes('.pdf?alt=')) ? (
+                        <div className="w-full space-y-2 text-center">
+                          <iframe 
+                            src={selectedAdmission.receiptFile} 
+                            className="w-full h-80 rounded border border-slate-800" 
+                            title="PDF Receipt"
+                          />
+                          <a href={selectedAdmission.receiptFile} target="_blank" rel="noreferrer" className="text-amber-500 hover:text-amber-400 text-xs inline-block underline">
+                            Open PDF in New Tab
+                          </a>
+                        </div>
+                      ) : (selectedAdmission.receiptFile.startsWith('data:image/') || selectedAdmission.receiptFile.startsWith('http') || selectedAdmission.receiptFile.startsWith('blob:')) ? (
+                        <div className="w-full space-y-2 text-center">
+                          <img 
+                            src={selectedAdmission.receiptFile} 
+                            alt="Uploaded payment receipt slip" 
+                            className="max-h-96 mx-auto object-contain w-auto h-auto rounded shadow-lg"
+                            referrerPolicy="no-referrer"
+                          />
+                          <a href={selectedAdmission.receiptFile} target="_blank" rel="noreferrer" className="text-amber-500 hover:text-amber-400 text-xs inline-block underline">
+                            Open Image in New Tab
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="w-full max-h-64 overflow-y-auto p-4 text-[10px] font-mono text-slate-400 break-all bg-slate-900 rounded">
+                           {/* Fallback if it's some unrecognized text or truncated base64 */}
+                           {selectedAdmission.receiptFile}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -2600,6 +3042,85 @@ export default function CMSAdmin() {
               </div>
 
             </motion.div>
+
+            {/* Print-Only View */}
+            <div id="print-only" className="hidden font-sans">
+              <div className="text-center mb-6 border-b-2 border-black pb-4 flex flex-col items-center">
+                <img src="/logo.png" alt="Academy Logo" className="h-20 mb-2" />
+                <h1 className="text-2xl font-bold uppercase font-serif">The Chef's Academy</h1>
+                <p className="text-sm">Admission Application Form</p>
+                <p className="text-sm font-bold mt-2">Tracking ID: {selectedAdmission.id}</p>
+              </div>
+
+              <table className="w-full border-collapse border border-black text-sm">
+                <tbody>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left w-1/3">Student Name</th>
+                    <td className="border border-black p-2">{selectedAdmission.studentName}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Father's Name</th>
+                    <td className="border border-black p-2">{selectedAdmission.fatherName}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Course Selected</th>
+                    <td className="border border-black p-2">{selectedAdmission.selectedCourseTitle} ({selectedAdmission.shift})</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">CNIC</th>
+                    <td className="border border-black p-2">{selectedAdmission.cnic}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Phone</th>
+                    <td className="border border-black p-2">{selectedAdmission.phone}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Email</th>
+                    <td className="border border-black p-2">{selectedAdmission.email}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Date of Birth</th>
+                    <td className="border border-black p-2">{selectedAdmission.dateOfBirth}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Gender</th>
+                    <td className="border border-black p-2">{selectedAdmission.gender}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Qualification</th>
+                    <td className="border border-black p-2">{selectedAdmission.qualification}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">City</th>
+                    <td className="border border-black p-2">{selectedAdmission.city}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Postal Address</th>
+                    <td className="border border-black p-2">{selectedAdmission.address}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Fee Status</th>
+                    <td className="border border-black p-2">{selectedAdmission.feeStatus}</td>
+                  </tr>
+                  <tr>
+                    <th className="border border-black p-2 bg-gray-100 text-left">Application Status</th>
+                    <td className="border border-black p-2 font-bold">{selectedAdmission.status}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div className="mt-12 flex justify-between px-10">
+                <div className="text-center">
+                  <div className="w-48 border-b border-black mb-2"></div>
+                  <p>Student Signature</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-48 border-b border-black mb-2"></div>
+                  <p>Authorized Signature</p>
+                </div>
+              </div>
+            </div>
+
           </div>
         )}
       </AnimatePresence>

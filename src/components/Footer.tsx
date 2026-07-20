@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 
 export default function Footer() {
-  const { setView } = useAcademy();
+  const { setView, websiteData } = useAcademy();
 
   return (
     <footer className="bg-slate-950 text-slate-400 font-sans border-t border-slate-900">
@@ -17,13 +17,21 @@ export default function Footer() {
           
           {/* Col 1: About & Logo */}
           <div className="space-y-6">
-            <div className="flex items-center cursor-pointer" onClick={() => setView('home')}>
-              <div className="p-2 bg-[#c19d53] rounded-lg text-slate-950 mr-3">
-                <GraduationCap className="h-5 w-5 stroke-[2.5]" />
-              </div>
-              <div>
-                <span className="font-serif text-lg font-bold tracking-tight text-white block">THE CHEF'S</span>
-                <span className="text-[9px] tracking-[0.3em] font-sans font-semibold text-[#c19d53] uppercase -mt-1 block">ACADEMY</span>
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setView('home')}>
+              <img 
+                src={websiteData?.logo || "/logo.png"} 
+                alt="The Chef's Academy Logo" 
+                className="brand-logo-img h-8 w-auto object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <div className="brand-text-container text-white">
+                <div className="flex items-end gap-1">
+                  <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
+                  <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>
+                </div>
+                <div className="text-base text-[#F7F2DE] font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
               </div>
             </div>
             
@@ -34,7 +42,7 @@ export default function Footer() {
             {/* Social Links */}
             <div className="flex items-center space-x-3.5">
               <a 
-                href="https://facebook.com" 
+                href={websiteData?.footer?.facebook || "https://facebook.com"} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 hover:border-[#c19d53] hover:text-[#c19d53] flex items-center justify-center transition-all"
@@ -43,7 +51,7 @@ export default function Footer() {
                 <Facebook className="h-4 w-4" />
               </a>
               <a 
-                href="https://instagram.com" 
+                href={websiteData?.footer?.instagram || "https://instagram.com"} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 hover:border-[#c19d53] hover:text-[#c19d53] flex items-center justify-center transition-all"
@@ -52,7 +60,7 @@ export default function Footer() {
                 <Instagram className="h-4 w-4" />
               </a>
               <a 
-                href="https://wa.me/923288888907" 
+                href={`https://wa.me/${websiteData?.footer?.whatsapp?.replace(/\D/g, '') || "923288888907"}`} 
                 target="_blank" 
                 rel="noreferrer" 
                 className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 hover:border-[#c19d53] hover:text-[#c19d53] flex items-center justify-center transition-all"
@@ -142,20 +150,22 @@ export default function Footer() {
               <li className="flex items-start space-x-2.5">
                 <MapPin className="h-5 w-5 text-[#c19d53] flex-shrink-0 mt-0.5" />
                 <span className="leading-relaxed text-slate-300 font-light">
-                  📍 79-B3 Gulberg III, Lahore, Pakistan
+                  {websiteData?.footer?.address || "📍 79-B3 Gulberg III, Lahore, Pakistan"}
                 </span>
               </li>
               <li className="flex items-center space-x-2.5">
                 <Phone className="h-4 w-4 text-[#c19d53] flex-shrink-0" />
                 <div className="space-y-0.5">
-                  <a href="tel:+923288888907" className="text-slate-300 block hover:text-[#c19d53] transition-colors font-mono font-medium">+92 328 8888907</a>
+                  <a href={`tel:${websiteData?.footer?.phone || "+923288888907"}`} className="text-slate-300 block hover:text-[#c19d53] transition-colors font-mono font-medium">
+                    {websiteData?.footer?.phone || "+92 328 8888907"}
+                  </a>
                   <span className="text-[10px] text-slate-500 block">Admissions Department</span>
                 </div>
               </li>
               <li className="flex items-center space-x-2.5">
                 <Mail className="h-4 w-4 text-[#c19d53] flex-shrink-0" />
-                <a href="mailto:info@thechefsacademy.pk" className="text-slate-300 select-all hover:text-[#c19d53] transition-colors font-light">
-                  info@thechefsacademy.pk
+                <a href={`mailto:${websiteData?.footer?.email || "info@thechefsacademy.pk"}`} className="text-slate-300 select-all hover:text-[#c19d53] transition-colors font-light">
+                  {websiteData?.footer?.email || "info@thechefsacademy.pk"}
                 </a>
               </li>
             </ul>

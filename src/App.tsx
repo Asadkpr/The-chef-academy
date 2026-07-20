@@ -10,6 +10,7 @@ import AdmissionForm from './components/AdmissionForm';
 import Footer from './components/Footer';
 import CMSAdmin from './components/CMSAdmin';
 import Website from './components/Website';
+import AnnouncementPopup from './components/AnnouncementPopup';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, AlertTriangle, X } from 'lucide-react';
 
@@ -55,7 +56,7 @@ function StorageWarningToast() {
 }
 
 function AppContent() {
-  const { activeView } = useAcademy();
+  const { activeView, setView, websiteData } = useAcademy();
 
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-[#c19d53] selection:text-slate-950">
@@ -98,6 +99,14 @@ function AppContent() {
       </AnimatePresence>
 
       <StorageWarningToast />
+
+      {/* Announcement Popup — only shown on home view */}
+      {activeView === 'home' && (
+        <AnnouncementPopup
+          popupSettings={websiteData?.popupSettings}
+          onNavigateToPortal={() => setView('portal')}
+        />
+      )}
 
       {/* Floating WhatsApp Quick-Connect Button only on portal view */}
       {activeView === 'portal' && (

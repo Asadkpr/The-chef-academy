@@ -12,3 +12,25 @@
 body, html, #root {
   background-color: #061c33 !important;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-only, #print-only * {
+    visibility: visible;
+  }
+  #print-only {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white;
+    color: black;
+  }
+  @page {
+    margin: 0.5cm;
+  }
+}

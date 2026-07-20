@@ -34,30 +34,21 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-14">
           
           {/* Logo Crest */}
-          <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => { setView('home'); }}>
+          <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => { setView('home'); }}>
             <img 
               src={websiteData?.logo || "/logo.png"} 
               alt="The Chef's Academy Logo" 
-              className="h-11 w-auto object-contain"
+              className="brand-logo-img h-8 w-auto object-contain"
               onError={(e) => {
-                // Fallback to text logo if image is missing
                 e.currentTarget.style.display = 'none';
-                const textLogo = document.getElementById('navbar-text-logo-fallback');
-                if (textLogo) textLogo.className = 'flex items-center';
               }}
             />
-            <div id="navbar-text-logo-fallback" className="hidden flex items-center">
-              <div className="w-10 h-10 flex-shrink-0 relative flex items-center justify-center mr-3">
-                <svg viewBox="0 0 100 100" className="w-full h-full text-[#c19d53]" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M50 5 L85 18 C85 55, 75 80, 50 95 C25 80, 15 55, 15 18 Z" stroke="#c19d53" strokeWidth="5" fill="#0c121e" />
-                  <path d="M50 11 L78 21 C78 49, 70 71, 50 85 C30 71, 22 49, 22 21 Z" stroke="#c19d53" strokeWidth="1.5" fill="none" />
-                  <text x="50" y="58" textAnchor="middle" fill="#c19d53" fontSize="23" fontFamily="'Cinzel', 'Playfair Display', serif" fontWeight="bold" letterSpacing="1.5">TCA</text>
-                </svg>
+            <div className="brand-text-container text-white">
+              <div className="flex items-end gap-1">
+                <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
+                <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>
               </div>
-              <div className="flex flex-col text-white leading-[1.1] select-none font-serif">
-                <span className="text-base sm:text-lg font-normal tracking-wide text-white">The Chef's</span>
-                <span className="text-[10px] sm:text-xs font-semibold tracking-[0.22em] text-[#c19d53] uppercase font-sans">Academy</span>
-              </div>
+              <div className="text-base text-[#F7F2DE] font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
             </div>
           </div>
 
