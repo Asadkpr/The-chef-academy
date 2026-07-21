@@ -26,7 +26,7 @@ export default function Footer() {
                   e.currentTarget.style.display = 'none';
                 }}
               />
-              <div className="brand-text-container text-white">
+              <div className="font-display leading-[0.9] text-white">
                 <div className="flex items-end gap-1">
                   <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
                   <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>

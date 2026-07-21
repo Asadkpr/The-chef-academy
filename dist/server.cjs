@@ -30,7 +30,7 @@ var import_nodemailer = __toESM(require("nodemailer"), 1);
 var import_vite = require("vite");
 import_dotenv.default.config();
 var app = (0, import_express.default)();
-var PORT = 3e3;
+var PORT = process.env.PORT ? parseInt(process.env.PORT) : 3e3;
 app.use(import_express.default.json({ limit: "50mb" }));
 app.use(import_express.default.urlencoded({ limit: "50mb", extended: true }));
 var uploadsDir = import_path.default.join(process.cwd(), "public", "uploads");

@@ -483,10 +483,6 @@ export default function Website() {
           object-fit: contain;
         }
 
-        .tca-website .brand-text-container {
-          font-family: var(--font-display);
-          line-height: 0.9;
-        }
       `}</style>
 
       {/* ================= HEADER / NAVBAR ================= */}
@@ -501,7 +497,7 @@ export default function Website() {
             className="flex items-center gap-2 cursor-pointer"
           >
             <img src={websiteData.logo || "/logo.png"} alt="The Chef's Academy Logo" className="brand-logo-img h-8 w-auto object-contain" />
-            <div className="brand-text-container text-white">
+            <div className="font-display leading-[0.9] text-white">
               <div className="flex items-end gap-1">
                 <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
                 <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>
@@ -1239,7 +1235,7 @@ export default function Website() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <img src={websiteData.logo || "/logo.png"} alt="The Chef's Academy Logo" className="brand-logo-img h-8 w-auto object-contain" />
-              <div className="brand-text-container text-white">
+              <div className="font-display leading-[0.9] text-white">
                 <div className="flex items-end gap-1">
                   <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
                   <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>

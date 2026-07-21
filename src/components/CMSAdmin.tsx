@@ -1,12 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { useAcademy } from '../context/AcademyContext';
-import { Course, Admission } from '../types';
+import { Course, Admission, InventoryItem, PurchaseRecord } from '../types';
 import { uploadFile } from '../lib/firebase';
 import { 
   Users, BookOpen, GraduationCap, DollarSign, Plus, Edit, Trash2, 
   CheckCircle, XCircle, AlertCircle, Eye, LogOut, RefreshCw, 
   Image as ImageIcon, Star, MessageSquare, ClipboardList, Printer, Mail,
-  Globe, Upload, CreditCard, Save, Megaphone, Calendar
+  Globe, Upload, CreditCard, Save, Megaphone, Calendar,
+  ShoppingBag, Package, TrendingUp, MinusCircle, PlusCircle, BarChart2, Archive, ShoppingCart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import WebsiteCMSEditor from './WebsiteCMSEditor';
@@ -107,7 +108,10 @@ export default function CMSAdmin() {
     logoutAdmin,
     changeAdminPasscode,
     resetAllData, coursePlans, updateCoursePlans,
-    updateAdmissionDiscountAndFees, websiteData, updateWebsiteData
+    updateAdmissionDiscountAndFees, websiteData, updateWebsiteData,
+    inventoryItems, purchaseRecords,
+    addInventoryItem, updateInventoryItem, deleteInventoryItem,
+    addPurchaseRecord, deletePurchaseRecord
   } = useAcademy();
 
   const [passcode, setPasscode] = useState('');
@@ -120,7 +124,16 @@ export default function CMSAdmin() {
   const [newCourseName, setNewCourseName] = useState('');
 
   // CMS Views
-  const [cmsTab, setCmsTab] = useState<'dashboard' | 'courses' | 'admissions' | 'content' | 'settings' | 'website' | 'payment' | 'popup'>('dashboard');
+  const [cmsTab, setCmsTab] = useState<'dashboard' | 'courses' | 'admissions' | 'content' | 'settings' | 'website' | 'payment' | 'popup' | 'shop'>('dashboard');
+
+  // TCA Shop / Inventory state
+  const [shopSubTab, setShopSubTab] = useState<'inventory' | 'purchases' | 'report'>('inventory');
+  const [newInventoryItem, setNewInventoryItem] = useState({ name: '', category: '', quantity: 0, unit: 'pcs' });
+  const [newPurchase, setNewPurchase] = useState({ itemName: '', cost: 0, quantityAdded: 0, unit: 'pcs', purchasedBy: '' });
+  const [stockAdjustItem, setStockAdjustItem] = useState<InventoryItem | null>(null);
+  const [stockAdjustQty, setStockAdjustQty] = useState(0);
+  const [stockAdjustMode, setStockAdjustMode] = useState<'add' | 'remove'>('add');
+  const [reportFilter, setReportFilter] = useState<'week' | 'month' | 'all'>('month');
 
   // Payment Settings state
   const [paymentSettings, setPaymentSettings] = useState({
@@ -685,10 +698,10 @@ export default function CMSAdmin() {
   if (!isAdminAuthenticated) {
     return (
       <section className="min-h-screen bg-slate-950 flex items-center justify-center p-4 pt-24">
-        <div className="absolute top-1/4 left-1/2 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none -translate-x-1/2"></div>
+        <div className="absolute top-1/4 left-1/2 w-80 h-80 bg-[#AE8C45]/5 rounded-full blur-3xl pointer-events-none -translate-x-1/2"></div>
         
         <div className="bg-slate-900/60 border border-slate-800 p-8 rounded-2xl max-w-md w-full shadow-2xl backdrop-blur relative text-center space-y-6">
-          <div className="inline-flex p-3 bg-amber-500/10 rounded-xl text-amber-500">
+          <div className="inline-flex p-3 bg-[#AE8C45]/10 rounded-xl text-[#C5A964]">
             <ClipboardList className="h-10 w-10 stroke-[1.5]" />
           </div>
 
@@ -712,7 +725,7 @@ export default function CMSAdmin() {
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
                 placeholder="Enter passcode"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center font-mono text-slate-200 focus:border-amber-500/50 focus:outline-none transition-all"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center font-mono text-slate-200 focus:border-[#AE8C45]/50 focus:outline-none transition-all"
               />
             </div>
 
@@ -724,7 +737,7 @@ export default function CMSAdmin() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-sans font-bold uppercase text-xs tracking-wider py-3.5 rounded-xl hover:brightness-110 shadow-lg shadow-amber-500/10 active:scale-95 transition-all"
+              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-[#0C1B2C] font-sans font-bold uppercase text-xs tracking-wider py-3.5 rounded-xl hover:brightness-110 shadow-lg shadow-[#AE8C45]/10 active:scale-95 transition-all"
             >
               Authorize Portal
             </button>
@@ -753,12 +766,18 @@ export default function CMSAdmin() {
               />
             )}
             <div className="space-y-1.5">
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white flex items-center space-x-2">
-                <span>The Chef's Academy CMS</span>
-                <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+              <div className="flex items-center space-x-3">
+                <div className="font-display leading-[0.9] text-white">
+                  <div className="flex items-end gap-1">
+                    <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
+                    <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>
+                  </div>
+                  <div className="text-base text-[#F7F2DE] font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
+                </div>
+                <span className="bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20 text-[10px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 rounded">
                   Admin Console
                 </span>
-              </h1>
+              </div>
               <p className="text-xs text-slate-400">
                 Manage courses catalog, review submitted student registrations, verify payments, and curate media.
               </p>
@@ -784,7 +803,7 @@ export default function CMSAdmin() {
               onClick={() => setCmsTab('dashboard')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'dashboard'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -796,7 +815,7 @@ export default function CMSAdmin() {
               onClick={() => setCmsTab('courses')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'courses'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -809,7 +828,7 @@ export default function CMSAdmin() {
               onClick={() => setCmsTab('admissions')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'admissions'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -826,7 +845,7 @@ export default function CMSAdmin() {
               onClick={() => setCmsTab('fees')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'fees'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -838,7 +857,7 @@ export default function CMSAdmin() {
               onClick={() => setCmsTab('content')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'content'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -850,7 +869,7 @@ export default function CMSAdmin() {
               onClick={() => setCmsTab('website')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'website'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -862,7 +881,7 @@ export default function CMSAdmin() {
               onClick={() => setCmsTab('payment')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'payment'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -874,7 +893,7 @@ export default function CMSAdmin() {
               onClick={() => setCmsTab('popup')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'popup'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -883,10 +902,23 @@ export default function CMSAdmin() {
             </button>
 
             <button
+              onClick={() => setCmsTab('shop')}
+              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                cmsTab === 'shop'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+              }`}
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span>TCA Shop & Inventory</span>
+              <span className="ml-auto bg-slate-950/20 px-1.5 py-0.5 rounded text-[10px]">{inventoryItems.length}</span>
+            </button>
+
+            <button
               onClick={() => setCmsTab('settings')}
               className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
                 cmsTab === 'settings'
-                  ? 'bg-amber-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/10'
+                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
                   : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
               }`}
             >
@@ -902,7 +934,7 @@ export default function CMSAdmin() {
             {/* TAB 1: DASHBOARD OVERVIEW */}
             {cmsTab === 'dashboard' && (
               <div className="space-y-8">
-                <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800">
+                <h2 className="font-serif text-xl font-bold text-[#C5A964] pb-2 border-b border-slate-800">
                   Registrar Overview Metrics
                 </h2>
 
@@ -912,7 +944,7 @@ export default function CMSAdmin() {
                   <div className="bg-slate-950 border border-slate-800/80 p-5 rounded-xl space-y-1.5 shadow-md">
                     <div className="flex justify-between items-center text-slate-400">
                       <span className="text-[10px] font-bold uppercase tracking-wider">Total Applications</span>
-                      <ClipboardList className="h-5 w-5 text-amber-500" />
+                      <ClipboardList className="h-5 w-5 text-[#C5A964]" />
                     </div>
                     <span className="block text-3xl font-serif font-bold text-white">{admissions.length}</span>
                   </div>
@@ -920,7 +952,7 @@ export default function CMSAdmin() {
                   <div className="bg-slate-950 border border-slate-800/80 p-5 rounded-xl space-y-1.5 shadow-md">
                     <div className="flex justify-between items-center text-slate-400">
                       <span className="text-[10px] font-bold uppercase tracking-wider">Pending Verification</span>
-                      <AlertCircle className="h-5 w-5 text-amber-500 animate-pulse" />
+                      <AlertCircle className="h-5 w-5 text-[#C5A964] animate-pulse" />
                     </div>
                     <span className="block text-3xl font-serif font-bold text-red-400">{pendingCount}</span>
                   </div>
@@ -970,7 +1002,7 @@ export default function CMSAdmin() {
                                   <div className="flex items-center space-x-2">
                                     <div className="w-24 bg-slate-800 h-2 rounded-full overflow-hidden">
                                       <div 
-                                        className={`h-full ${capacityPercent >= 80 ? 'bg-red-500' : 'bg-amber-500'}`}
+                                        className={`h-full ${capacityPercent >= 80 ? 'bg-red-500' : 'bg-[#AE8C45]'}`}
                                         style={{ width: `${capacityPercent}%` }}
                                       ></div>
                                     </div>
@@ -993,12 +1025,12 @@ export default function CMSAdmin() {
             {cmsTab === 'courses' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center border-b border-slate-850 pb-4">
-                  <h2 className="font-serif text-xl font-bold text-amber-400">
+                  <h2 className="font-serif text-xl font-bold text-[#C5A964]">
                     Courses Catalog Editor
                   </h2>
                   <button
                     onClick={() => openCourseModal()}
-                    className="flex items-center space-x-1.5 bg-amber-500 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all"
+                    className="flex items-center space-x-1.5 bg-[#AE8C45] text-[#0C1B2C] px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all"
                   >
                     <Plus className="h-4 w-4 stroke-[2.5]" />
                     <span>Add New Course</span>
@@ -1016,7 +1048,7 @@ export default function CMSAdmin() {
                           className="w-20 h-20 rounded-lg object-cover flex-shrink-0 border border-slate-800"
                         />
                         <div className="space-y-1 w-full min-w-0 flex-1">
-                          <span className="text-[9px] uppercase tracking-wider text-amber-400 font-bold bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded">
+                          <span className="text-[9px] uppercase tracking-wider text-[#C5A964] font-bold bg-[#AE8C45]/5 border border-[#AE8C45]/10 px-2 py-0.5 rounded">
                             {course.category}
                           </span>
                           <h3 className="font-serif font-bold text-sm text-white">{course.title}</h3>
@@ -1026,10 +1058,10 @@ export default function CMSAdmin() {
                             <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.heroVideo ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
                               {course.heroVideo ? '✓ Video' : '✗ No Video'}
                             </span>
-                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.outline && course.outline.length > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.outline && course.outline.length > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20'}`}>
                               {course.outline && course.outline.length > 0 ? `✓ ${course.outline.length} Modules` : '⚠ No Outline'}
                             </span>
-                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.faqs && course.faqs.length > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.faqs && course.faqs.length > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20'}`}>
                               {course.faqs && course.faqs.length > 0 ? `✓ ${course.faqs.length} FAQs` : '⚠ No FAQs'}
                             </span>
                           </div>
@@ -1039,7 +1071,7 @@ export default function CMSAdmin() {
                         <div className="flex flex-col gap-1.5 flex-shrink-0">
                           <button
                             onClick={() => openCourseModal(course)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-amber-400 hover:text-white hover:bg-amber-500 rounded-lg transition-colors cursor-pointer text-[10px] font-bold uppercase whitespace-nowrap"
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-[#C5A964] hover:text-white hover:bg-[#AE8C45] rounded-lg transition-colors cursor-pointer text-[10px] font-bold uppercase whitespace-nowrap"
                             title="Edit Basic Info"
                           >
                             <Edit className="h-3 w-3" /> Edit
@@ -1061,7 +1093,7 @@ export default function CMSAdmin() {
                           className="p-3 text-left hover:bg-slate-900 transition-colors group"
                         >
                           <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Overview & Video</span>
-                          <span className="block text-xs text-slate-300 group-hover:text-amber-400 transition-colors truncate">
+                          <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors truncate">
                             {course.overview ? course.overview.slice(0, 40) + '...' : '⚠ Click to add overview'}
                           </span>
                         </button>
@@ -1070,7 +1102,7 @@ export default function CMSAdmin() {
                           className="p-3 text-left hover:bg-slate-900 transition-colors group"
                         >
                           <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Syllabus & Careers</span>
-                          <span className="block text-xs text-slate-300 group-hover:text-amber-400 transition-colors">
+                          <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
                             {course.syllabus?.length > 0 ? `${course.syllabus.length} learning points` : '⚠ Click to add syllabus'}
                           </span>
                         </button>
@@ -1079,7 +1111,7 @@ export default function CMSAdmin() {
                           className="p-3 text-left hover:bg-slate-900 transition-colors group"
                         >
                           <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Module Outline</span>
-                          <span className="block text-xs text-slate-300 group-hover:text-amber-400 transition-colors">
+                          <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
                             {course.outline?.length > 0 ? `${course.outline.length} modules defined` : '⚠ Click to add modules'}
                           </span>
                         </button>
@@ -1088,7 +1120,7 @@ export default function CMSAdmin() {
                           className="p-3 text-left hover:bg-slate-900 transition-colors group"
                         >
                           <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Course FAQs</span>
-                          <span className="block text-xs text-slate-300 group-hover:text-amber-400 transition-colors">
+                          <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
                             {course.faqs?.length > 0 ? `${course.faqs.length} FAQs saved` : '⚠ Click to add FAQs'}
                           </span>
                         </button>
@@ -1104,7 +1136,7 @@ export default function CMSAdmin() {
             {cmsTab === 'admissions' && (
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-850 pb-4 gap-4">
-                  <h2 className="font-serif text-xl font-bold text-amber-400">
+                  <h2 className="font-serif text-xl font-bold text-[#C5A964]">
                     Student Admissions Panel
                   </h2>
                   
@@ -1156,7 +1188,7 @@ export default function CMSAdmin() {
                         <tbody>
                           {filteredAdmissions.map((adm) => (
                             <tr key={adm.id} className="border-b border-slate-900/50 hover:bg-slate-900/30">
-                              <td className="py-2.5 px-2 font-mono font-bold text-amber-500">{adm.id}</td>
+                              <td className="py-2.5 px-2 font-mono font-bold text-[#C5A964]">{adm.id}</td>
                               <td className="py-2.5 px-2">
                                 <span className="block font-semibold text-slate-200">{adm.studentName}</span>
                                 <span className="block text-[10px] text-slate-500">{adm.phone}</span>
@@ -1168,7 +1200,7 @@ export default function CMSAdmin() {
                                     <span className="text-slate-400">Fee: PKR {(adm.tuitionFee || 0).toLocaleString()}</span>
                                     <span className="text-slate-400">Reg: PKR {(adm.regFee || 0).toLocaleString()}</span>
                                     {(adm.discountAmount || 0) > 0 && (
-                                      <span className="text-amber-500 font-bold bg-amber-500/10 px-1 rounded">
+                                      <span className="text-[#C5A964] font-bold bg-[#AE8C45]/10 px-1 rounded">
                                         Discount: -PKR {(adm.discountAmount || 0).toLocaleString()}
                                       </span>
                                     )}
@@ -1187,7 +1219,7 @@ export default function CMSAdmin() {
                                         📎 Yes
                                       </span>
                                     ) : (
-                                      <span className="text-[10px] font-bold text-amber-500 flex items-center gap-0.5" title="Slip File is NOT Uploaded">
+                                      <span className="text-[10px] font-bold text-[#C5A964] flex items-center gap-0.5" title="Slip File is NOT Uploaded">
                                         ○ No Slip
                                       </span>
                                     )}
@@ -1197,7 +1229,7 @@ export default function CMSAdmin() {
                                     <span className={`text-[11px] font-bold ${
                                       adm.feeStatus === 'Paid' ? 'text-emerald-400' :
                                       adm.feeStatus === 'Uploaded' ? 'text-cyan-400 font-semibold blink' :
-                                      'text-amber-500 font-semibold'
+                                      'text-[#C5A964] font-semibold'
                                     }`}>
                                       {adm.feeStatus === 'Paid' ? 'Verified & Paid' :
                                        adm.feeStatus === 'Uploaded' ? 'Receipt Uploaded' :
@@ -1209,7 +1241,7 @@ export default function CMSAdmin() {
                               <td className="py-2.5 px-2 text-center">
                                 <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                                   adm.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                  adm.status === 'Hold' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                  adm.status === 'Hold' ? 'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20' :
                                   adm.status === 'Rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
                                   'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                                 }`}>
@@ -1227,7 +1259,7 @@ export default function CMSAdmin() {
                                     setSelectedFeeStatus(adm.feeStatus || 'Pending');
                                     setResendInvoiceMessage(null);
                                   }}
-                                  className="inline-flex items-center space-x-1 bg-slate-900 border border-slate-800 text-amber-500 hover:text-slate-950 hover:bg-amber-500 px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                                  className="inline-flex items-center space-x-1 bg-slate-900 border border-slate-800 text-[#C5A964] hover:text-[#0C1B2C] hover:bg-[#AE8C45] px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
                                   <span>View & Process</span>
@@ -1247,7 +1279,7 @@ export default function CMSAdmin() {
             {cmsTab === 'fees' && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800 flex items-center justify-between">
+                  <h2 className="font-serif text-xl font-bold text-[#C5A964] pb-2 border-b border-slate-800 flex items-center justify-between">
                     <span>Student Fee Management</span>
                     <span className="text-sm font-sans text-slate-400 bg-slate-900 px-3 py-1 rounded-full border border-slate-800">
                       Total Records: {admissions.length}
@@ -1284,7 +1316,7 @@ export default function CMSAdmin() {
                             </td>
                             <td className="py-3 px-4">
                               <div className="flex flex-col">
-                                <span className="font-bold text-amber-500">
+                                <span className="font-bold text-[#C5A964]">
                                   {((adm.tuitionFee || 0) + (adm.regFee || 0) - (adm.discountAmount || 0)).toLocaleString()}
                                 </span>
                                 {(adm.discountAmount || 0) > 0 && (
@@ -1307,7 +1339,7 @@ export default function CMSAdmin() {
                               <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
                                 adm.feeStatus === 'Paid' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                                 adm.feeStatus === 'Uploaded' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 blink' :
-                                'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20'
                               }`}>
                                 {adm.feeStatus === 'Paid' ? 'Verified' :
                                  adm.feeStatus === 'Uploaded' ? 'Reviewing' :
@@ -1325,7 +1357,7 @@ export default function CMSAdmin() {
                                   setSelectedFeeStatus(adm.feeStatus || 'Pending');
                                   setResendInvoiceMessage(null);
                                 }}
-                                className="inline-flex items-center space-x-1 bg-slate-900 border border-slate-800 text-amber-500 hover:text-slate-950 hover:bg-amber-500 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                                className="inline-flex items-center space-x-1 bg-slate-900 border border-slate-800 text-[#C5A964] hover:text-[#0C1B2C] hover:bg-[#AE8C45] px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
                               >
                                 <Eye className="h-3.5 w-3.5" />
                                 <span>View Detail</span>
@@ -1353,7 +1385,7 @@ export default function CMSAdmin() {
                 
                 {/* Section A: Gallery Curator */}
                 <div className="space-y-4">
-                  <h2 className="font-serif text-lg font-bold text-amber-400 pb-2 border-b border-slate-800">
+                  <h2 className="font-serif text-lg font-bold text-[#C5A964] pb-2 border-b border-slate-800">
                     Curate Kitchen Photo Gallery
                   </h2>
                   <form onSubmit={handleAddGallery} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-slate-950 p-4 rounded-xl border border-slate-850">
@@ -1397,7 +1429,7 @@ export default function CMSAdmin() {
                           type="button"
                           onClick={() => galleryFileRef.current?.click()}
                           disabled={isGalleryUploading}
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 rounded text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 whitespace-nowrap"
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-[#AE8C45]/10 hover:bg-[#AE8C45]/20 border border-[#AE8C45]/30 text-[#C5A964] rounded text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 whitespace-nowrap"
                         >
                           {isGalleryUploading ? <><span className="animate-spin inline-block">⏳</span> Uploading...</> : <><Upload className="h-3 w-3" /> Upload</>}
                         </button>
@@ -1411,14 +1443,14 @@ export default function CMSAdmin() {
                       </div>
                       {newGallery.image && (
                         <div className="flex items-center gap-1 mt-1">
-                          <img src={newGallery.image} alt="preview" className="h-8 w-8 rounded object-cover border border-amber-500/30" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                          <img src={newGallery.image} alt="preview" className="h-8 w-8 rounded object-cover border border-[#AE8C45]/30" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
                           <span className="text-[9px] text-emerald-400 font-bold">✓ Ready</span>
                         </div>
                       )}
                     </div>
                     <button
                       type="submit"
-                      className="sm:col-span-2 bg-amber-500 text-slate-950 py-2 rounded-lg text-xs font-bold uppercase"
+                      className="sm:col-span-2 bg-[#AE8C45] text-[#0C1B2C] py-2 rounded-lg text-xs font-bold uppercase"
                     >
                       Add Photo
                     </button>
@@ -1442,7 +1474,7 @@ export default function CMSAdmin() {
 
                 {/* Section B: Testimonials Curator */}
                 <div className="space-y-4">
-                  <h2 className="font-serif text-lg font-bold text-amber-400 pb-2 border-b border-slate-800">
+                  <h2 className="font-serif text-lg font-bold text-[#C5A964] pb-2 border-b border-slate-800">
                     Curate Student Reviews (Testimonials)
                   </h2>
                   <form onSubmit={handleAddTestimonial} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-slate-950 p-4 rounded-xl border border-slate-850 font-sans text-xs">
@@ -1517,7 +1549,7 @@ export default function CMSAdmin() {
                           type="button"
                           onClick={() => testimonialImgRef.current?.click()}
                           disabled={isTestimonialImgUploading}
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 rounded text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 whitespace-nowrap"
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-[#AE8C45]/10 hover:bg-[#AE8C45]/20 border border-[#AE8C45]/30 text-[#C5A964] rounded text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 whitespace-nowrap"
                         >
                           {isTestimonialImgUploading ? <><span className="animate-spin inline-block">⏳</span> Uploading...</> : <><Upload className="h-3 w-3" /> Upload Photo</>}
                         </button>
@@ -1531,14 +1563,14 @@ export default function CMSAdmin() {
                       </div>
                       {newTestimonial.image && (
                         <div className="flex items-center gap-1 mt-1">
-                          <img src={newTestimonial.image} alt="preview" className="h-8 w-8 rounded-full object-cover border border-amber-500/30" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                          <img src={newTestimonial.image} alt="preview" className="h-8 w-8 rounded-full object-cover border border-[#AE8C45]/30" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
                           <span className="text-[9px] text-emerald-400 font-bold">✓ Photo ready</span>
                         </div>
                       )}
                     </div>
                     <button
                       type="submit"
-                      className="sm:col-span-2 bg-amber-500 text-slate-950 font-bold py-2 rounded-lg text-xs uppercase"
+                      className="sm:col-span-2 bg-[#AE8C45] text-[#0C1B2C] font-bold py-2 rounded-lg text-xs uppercase"
                     >
                       Save Review
                     </button>
@@ -1573,7 +1605,7 @@ export default function CMSAdmin() {
               <div className="space-y-8 font-sans text-xs sm:text-sm">
                 
                 <div>
-                  <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800">
+                  <h2 className="font-serif text-xl font-bold text-[#C5A964] pb-2 border-b border-slate-800">
                     CMS System Settings
                   </h2>
                   <p className="text-slate-400 text-xs mt-2 font-light">
@@ -1583,7 +1615,7 @@ export default function CMSAdmin() {
 
                 {/* SECTION 1: DYNAMIC ADMISSION PLANS & FEE HEADS */}
                 <div className="space-y-6">
-                  <div className="border-l-2 border-amber-500 pl-3">
+                  <div className="border-l-2 border-[#AE8C45] pl-3">
                     <h3 className="text-white font-bold uppercase tracking-wider text-xs">
                       Course Programs, Durations & Fee Heads Editor
                     </h3>
@@ -1605,7 +1637,7 @@ export default function CMSAdmin() {
                             {/* Course plan header */}
                             <div className="bg-slate-900/60 border-b border-slate-900 px-4 py-3 flex justify-between items-center">
                               <div className="flex items-center space-x-2">
-                                <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                                <span className="h-2 w-2 rounded-full bg-[#AE8C45]"></span>
                                 <span className="font-serif text-sm font-bold text-slate-200">{courseName} Program</span>
                               </div>
                               <button
@@ -1676,7 +1708,7 @@ export default function CMSAdmin() {
                                                 className="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-white font-mono max-w-[90px]"
                                               />
                                             ) : (
-                                              <span className="text-amber-500 font-mono font-semibold">PKR {plan.regFee.toLocaleString()}</span>
+                                              <span className="text-[#C5A964] font-mono font-semibold">PKR {plan.regFee.toLocaleString()}</span>
                                             )}
                                           </td>
 
@@ -1721,7 +1753,7 @@ export default function CMSAdmin() {
                                                     setEditingPlanKey(`${courseName}-${idx}`);
                                                     setEditingPlanData({ duration: plan.duration, fee: plan.fee, regFee: plan.regFee, detail: plan.detail });
                                                   }}
-                                                  className="text-amber-500 hover:text-white p-1"
+                                                  className="text-[#C5A964] hover:text-white p-1"
                                                   title="Edit plan"
                                                 >
                                                   <Edit className="h-3.5 w-3.5" />
@@ -1794,7 +1826,7 @@ export default function CMSAdmin() {
                                       <td className="py-3 px-3 text-right">
                                         <button
                                           onClick={() => handleAddPlanRow(courseName)}
-                                          className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1.5 rounded font-bold uppercase text-[10px] flex items-center space-x-1 ml-auto"
+                                          className="bg-[#AE8C45] hover:bg-[#AE8C45] text-[#0C1B2C] px-3 py-1.5 rounded font-bold uppercase text-[10px] flex items-center space-x-1 ml-auto"
                                         >
                                           <Plus className="h-3 w-3 stroke-[3]" />
                                           <span>Add Plan</span>
@@ -1817,7 +1849,7 @@ export default function CMSAdmin() {
 
                   {/* ADD NEW COURSE PROGRAM FORM */}
                   <form onSubmit={handleAddNewCourseCategory} className="bg-slate-950 border border-slate-900 p-5 rounded-xl space-y-4 max-w-xl">
-                    <span className="block font-bold text-amber-500 uppercase tracking-wider text-xs">
+                    <span className="block font-bold text-[#C5A964] uppercase tracking-wider text-xs">
                       + Register New Course Program Category
                     </span>
                     <p className="text-slate-400 text-xs leading-relaxed font-light">
@@ -1830,11 +1862,11 @@ export default function CMSAdmin() {
                         required
                         value={newCourseName}
                         onChange={(e) => setNewCourseName(e.target.value)}
-                        className="bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 text-xs sm:text-sm flex-1 focus:border-amber-500/50 focus:outline-none"
+                        className="bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 text-xs sm:text-sm flex-1 focus:border-[#AE8C45]/50 focus:outline-none"
                       />
                       <button
                         type="submit"
-                        className="bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-lg hover:brightness-110 text-xs uppercase font-sans tracking-wide"
+                        className="bg-[#AE8C45] text-[#0C1B2C] font-bold px-4 py-2 rounded-lg hover:brightness-110 text-xs uppercase font-sans tracking-wide"
                       >
                         Add Category
                       </button>
@@ -1881,7 +1913,7 @@ export default function CMSAdmin() {
             {/* TAB: PAYMENT SETTINGS */}
             {cmsTab === 'payment' && (
               <div className="space-y-8 max-w-2xl">
-                <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800">
+                <h2 className="font-serif text-xl font-bold text-[#C5A964] pb-2 border-b border-slate-800">
                   Payment & Bank Account Settings
                 </h2>
                 <p className="text-xs text-slate-400">These details appear on the student's admission invoice. Update them here and they'll reflect immediately on all new invoices.</p>
@@ -1889,7 +1921,7 @@ export default function CMSAdmin() {
                 {/* Bank Account Section */}
                 <div className="bg-slate-950 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-lg">
                   <h3 className="font-sans font-bold text-base text-white flex items-center gap-2">
-                    <span className="text-amber-400">🏦</span> Bank Account Details
+                    <span className="text-[#C5A964]">🏦</span> Bank Account Details
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1900,7 +1932,7 @@ export default function CMSAdmin() {
                         value={paymentSettings.bankName}
                         onChange={e => setPaymentSettings(p => ({ ...p, bankName: e.target.value }))}
                         placeholder="e.g. Bank Alfalah Ltd"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1910,7 +1942,7 @@ export default function CMSAdmin() {
                         value={paymentSettings.accountTitle}
                         onChange={e => setPaymentSettings(p => ({ ...p, accountTitle: e.target.value }))}
                         placeholder="e.g. The Chef's Academy"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1920,7 +1952,7 @@ export default function CMSAdmin() {
                         value={paymentSettings.accountNumber}
                         onChange={e => setPaymentSettings(p => ({ ...p, accountNumber: e.target.value }))}
                         placeholder="e.g. 5502-9018274619"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1930,7 +1962,7 @@ export default function CMSAdmin() {
                         value={paymentSettings.iban}
                         onChange={e => setPaymentSettings(p => ({ ...p, iban: e.target.value }))}
                         placeholder="e.g. PK36ALFA0123456789012345"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                   </div>
@@ -1939,7 +1971,7 @@ export default function CMSAdmin() {
                 {/* Mobile Wallet Section */}
                 <div className="bg-slate-950 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-lg">
                   <h3 className="font-sans font-bold text-base text-white flex items-center gap-2">
-                    <span className="text-amber-400">📱</span> Mobile Wallet (JazzCash / Easypaisa)
+                    <span className="text-[#C5A964]">📱</span> Mobile Wallet (JazzCash / Easypaisa)
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1950,7 +1982,7 @@ export default function CMSAdmin() {
                         value={paymentSettings.mobileName}
                         onChange={e => setPaymentSettings(p => ({ ...p, mobileName: e.target.value }))}
                         placeholder="e.g. JazzCash / Easypaisa"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1960,7 +1992,7 @@ export default function CMSAdmin() {
                         value={paymentSettings.mobileNumber}
                         onChange={e => setPaymentSettings(p => ({ ...p, mobileNumber: e.target.value }))}
                         placeholder="e.g. 0333-9123456"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm font-mono focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1970,7 +2002,7 @@ export default function CMSAdmin() {
                         value={paymentSettings.mobileTitle}
                         onChange={e => setPaymentSettings(p => ({ ...p, mobileTitle: e.target.value }))}
                         placeholder="e.g. The Chef's Academy"
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                   </div>
@@ -1986,7 +2018,7 @@ export default function CMSAdmin() {
                     setPaymentSaveMsg('✅ Payment settings saved successfully!');
                     setTimeout(() => setPaymentSaveMsg(''), 4000);
                   }}
-                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                  className="flex items-center gap-2 bg-[#AE8C45] hover:bg-[#AE8C45] text-[#0C1B2C] font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
                 >
                   <Save className="h-4 w-4" />
                   Save Payment Settings
@@ -1998,7 +2030,7 @@ export default function CMSAdmin() {
             {cmsTab === 'popup' && (
               <div className="space-y-6 max-w-2xl">
                 <div>
-                  <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800 flex items-center gap-2">
+                  <h2 className="font-serif text-xl font-bold text-[#C5A964] pb-2 border-b border-slate-800 flex items-center gap-2">
                     <Megaphone className="h-5 w-5" />
                     Popup Announcement Settings
                   </h2>
@@ -2015,7 +2047,7 @@ export default function CMSAdmin() {
                     <button
                       onClick={() => setPopupDraft(p => ({ ...p, enabled: !p.enabled }))}
                       className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none cursor-pointer ${
-                        popupDraft.enabled ? 'bg-amber-500' : 'bg-slate-700'
+                        popupDraft.enabled ? 'bg-[#AE8C45]' : 'bg-slate-700'
                       }`}
                     >
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
@@ -2032,7 +2064,7 @@ export default function CMSAdmin() {
                         type="date"
                         value={popupDraft.startDate}
                         onChange={e => setPopupDraft(p => ({ ...p, startDate: e.target.value }))}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -2041,7 +2073,7 @@ export default function CMSAdmin() {
                         type="date"
                         value={popupDraft.endDate}
                         onChange={e => setPopupDraft(p => ({ ...p, endDate: e.target.value }))}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50"
                       />
                     </div>
                   </div>
@@ -2058,7 +2090,7 @@ export default function CMSAdmin() {
                       value={popupDraft.title}
                       onChange={e => setPopupDraft(p => ({ ...p, title: e.target.value }))}
                       placeholder="e.g. Admissions Now Open!"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50"
                     />
                   </div>
 
@@ -2069,7 +2101,7 @@ export default function CMSAdmin() {
                       onChange={e => setPopupDraft(p => ({ ...p, content: e.target.value }))}
                       rows={5}
                       placeholder="Describe the announcement in detail. e.g. which courses are open, batch dates, seat limits..."
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 resize-y"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50 resize-y"
                     />
                     <p className="text-slate-600 text-[10px]">Tip: Use a new line to separate information.</p>
                   </div>
@@ -2081,7 +2113,7 @@ export default function CMSAdmin() {
                       value={popupDraft.image}
                       onChange={e => setPopupDraft(p => ({ ...p, image: e.target.value }))}
                       placeholder="Paste an image URL to show at the top of the popup"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 font-mono"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50 font-mono"
                     />
                   </div>
 
@@ -2092,15 +2124,15 @@ export default function CMSAdmin() {
                       value={popupDraft.link}
                       onChange={e => setPopupDraft(p => ({ ...p, link: e.target.value }))}
                       placeholder="Leave blank to open the Admission Portal, or paste a URL"
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-amber-500/50 font-mono"
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#AE8C45]/50 font-mono"
                     />
                     <p className="text-slate-600 text-[10px]">Leave blank → opens admission portal. Paste an external URL → opens in new tab.</p>
                   </div>
                 </div>
 
                 {/* Live Preview badge */}
-                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 text-xs text-amber-300/80 leading-relaxed">
-                  <strong className="text-amber-400">How it works:</strong> When enabled and the current date is within the start/end range, the popup will automatically appear for every visitor when they open the website. They must click Close or the X button before they can scroll through the page.
+                <div className="bg-[#AE8C45]/5 border border-[#AE8C45]/20 rounded-xl p-4 text-xs text-amber-300/80 leading-relaxed">
+                  <strong className="text-[#C5A964]">How it works:</strong> When enabled and the current date is within the start/end range, the popup will automatically appear for every visitor when they open the website. They must click Close or the X button before they can scroll through the page.
                 </div>
 
                 {popupSaveMsg && (
@@ -2113,7 +2145,7 @@ export default function CMSAdmin() {
                     setPopupSaveMsg('✅ Popup settings saved successfully!');
                     setTimeout(() => setPopupSaveMsg(''), 4000);
                   }}
-                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
+                  className="flex items-center gap-2 bg-[#AE8C45] hover:bg-[#AE8C45] text-[#0C1B2C] font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer"
                 >
                   <Save className="h-4 w-4" />
                   Save Popup Settings
@@ -2121,9 +2153,340 @@ export default function CMSAdmin() {
               </div>
             )}
 
+            {/* TAB: TCA SHOP & INVENTORY */}
+            {cmsTab === 'shop' && (() => {
+              const now = new Date();
+              const startOfWeek = new Date(now);
+              startOfWeek.setDate(now.getDate() - now.getDay());
+              startOfWeek.setHours(0,0,0,0);
+              const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+              const filtered = purchaseRecords.filter(r => {
+                const d = new Date(r.date);
+                if (reportFilter === 'week') return d >= startOfWeek;
+                if (reportFilter === 'month') return d >= startOfMonth;
+                return true;
+              });
+              const totalExpense = filtered.reduce((s, r) => s + (r.cost || 0), 0);
+              const weekExpense = purchaseRecords.filter(r => new Date(r.date) >= startOfWeek).reduce((s,r)=>s+r.cost,0);
+              const monthExpense = purchaseRecords.filter(r => new Date(r.date) >= startOfMonth).reduce((s,r)=>s+r.cost,0);
+
+              return (
+                <div className="space-y-6 font-sans">
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                    <div>
+                      <h2 className="font-serif text-xl font-bold text-[#C5A964] flex items-center gap-2">
+                        <ShoppingBag className="h-5 w-5" /> TCA Shop & Inventory
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-0.5">Track purchases, manage stock levels & generate expense reports</p>
+                    </div>
+                    {/* Sub-tab switcher */}
+                    <div className="flex gap-2">
+                      {(['inventory','purchases','report'] as const).map(t => (
+                        <button key={t} onClick={() => setShopSubTab(t)}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${shopSubTab===t ? 'bg-[#AE8C45] text-[#0C1B2C]' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+                          {t === 'inventory' ? '📦 Inventory' : t === 'purchases' ? '🛒 Purchases' : '📊 Report'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-1">
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Items in Stock</p>
+                      <p className="text-2xl font-bold text-white font-serif">{inventoryItems.length}</p>
+                    </div>
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-1">
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Total Purchases</p>
+                      <p className="text-2xl font-bold text-white font-serif">{purchaseRecords.length}</p>
+                    </div>
+                    <div className="bg-slate-950 border border-[#AE8C45]/30 rounded-xl p-4 space-y-1">
+                      <p className="text-[10px] text-[#C5A964] uppercase tracking-wider">This Week Spent</p>
+                      <p className="text-2xl font-bold text-[#C5A964] font-serif">Rs {weekExpense.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-slate-950 border border-[#AE8C45]/30 rounded-xl p-4 space-y-1">
+                      <p className="text-[10px] text-[#C5A964] uppercase tracking-wider">This Month Spent</p>
+                      <p className="text-2xl font-bold text-[#C5A964] font-serif">Rs {monthExpense.toLocaleString()}</p>
+                    </div>
+                  </div>
+
+                  {/* ===== INVENTORY SUB-TAB ===== */}
+                  {shopSubTab === 'inventory' && (
+                    <div className="space-y-5">
+                      {/* Add Item Form */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
+                        <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider flex items-center gap-2"><Plus className="h-4 w-4"/>Add New Item to Inventory</h3>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <input value={newInventoryItem.name} onChange={e=>setNewInventoryItem(p=>({...p,name:e.target.value}))}
+                            placeholder="Item Name *" className="col-span-2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
+                          <input value={newInventoryItem.category} onChange={e=>setNewInventoryItem(p=>({...p,category:e.target.value}))}
+                            placeholder="Category (e.g. Ingredients)" className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
+                          <div className="flex gap-2">
+                            <input type="number" min="0" value={newInventoryItem.quantity} onChange={e=>setNewInventoryItem(p=>({...p,quantity:+e.target.value}))}
+                              placeholder="Qty" className="w-1/2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
+                            <input value={newInventoryItem.unit} onChange={e=>setNewInventoryItem(p=>({...p,unit:e.target.value}))}
+                              placeholder="Unit" className="w-1/2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
+                          </div>
+                        </div>
+                        <button onClick={async()=>{
+                          if(!newInventoryItem.name.trim()) return;
+                          await addInventoryItem(newInventoryItem);
+                          setNewInventoryItem({name:'',category:'',quantity:0,unit:'pcs'});
+                        }} className="inline-flex items-center gap-2 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold text-xs px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                          <Plus className="h-3 w-3"/> Add to Inventory
+                        </button>
+                      </div>
+
+                      {/* Stock Adjust Modal */}
+                      {stockAdjustItem && (
+                        <div className="bg-slate-950 border border-[#AE8C45]/40 rounded-xl p-5 space-y-3">
+                          <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider">Adjust Stock: <span className="text-white">{stockAdjustItem.name}</span></h3>
+                          <div className="flex gap-3 items-center flex-wrap">
+                            <div className="flex rounded-lg overflow-hidden border border-slate-700">
+                              <button onClick={()=>setStockAdjustMode('add')} className={`px-3 py-1.5 text-xs font-bold cursor-pointer ${stockAdjustMode==='add'?'bg-emerald-600 text-white':'bg-slate-900 text-slate-400'}`}>+ Add</button>
+                              <button onClick={()=>setStockAdjustMode('remove')} className={`px-3 py-1.5 text-xs font-bold cursor-pointer ${stockAdjustMode==='remove'?'bg-red-600 text-white':'bg-slate-900 text-slate-400'}`}>− Remove</button>
+                            </div>
+                            <input type="number" min="1" value={stockAdjustQty} onChange={e=>setStockAdjustQty(+e.target.value)}
+                              className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#AE8C45]" />
+                            <span className="text-xs text-slate-400">Current: <strong className="text-white">{stockAdjustItem.quantity} {stockAdjustItem.unit}</strong></span>
+                            <button onClick={async()=>{
+                              const newQty = stockAdjustMode==='add' ? stockAdjustItem.quantity + stockAdjustQty : Math.max(0, stockAdjustItem.quantity - stockAdjustQty);
+                              await updateInventoryItem({...stockAdjustItem, quantity: newQty});
+                              setStockAdjustItem(null); setStockAdjustQty(0);
+                            }} className="inline-flex items-center gap-1 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold text-xs px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                              <Save className="h-3 w-3"/> Confirm
+                            </button>
+                            <button onClick={()=>{setStockAdjustItem(null);setStockAdjustQty(0);}} className="text-slate-400 hover:text-white text-xs cursor-pointer">Cancel</button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Inventory Table */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+                        <table className="w-full text-xs">
+                          <thead className="bg-slate-900 border-b border-slate-800">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase tracking-wider">Item</th>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase tracking-wider">Category</th>
+                              <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase tracking-wider">Qty</th>
+                              <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase tracking-wider">Unit</th>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase tracking-wider">Last Updated</th>
+                              <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase tracking-wider">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {inventoryItems.length === 0 ? (
+                              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-600 italic">No items in inventory yet. Add your first item above.</td></tr>
+                            ) : inventoryItems.map(item => (
+                              <tr key={item.id} className="hover:bg-slate-900/50 transition-colors">
+                                <td className="px-4 py-3 text-white font-medium">{item.name}</td>
+                                <td className="px-4 py-3 text-slate-400">{item.category || '—'}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <span className={`font-bold text-sm ${item.quantity < 5 ? 'text-red-400' : item.quantity < 20 ? 'text-amber-400' : 'text-emerald-400'}`}>{item.quantity}</span>
+                                </td>
+                                <td className="px-4 py-3 text-center text-slate-400">{item.unit}</td>
+                                <td className="px-4 py-3 text-slate-500">{new Date(item.lastUpdated).toLocaleDateString()}</td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <button onClick={()=>{setStockAdjustItem(item);setStockAdjustQty(0);setStockAdjustMode('add');}}
+                                      className="text-[#C5A964] hover:text-[#AE8C45] cursor-pointer" title="Adjust Stock"><Package className="h-4 w-4"/></button>
+                                    <button onClick={()=>deleteInventoryItem(item.id)}
+                                      className="text-red-400 hover:text-red-300 cursor-pointer" title="Delete"><Trash2 className="h-4 w-4"/></button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===== PURCHASES SUB-TAB ===== */}
+                  {shopSubTab === 'purchases' && (
+                    <div className="space-y-5">
+                      {/* Add Purchase Form */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
+                        <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider flex items-center gap-2"><ShoppingCart className="h-4 w-4"/>Record New Purchase</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Item Name *</label>
+                            <input list="inv-items-list" value={newPurchase.itemName} onChange={e=>setNewPurchase(p=>({...p,itemName:e.target.value}))}
+                              placeholder="Type or select from inventory..." className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
+                            <datalist id="inv-items-list">{inventoryItems.map(i=><option key={i.id} value={i.name}/>)}</datalist>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Cost (Rs) *</label>
+                            <input type="number" min="0" value={newPurchase.cost} onChange={e=>setNewPurchase(p=>({...p,cost:+e.target.value}))}
+                              placeholder="0" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Quantity Purchased</label>
+                            <div className="flex gap-2">
+                              <input type="number" min="0" value={newPurchase.quantityAdded} onChange={e=>setNewPurchase(p=>({...p,quantityAdded:+e.target.value}))}
+                                className="w-2/3 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#AE8C45]" />
+                              <input value={newPurchase.unit} onChange={e=>setNewPurchase(p=>({...p,unit:e.target.value}))}
+                                placeholder="Unit" className="w-1/3 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Purchased By</label>
+                            <input value={newPurchase.purchasedBy} onChange={e=>setNewPurchase(p=>({...p,purchasedBy:e.target.value}))}
+                              placeholder="Staff name" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
+                          </div>
+                        </div>
+                        <button onClick={async()=>{
+                          if(!newPurchase.itemName.trim() || !newPurchase.cost) return;
+                          await addPurchaseRecord(newPurchase);
+                          setNewPurchase({itemName:'',cost:0,quantityAdded:0,unit:'pcs',purchasedBy:''});
+                        }} className="inline-flex items-center gap-2 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold text-xs px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                          <Plus className="h-3 w-3"/> Record Purchase
+                        </button>
+                        <p className="text-[10px] text-slate-600 italic">* If the item exists in inventory, stock will be updated automatically.</p>
+                      </div>
+
+                      {/* Purchases Table */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-300">Recent Purchases</span>
+                          <span className="text-[10px] text-slate-500">{purchaseRecords.length} total records</span>
+                        </div>
+                        <table className="w-full text-xs">
+                          <thead className="bg-slate-900 border-b border-slate-800">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase tracking-wider">Date</th>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase tracking-wider">Item</th>
+                              <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase tracking-wider">Qty</th>
+                              <th className="px-4 py-3 text-right text-[10px] text-slate-400 uppercase tracking-wider">Cost</th>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase tracking-wider">By</th>
+                              <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase tracking-wider">Del</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {purchaseRecords.length === 0 ? (
+                              <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-600 italic">No purchases recorded yet.</td></tr>
+                            ) : purchaseRecords.map(rec => (
+                              <tr key={rec.id} className="hover:bg-slate-900/50 transition-colors">
+                                <td className="px-4 py-3 text-slate-400">{new Date(rec.date).toLocaleDateString()}</td>
+                                <td className="px-4 py-3 text-white font-medium">{rec.itemName}</td>
+                                <td className="px-4 py-3 text-center text-slate-300">{rec.quantityAdded} {rec.unit}</td>
+                                <td className="px-4 py-3 text-right font-bold text-[#C5A964]">Rs {rec.cost.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-slate-400">{rec.purchasedBy || '—'}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <button onClick={()=>deletePurchaseRecord(rec.id)} className="text-red-400 hover:text-red-300 cursor-pointer"><Trash2 className="h-4 w-4"/></button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===== REPORT SUB-TAB ===== */}
+                  {shopSubTab === 'report' && (
+                    <div className="space-y-5">
+                      {/* Filter */}
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-xs text-slate-400">Filter by:</span>
+                        {(['week','month','all'] as const).map(f => (
+                          <button key={f} onClick={()=>setReportFilter(f)}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${reportFilter===f?'bg-[#AE8C45] text-[#0C1B2C]':'bg-slate-800 text-slate-400 hover:text-white'}`}>
+                            {f === 'week' ? 'This Week' : f === 'month' ? 'This Month' : 'All Time'}
+                          </button>
+                        ))}
+                        <span className="ml-auto text-xs font-bold text-[#C5A964]">Total: Rs {totalExpense.toLocaleString()}</span>
+                      </div>
+
+                      {/* Summary Cards */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 text-center space-y-2">
+                          <BarChart2 className="h-6 w-6 text-[#C5A964] mx-auto"/>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Total Expense ({reportFilter === 'week' ? 'Week' : reportFilter === 'month' ? 'Month' : 'All'})</p>
+                          <p className="text-3xl font-bold text-white font-serif">Rs {totalExpense.toLocaleString()}</p>
+                        </div>
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 text-center space-y-2">
+                          <ShoppingCart className="h-6 w-6 text-[#C5A964] mx-auto"/>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Purchase Transactions</p>
+                          <p className="text-3xl font-bold text-white font-serif">{filtered.length}</p>
+                        </div>
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 text-center space-y-2">
+                          <TrendingUp className="h-6 w-6 text-[#C5A964] mx-auto"/>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Avg Cost / Purchase</p>
+                          <p className="text-3xl font-bold text-white font-serif">Rs {filtered.length ? Math.round(totalExpense / filtered.length).toLocaleString() : '0'}</p>
+                        </div>
+                      </div>
+
+                      {/* Category Breakdown */}
+                      {(() => {
+                        const byItem: Record<string, number> = {};
+                        filtered.forEach(r => { byItem[r.itemName] = (byItem[r.itemName] || 0) + r.cost; });
+                        const sorted = Object.entries(byItem).sort((a,b) => b[1] - a[1]);
+                        return sorted.length === 0 ? (
+                          <div className="text-center text-slate-600 py-8 italic text-xs">No purchases in this period.</div>
+                        ) : (
+                          <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-slate-800">
+                              <span className="text-xs font-bold text-slate-300">Expense Breakdown by Item</span>
+                            </div>
+                            <div className="divide-y divide-slate-800">
+                              {sorted.map(([name, cost]) => (
+                                <div key={name} className="flex items-center justify-between px-4 py-3">
+                                  <span className="text-xs text-white font-medium">{name}</span>
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-32 sm:w-48 bg-slate-800 rounded-full h-1.5">
+                                      <div className="bg-[#AE8C45] h-1.5 rounded-full" style={{width:`${Math.min(100,(cost/totalExpense)*100)}%`}}/>
+                                    </div>
+                                    <span className="text-xs font-bold text-[#C5A964] w-24 text-right">Rs {cost.toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Detailed Log */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-800">
+                          <span className="text-xs font-bold text-slate-300">Detailed Transaction Log</span>
+                        </div>
+                        <table className="w-full text-xs">
+                          <thead className="bg-slate-900 border-b border-slate-800">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Date</th>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Item</th>
+                              <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase">Qty</th>
+                              <th className="px-4 py-3 text-right text-[10px] text-slate-400 uppercase">Cost</th>
+                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">By</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800">
+                            {filtered.length === 0 ? (
+                              <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-600 italic">No records for selected period.</td></tr>
+                            ) : filtered.map(rec => (
+                              <tr key={rec.id} className="hover:bg-slate-900/50">
+                                <td className="px-4 py-3 text-slate-400">{new Date(rec.date).toLocaleDateString()}</td>
+                                <td className="px-4 py-3 text-white">{rec.itemName}</td>
+                                <td className="px-4 py-3 text-center text-slate-300">{rec.quantityAdded} {rec.unit}</td>
+                                <td className="px-4 py-3 text-right font-bold text-[#C5A964]">Rs {rec.cost.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-slate-400">{rec.purchasedBy || '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {cmsTab === 'settings' && (
               <div className="space-y-8 max-w-lg">
-                <h2 className="font-serif text-xl font-bold text-amber-400 pb-2 border-b border-slate-800">
+                <h2 className="font-serif text-xl font-bold text-[#C5A964] pb-2 border-b border-slate-800">
                   System Settings & Security
                 </h2>
                 
@@ -2140,7 +2503,7 @@ export default function CMSAdmin() {
                         type="password"
                         value={newPasscode}
                         onChange={(e) => setNewPasscode(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-[#AE8C45]/50"
                         required
                         minLength={5}
                       />
@@ -2152,7 +2515,7 @@ export default function CMSAdmin() {
                         type="password"
                         value={confirmPasscode}
                         onChange={(e) => setConfirmPasscode(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500/50"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-[#AE8C45]/50"
                         required
                         minLength={5}
                       />
@@ -2166,7 +2529,7 @@ export default function CMSAdmin() {
 
                     <button
                       type="submit"
-                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer w-full"
+                      className="bg-[#AE8C45] hover:bg-[#AE8C45] text-[#0C1B2C] font-bold px-4 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer w-full"
                     >
                       Update Passcode
                     </button>
@@ -2201,11 +2564,11 @@ export default function CMSAdmin() {
             >
               <div className="border-b border-slate-850 pb-3 flex justify-between items-center flex-wrap gap-2">
                 <div>
-                  <h3 className="font-serif text-xl font-bold text-amber-400">
+                  <h3 className="font-serif text-xl font-bold text-[#C5A964]">
                     {editingCourse ? `Editing: ${editingCourse.title}` : 'Create New Course'}
                   </h3>
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    Tabs marked <span className="text-amber-400 font-bold">🌐</span> control the public course detail page visible to students
+                    Tabs marked <span className="text-[#C5A964] font-bold">🌐</span> control the public course detail page visible to students
                   </p>
                 </div>
                 <span className="text-slate-500 text-xs font-mono bg-slate-900 px-2 py-1 rounded">Dynamic Page CMS</span>
@@ -2216,35 +2579,35 @@ export default function CMSAdmin() {
                 <button
                   type="button"
                   onClick={() => setCourseModalTab('basic')}
-                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'basic' ? 'border-b-2 border-amber-500 text-amber-500' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'basic' ? 'border-b-2 border-[#AE8C45] text-[#C5A964]' : 'text-slate-400 hover:text-white'}`}
                 >
                   Basic Info
                 </button>
                 <button
                   type="button"
                   onClick={() => setCourseModalTab('overview')}
-                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'overview' ? 'border-b-2 border-amber-500 text-amber-500' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'overview' ? 'border-b-2 border-[#AE8C45] text-[#C5A964]' : 'text-slate-400 hover:text-white'}`}
                 >
                   🌐 Overview & Video
                 </button>
                 <button
                   type="button"
                   onClick={() => setCourseModalTab('syllabus')}
-                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'syllabus' ? 'border-b-2 border-amber-500 text-amber-500' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'syllabus' ? 'border-b-2 border-[#AE8C45] text-[#C5A964]' : 'text-slate-400 hover:text-white'}`}
                 >
                   🌐 Syllabus & Careers
                 </button>
                 <button
                   type="button"
                   onClick={() => setCourseModalTab('outline')}
-                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'outline' ? 'border-b-2 border-amber-500 text-amber-500' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'outline' ? 'border-b-2 border-[#AE8C45] text-[#C5A964]' : 'text-slate-400 hover:text-white'}`}
                 >
                   🌐 Outline Modules ({courseOutline.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setCourseModalTab('faqs')}
-                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'faqs' ? 'border-b-2 border-amber-500 text-amber-500' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3.5 py-2 font-bold ${courseModalTab === 'faqs' ? 'border-b-2 border-[#AE8C45] text-[#C5A964]' : 'text-slate-400 hover:text-white'}`}
                 >
                   🌐 Course FAQs ({courseFaqs.length})
                 </button>
@@ -2360,7 +2723,7 @@ export default function CMSAdmin() {
                           type="button"
                           onClick={() => courseImgRef.current?.click()}
                           disabled={isCourseImgUploading}
-                          className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 rounded text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 whitespace-nowrap"
+                          className="flex items-center gap-1 px-2.5 py-1.5 bg-[#AE8C45]/10 hover:bg-[#AE8C45]/20 border border-[#AE8C45]/30 text-[#C5A964] rounded text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-50 whitespace-nowrap"
                         >
                           {isCourseImgUploading ? <><span className="animate-spin inline-block">⏳</span> Uploading...</> : <><Upload className="h-3 w-3" /> Upload</>}
                         </button>
@@ -2374,7 +2737,7 @@ export default function CMSAdmin() {
                       </div>
                       {courseFormData.image && (
                         <div className="flex items-center gap-1 mt-1">
-                          <img src={courseFormData.image} alt="preview" className="h-10 w-16 rounded object-cover border border-amber-500/30" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
+                          <img src={courseFormData.image} alt="preview" className="h-10 w-16 rounded object-cover border border-[#AE8C45]/30" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />
                           <span className="text-[9px] text-emerald-400 font-bold">✓ Banner ready</span>
                         </div>
                       )}
@@ -2386,7 +2749,7 @@ export default function CMSAdmin() {
                         <button
                           type="button"
                           onClick={handleAddShift}
-                          className="text-amber-500 hover:text-white text-[10px] uppercase font-bold"
+                          className="text-[#C5A964] hover:text-white text-[10px] uppercase font-bold"
                         >
                           + Add Shift Time
                         </button>
@@ -2448,7 +2811,7 @@ export default function CMSAdmin() {
                       <div className="flex items-center justify-between">
                         <label className="text-slate-300 font-bold uppercase text-[10px]">Promo / Hero Video *</label>
                         {courseFormData.heroVideo && (
-                          <span className="text-[10px] text-amber-500 font-mono bg-amber-500/10 px-2 py-0.5 rounded">
+                          <span className="text-[10px] text-[#C5A964] font-mono bg-[#AE8C45]/10 px-2 py-0.5 rounded">
                             Active Source Attached
                           </span>
                         )}
@@ -2462,7 +2825,7 @@ export default function CMSAdmin() {
                         onDrop={handleVideoDrop}
                         className={`border border-dashed rounded-lg p-5 text-center transition-all ${
                           videoDragActive 
-                            ? 'border-amber-500 bg-amber-500/5' 
+                            ? 'border-[#AE8C45] bg-[#AE8C45]/5' 
                             : 'border-slate-800 bg-slate-950/40 hover:bg-slate-950/80'
                         }`}
                       >
@@ -2488,7 +2851,7 @@ export default function CMSAdmin() {
                               type="button"
                               onClick={() => videoInputRef.current?.click()}
                               disabled={isVideoUploading}
-                              className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-500/20 text-slate-950 disabled:text-slate-500 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                              className="px-3.5 py-1.5 bg-[#AE8C45] hover:bg-[#AE8C45] disabled:bg-[#AE8C45]/20 text-[#0C1B2C] disabled:text-slate-500 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                             >
                               {isVideoUploading ? 'Uploading Video...' : 'Choose Video File'}
                             </button>
@@ -2570,7 +2933,7 @@ export default function CMSAdmin() {
                       <button
                         type="button"
                         onClick={handleAddOutlineModule}
-                        className="bg-amber-500 text-slate-950 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase hover:bg-amber-400"
+                        className="bg-[#AE8C45] text-[#0C1B2C] px-2.5 py-1 rounded-md text-[10px] font-bold uppercase hover:bg-[#AE8C45]"
                       >
                         + Add Module
                       </button>
@@ -2630,7 +2993,7 @@ export default function CMSAdmin() {
                       <button
                         type="button"
                         onClick={handleAddFaq}
-                        className="bg-amber-500 text-slate-950 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase hover:bg-amber-400"
+                        className="bg-[#AE8C45] text-[#0C1B2C] px-2.5 py-1 rounded-md text-[10px] font-bold uppercase hover:bg-[#AE8C45]"
                       >
                         + Add FAQ
                       </button>
@@ -2694,7 +3057,7 @@ export default function CMSAdmin() {
                     </button>
                     <button
                       type="submit"
-                      className="bg-amber-500 text-slate-950 font-bold px-5 py-2 rounded-lg hover:brightness-110 shadow-lg shadow-amber-500/10"
+                      className="bg-[#AE8C45] text-[#0C1B2C] font-bold px-5 py-2 rounded-lg hover:brightness-110 shadow-lg shadow-[#AE8C45]/10"
                     >
                       Save Course
                     </button>
@@ -2730,18 +3093,22 @@ export default function CMSAdmin() {
               {/* Receipt Header */}
               <div className="flex justify-between items-start border-b border-slate-850 pb-4">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-sans font-bold text-amber-500 uppercase tracking-widest">Enrollment Application Document</span>
-                  <h3 className="font-serif text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
-                    <span>THE CHEF'S ACADEMY PESHAWAR</span>
-                  </h3>
+                  <span className="text-[10px] font-sans font-bold text-[#C5A964] uppercase tracking-widest">Enrollment Application Document</span>
+                  <div className="font-display leading-[0.9] text-white">
+                    <div className="flex items-end gap-1">
+                      <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
+                      <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>
+                    </div>
+                    <div className="text-base text-[#F7F2DE] font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
+                  </div>
                   <span className="text-[10px] text-slate-500 block">Date Submitted: {new Date(selectedAdmission.createdAt).toLocaleDateString()}</span>
                 </div>
                 
                 <div className="text-right">
-                  <span className="block font-mono text-lg font-black text-amber-400">{selectedAdmission.id}</span>
+                  <span className="block font-mono text-lg font-black text-[#C5A964]">{selectedAdmission.id}</span>
                   <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider mt-1 ${
                     selectedAdmission.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/10' :
-                    selectedAdmission.status === 'Hold' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/10' :
+                    selectedAdmission.status === 'Hold' ? 'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/10' :
                     selectedAdmission.status === 'Rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/10' :
                     'bg-blue-500/10 text-blue-400 border border-blue-500/10'
                   }`}>
@@ -2755,7 +3122,7 @@ export default function CMSAdmin() {
                 
                 {/* Applied Course */}
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-900 space-y-2">
-                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">Course & Shift Choice</span>
+                  <span className="text-[10px] text-[#C5A964] font-bold uppercase tracking-wider block">Course & Shift Choice</span>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <span className="text-slate-500 text-xs block">Selected Culinary Course</span>
@@ -2770,7 +3137,7 @@ export default function CMSAdmin() {
 
                 {/* Student Personal Info */}
                 <div className="space-y-3">
-                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">Student Profile details</span>
+                  <span className="text-[10px] text-[#C5A964] font-bold uppercase tracking-wider block">Student Profile details</span>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-3 gap-x-4 text-xs sm:text-sm bg-slate-900/30 p-4 rounded-xl border border-slate-900">
                     <div>
                       <span className="text-slate-500 text-[10px] uppercase block">Full Name</span>
@@ -2818,13 +3185,13 @@ export default function CMSAdmin() {
                 {/* Payment Receipt / Verification */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-900 space-y-1.5">
-                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">Tuition Deposit Receipt</span>
+                    <span className="text-[10px] text-[#C5A964] font-bold uppercase tracking-wider block">Tuition Deposit Receipt</span>
                     <span className="text-slate-500 text-[10px] block">Receipt / Deposit Slip Trans ID:</span>
                     <span className="text-white font-mono font-bold block text-sm select-all">{selectedAdmission.receiptNumber || 'Not Uploaded'}</span>
                   </div>
 
                   <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-900 space-y-1.5">
-                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">Student Remarks Notes</span>
+                    <span className="text-[10px] text-[#C5A964] font-bold uppercase tracking-wider block">Student Remarks Notes</span>
                     <span className="text-slate-400 text-xs italic block leading-relaxed line-clamp-2">
                       {selectedAdmission.notes ? `"${selectedAdmission.notes}"` : 'No additional notes provided by student.'}
                     </span>
@@ -2833,7 +3200,7 @@ export default function CMSAdmin() {
 
                 {/* Fee & Discount Management Panel */}
                 <div className="bg-slate-900/60 p-5 rounded-xl border border-[#c19d53]/20 space-y-4">
-                  <div className="flex items-center space-x-2 text-amber-400 font-bold uppercase tracking-wider text-xs border-b border-slate-800 pb-2">
+                  <div className="flex items-center space-x-2 text-[#C5A964] font-bold uppercase tracking-wider text-xs border-b border-slate-800 pb-2">
                     <DollarSign className="h-4 w-4" />
                     <span>Fee Structure, Discount & Email Invoice dispatch</span>
                   </div>
@@ -2860,12 +3227,12 @@ export default function CMSAdmin() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-amber-500 uppercase text-[10px] font-bold block">Applied Student Discount (PKR)</label>
+                      <label className="text-[#C5A964] uppercase text-[10px] font-bold block">Applied Student Discount (PKR)</label>
                       <input
                         type="number"
                         value={selectedDiscount}
                         onChange={(e) => setSelectedDiscount(Number(e.target.value))}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-amber-200 font-bold"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-[#C5A964] font-bold"
                       />
                     </div>
 
@@ -2897,7 +3264,7 @@ export default function CMSAdmin() {
                     <button
                       type="button"
                       onClick={handleSaveAdmissionFees}
-                      className="flex-1 bg-[#c19d53] hover:bg-[#d4b065] text-slate-950 font-bold py-2.5 px-4 rounded-lg text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 cursor-pointer transition-colors"
+                      className="flex-1 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold py-2.5 px-4 rounded-lg text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 cursor-pointer transition-colors"
                     >
                       <span>Save Fee & Discount Changes</span>
                     </button>
@@ -2906,7 +3273,7 @@ export default function CMSAdmin() {
                       type="button"
                       disabled={isResendingInvoice}
                       onClick={handleResendInvoiceEmail}
-                      className="flex-1 bg-slate-950 hover:bg-slate-900 text-amber-400 hover:text-white font-bold py-2.5 px-4 rounded-lg text-xs uppercase tracking-wider border border-amber-500/30 hover:border-amber-500 flex items-center justify-center space-x-1.5 cursor-pointer transition-colors disabled:opacity-50"
+                      className="flex-1 bg-slate-950 hover:bg-slate-900 text-[#C5A964] hover:text-white font-bold py-2.5 px-4 rounded-lg text-xs uppercase tracking-wider border border-[#AE8C45]/30 hover:border-[#AE8C45] flex items-center justify-center space-x-1.5 cursor-pointer transition-colors disabled:opacity-50"
                     >
                       {isResendingInvoice ? (
                         <>
@@ -2944,11 +3311,11 @@ export default function CMSAdmin() {
                             className="w-full h-80 rounded border border-slate-800" 
                             title="PDF Receipt"
                           />
-                          <a href={selectedAdmission.receiptFile} target="_blank" rel="noreferrer" className="text-amber-500 hover:text-amber-400 text-xs inline-block underline">
+                          <a href={selectedAdmission.receiptFile} target="_blank" rel="noreferrer" className="text-[#C5A964] hover:text-[#C5A964] text-xs inline-block underline">
                             Open PDF in New Tab
                           </a>
                         </div>
-                      ) : (selectedAdmission.receiptFile.startsWith('data:image/') || selectedAdmission.receiptFile.startsWith('http') || selectedAdmission.receiptFile.startsWith('blob:')) ? (
+                      ) : (selectedAdmission.receiptFile.startsWith('data:image/') || selectedAdmission.receiptFile.startsWith('http') || selectedAdmission.receiptFile.startsWith('blob:') || selectedAdmission.receiptFile.startsWith('/') || selectedAdmission.receiptFile.match(/\.(jpeg|jpg|gif|png|webp)$/i)) ? (
                         <div className="w-full space-y-2 text-center">
                           <img 
                             src={selectedAdmission.receiptFile} 
@@ -2956,7 +3323,7 @@ export default function CMSAdmin() {
                             className="max-h-96 mx-auto object-contain w-auto h-auto rounded shadow-lg"
                             referrerPolicy="no-referrer"
                           />
-                          <a href={selectedAdmission.receiptFile} target="_blank" rel="noreferrer" className="text-amber-500 hover:text-amber-400 text-xs inline-block underline">
+                          <a href={selectedAdmission.receiptFile} target="_blank" rel="noreferrer" className="text-[#C5A964] hover:text-[#C5A964] text-xs inline-block underline">
                             Open Image in New Tab
                           </a>
                         </div>
@@ -2972,7 +3339,7 @@ export default function CMSAdmin() {
 
                 {/* Administrator Action Board */}
                 <div className="border-t border-slate-850 pt-5 space-y-4">
-                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider block">Registrar Action & Status Update</span>
+                  <span className="text-[10px] text-[#C5A964] font-bold uppercase tracking-wider block">Registrar Action & Status Update</span>
                   
                   <div className="space-y-2">
                     <label className="text-slate-500 text-xs block">Internal Staff Comments / Remarks:</label>
@@ -2996,7 +3363,7 @@ export default function CMSAdmin() {
                   <div className="flex flex-wrap gap-2 pt-2">
                     <button
                       onClick={() => handleProcessAdmission(selectedAdmission.id, 'Approved')}
-                      className="flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-3.5 py-2 rounded-lg text-xs uppercase"
+                      className="flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-500 text-[#0C1B2C] font-bold px-3.5 py-2 rounded-lg text-xs uppercase"
                     >
                       <CheckCircle className="h-4 w-4" />
                       <span>Approve (Enrol Student)</span>
@@ -3004,7 +3371,7 @@ export default function CMSAdmin() {
                     
                     <button
                       onClick={() => handleProcessAdmission(selectedAdmission.id, 'Hold')}
-                      className="flex items-center space-x-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3.5 py-2 rounded-lg text-xs uppercase"
+                      className="flex items-center space-x-1 bg-[#AE8C45] hover:bg-[#AE8C45] text-[#0C1B2C] font-bold px-3.5 py-2 rounded-lg text-xs uppercase"
                     >
                       <AlertCircle className="h-4 w-4" />
                       <span>Put on Hold</span>
@@ -3029,7 +3396,7 @@ export default function CMSAdmin() {
                   onClick={printAdmissionDoc}
                   className="flex items-center space-x-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700 px-4 py-2 rounded-xl text-xs font-bold uppercase transition-colors cursor-pointer"
                 >
-                  <Printer className="h-4 w-4 text-amber-500" />
+                  <Printer className="h-4 w-4 text-[#C5A964]" />
                   <span>Print Admission Form</span>
                 </button>
                 
@@ -3047,7 +3414,13 @@ export default function CMSAdmin() {
             <div id="print-only" className="hidden font-sans">
               <div className="text-center mb-6 border-b-2 border-black pb-4 flex flex-col items-center">
                 <img src="/logo.png" alt="Academy Logo" className="h-20 mb-2" />
-                <h1 className="text-2xl font-bold uppercase font-serif">The Chef's Academy</h1>
+                <div className="font-display leading-[0.9] text-slate-950 mb-1">
+                  <div className="flex items-end gap-1 justify-center">
+                    <span className="text-sm font-light">The</span>
+                    <span className="text-2xl font-medium leading-none">Chef's</span>
+                  </div>
+                  <div className="text-xl font-medium tracking-wide -mt-0.5 leading-none text-center">Academy</div>
+                </div>
                 <p className="text-sm">Admission Application Form</p>
                 <p className="text-sm font-bold mt-2">Tracking ID: {selectedAdmission.id}</p>
               </div>

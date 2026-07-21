@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAcademy } from '../context/AcademyContext';
 import { uploadFile } from '../lib/firebase';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { 
   GraduationCap, CheckCircle, ArrowLeft, ArrowRight, ClipboardCheck, 
   Landmark, CheckSquare, Search, SearchCode, ShieldCheck, User, 
   MapPin, Sparkles, ChevronRight, FileText, Upload, Printer, Mail, 
-  Loader2, AlertCircle, RefreshCw, FileImage
+  Loader2, AlertCircle, RefreshCw, FileImage, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -65,7 +67,7 @@ export default function AdmissionForm() {
     gender: 'Male',
     dateOfBirth: '',
     qualification: 'Intermediate (FSc/FA/ICom)',
-    city: 'Peshawar',
+    city: 'Lahore',
     address: '',
     notes: ''
   });
@@ -269,13 +271,13 @@ export default function AdmissionForm() {
       shift: formData.shift,
       city: formData.city,
       address: formData.address,
-      receiptNumber: '', // Emptied out for step-based payment slip upload later
-      notes: formData.notes
+      receiptNumber: '',
+      notes: formData.notes,
     });
 
     setSubmittedId(admissionId);
 
-    // Make API request to send email invoice
+    // Send email invoice
     try {
       const response = await window.fetch('/api/send-invoice', {
         method: 'POST',
@@ -292,32 +294,51 @@ export default function AdmissionForm() {
           regFee: activePlan.regFee,
           tuitionFee: activePlan.fee,
           totalFee: activePlan.fee + activePlan.regFee,
-          paymentSettings: websiteData?.paymentSettings
-        })
+          paymentSettings: websiteData?.paymentSettings,
+        }),
       });
 
       const resData = await response.json();
 
+      // Store invoice HTML regardless of outcome
+      setGeneratedInvoiceHtml(resData.invoiceHtml || '');
+      updateAdmissionInvoiceHtml(admissionId, resData.invoiceHtml || '');
+
       if (response.ok && resData.success) {
-        setGeneratedInvoiceHtml(resData.invoiceHtml || '');
-        updateAdmissionInvoiceHtml(admissionId, resData.invoiceHtml || '');
         setEmailMessage({
           type: 'success',
-          text: `Invoice sent successfully to ${formData.email}! Please check your Inbox / Spam folder.`
+          text: `Invoice sent successfully to ${formData.email}! Please check your Inbox / Spam folder.`,
         });
       } else {
-        throw new Error(resData.error || 'Failed to dispatch email.');
+        setEmailMessage({
+          type: 'error',
+          text: `Application saved, but we couldn't send the email automatically. You can download/print the invoice below.`,
+        });
       }
     } catch (err: any) {
       console.error(err);
       setEmailMessage({
         type: 'error',
-        text: `Application saved, but we couldn't send the email automatically. Feel free to download/print the invoice below.`
+        text: `Application saved, but an error occurred while sending the email. You can download/print the invoice below.`,
       });
     } finally {
       setIsSendingEmail(false);
-      setStep(4); // Success View
+      setStep(4);
     }
+  };
+
+  // Download Invoice as PDF
+  const handleDownloadPdf = async () => {
+    const element = document.getElementById('invoice-content');
+    if (!element) return;
+    const canvas = await html2canvas(element);
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Invoice-${submittedId || 'invoice'}.pdf`);
   };
 
   const handleSearchStatus = (e: React.FormEvent) => {
@@ -352,7 +373,7 @@ export default function AdmissionForm() {
       gender: 'Male',
       dateOfBirth: '',
       qualification: 'Intermediate (FSc/FA/ICom)',
-      city: 'Peshawar',
+      city: 'Lahore',
       address: '',
       notes: ''
     });
@@ -362,6 +383,8 @@ export default function AdmissionForm() {
     setGeneratedInvoiceHtml('');
     setEmailMessage(null);
   };
+
+
 
   const stepLabels = ['Course & Schedule', 'Personal Profile', 'Verify & Register'];
 
@@ -582,7 +605,7 @@ export default function AdmissionForm() {
                 )}
 
                 {/* Print-friendly Digital Invoice Section */}
-                <div className="border border-slate-800 rounded-2xl bg-white text-slate-900 p-6 sm:p-10 space-y-6 shadow-xl max-w-2xl mx-auto font-sans relative overflow-hidden">
+                <div id="invoice-content" className="border border-slate-800 rounded-2xl bg-white text-slate-900 p-6 sm:p-10 space-y-6 shadow-xl max-w-2xl mx-auto font-sans relative overflow-hidden">
                   
                   {/* Decorative stamp/watermark */}
                   <div className="absolute top-6 right-6 border-2 border-amber-500/25 text-amber-500/30 text-[10px] uppercase font-mono font-black py-1.5 px-4 rounded-lg transform rotate-12 select-none tracking-widest">
@@ -591,9 +614,15 @@ export default function AdmissionForm() {
 
                   <div className="flex justify-between items-start border-b border-slate-100 pb-5">
                     <div>
-                      <h4 className="font-serif text-xl font-bold tracking-tight text-slate-950 uppercase">The Chef's Academy</h4>
+                      <div className="font-display leading-[0.9] text-slate-950">
+                        <div className="flex items-end gap-1">
+                          <span className="text-[10px] text-slate-900 font-light">The</span>
+                          <span className="text-lg text-slate-900 font-medium leading-none">Chef's</span>
+                        </div>
+                        <div className="text-base text-slate-900 font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
+                      </div>
                       <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Professional Culinary Institute</p>
-                      <p className="text-[10px] text-slate-400 mt-2">Peshawar & Lahore Campuses, Pakistan</p>
+                      <p className="text-[10px] text-slate-400 mt-2">79-B3 Gulberg III, Lahore, Pakistan</p>
                     </div>
                     <div className="text-right">
                       <span className="text-[9px] uppercase tracking-wider text-slate-400 block">Admissions Invoice</span>
@@ -675,14 +704,14 @@ export default function AdmissionForm() {
                     </div>
                   </div>
 
-                  {/* Print and Save button for PDF */}
                   <div className="text-center pt-1 no-print">
                     <button
-                      onClick={() => window.print()}
+                      id="download-btn"
+                      onClick={handleDownloadPdf}
                       className="inline-flex items-center space-x-1.5 bg-slate-950 text-white hover:bg-amber-600 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                     >
-                      <Printer className="h-4 w-4 text-[#c19d53]" />
-                      <span>Print or Save Invoice as PDF</span>
+                      <Download className="h-4 w-4 text-[#c19d53]" />
+                      <span>Download Invoice</span>
                     </button>
                   </div>
                 </div>

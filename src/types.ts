@@ -202,3 +202,22 @@ export interface WebsiteData {
 }
 
 
+
+export interface InventoryItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  lastUpdated: string;
+}
+
+export interface PurchaseRecord {
+  id: string;
+  itemName: string;
+  cost: number;
+  date: string;
+  purchasedBy: string;
+  quantityAdded: number;
+  unit: string;
+}

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Course, Admission, Testimonial, GalleryItem, CoursePlans, CoursePlanItem, WebsiteData } from '../types';
+import { Course, Admission, Testimonial, GalleryItem, CoursePlans, CoursePlanItem, WebsiteData, InventoryItem, PurchaseRecord } from '../types';
 import { INITIAL_COURSES, INITIAL_TESTIMONIALS, INITIAL_GALLERY } from '../data/defaultData';
 import { INITIAL_WEBSITE_DATA } from '../data/websiteDefaultData';
 import { auth, db } from '../lib/firebase';
@@ -60,6 +60,13 @@ interface AcademyContextType {
   admissions: Admission[];
   testimonials: Testimonial[];
   gallery: GalleryItem[];
+  inventoryItems: InventoryItem[];
+  purchaseRecords: PurchaseRecord[];
+  addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => void;
+  updateInventoryItem: (item: InventoryItem) => void;
+  deleteInventoryItem: (id: string) => void;
+  addPurchaseRecord: (record: Omit<PurchaseRecord, 'id' | 'date'>) => void;
+  deletePurchaseRecord: (id: string) => void;
   coursePlans: CoursePlans;
   updateCoursePlans: (plans: CoursePlans) => void;
   activeView: 'home' | 'cms' | 'portal';
@@ -125,6 +132,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [admissions, setAdmissions] = useState<Admission[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([]);
   const [coursePlans, setCoursePlans] = useState<CoursePlans>({});
   const [activeView, setActiveView] = useState<'home' | 'cms' | 'portal'>('home');
   const [currentSection, setCurrentSection] = useState<'hero' | 'about' | 'courses' | 'admission' | 'gallery' | 'testimonials'>('hero');
@@ -145,6 +154,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     let unsubscribeAdmissions: (() => void) | null = null;
+    let unsubscribeInventory: (() => void) | null = null;
+    let unsubscribePurchases: (() => void) | null = null;
 
     const initFirebaseAndLoadData = async () => {
       // Step 1: Try Anonymous Auth (non-blocking - if it fails, Firestore still works with open rules)
@@ -165,6 +176,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const cachedTestimonials = getCacheItem<Testimonial[]>('cache_testimonials');
       const cachedGallery   = getCacheItem<GalleryItem[]>('cache_gallery');
       const cachedPasscode  = getCacheItem<string>('cache_admin_passcode');
+      const cachedInventory = localStorage.getItem('chef_inventory');
+      const cachedPurchases = localStorage.getItem('chef_purchases');
 
       const allCached = cachedWebsite && cachedPlans && cachedCourses && cachedTestimonials && cachedGallery;
       const allFresh  = allCached && !cachedWebsite.isStale && !cachedPlans.isStale && !cachedCourses.isStale && !cachedTestimonials.isStale && !cachedGallery.isStale;
@@ -177,6 +190,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setCourses(cachedCourses.data);
         setTestimonials(cachedTestimonials.data);
         setGallery(cachedGallery.data);
+        if (cachedInventory) setInventoryItems(JSON.parse(cachedInventory));
+        if (cachedPurchases) setPurchaseRecords(JSON.parse(cachedPurchases));
         console.log(`[Cache] Loaded all data from localStorage cache (${allFresh ? 'fresh ✅' : 'stale — will refresh in background 🔄'})`);
 
         if (allFresh) {
@@ -193,6 +208,26 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
               setAdmissions(loaded);
             });
           } catch (e) { console.warn('Admissions listener error:', e); }
+
+          try {
+            const inventoryRef = collection(db, 'inventory');
+            unsubscribeInventory = onSnapshot(inventoryRef, (snapshot) => {
+              const loaded: InventoryItem[] = [];
+              snapshot.forEach(docSnap => loaded.push(docSnap.data() as InventoryItem));
+              setInventoryItems(loaded);
+            });
+          } catch (e) { console.warn('Inventory listener error:', e); }
+
+          try {
+            const purchasesRef = collection(db, 'purchases');
+            unsubscribePurchases = onSnapshot(purchasesRef, (snapshot) => {
+              const loaded: PurchaseRecord[] = [];
+              snapshot.forEach(docSnap => loaded.push(docSnap.data() as PurchaseRecord));
+              loaded.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+              setPurchaseRecords(loaded);
+            });
+          } catch (e) { console.warn('Purchases listener error:', e); }
+
           return; // ← skip full Firebase fetch, cache is fresh
         }
         // If stale: continue to re-fetch from Firebase below (UI already showing cached data)
@@ -394,6 +429,27 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
           });
         } catch (e) { console.error('Error loading admissions:', e); throw e; }
 
+        // 7. Load Inventory in Real-time
+        try {
+          const inventoryRef = collection(db, 'inventory');
+          unsubscribeInventory = onSnapshot(inventoryRef, (snapshot) => {
+            const loaded: InventoryItem[] = [];
+            snapshot.forEach(docSnap => loaded.push(docSnap.data() as InventoryItem));
+            setInventoryItems(loaded);
+          });
+        } catch (e) { console.error('Error loading inventory:', e); }
+
+        // 8. Load Purchases in Real-time
+        try {
+          const purchasesRef = collection(db, 'purchases');
+          unsubscribePurchases = onSnapshot(purchasesRef, (snapshot) => {
+            const loaded: PurchaseRecord[] = [];
+            snapshot.forEach(docSnap => loaded.push(docSnap.data() as PurchaseRecord));
+            loaded.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            setPurchaseRecords(loaded);
+          });
+        } catch (e) { console.error('Error loading purchases:', e); }
+
       } catch (err) {
         console.warn("Failed to initialize Firebase or load data, falling back to localStorage:", err);
         loadFromLocalStorageFallback();
@@ -408,6 +464,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const storedCoursePlans = localStorage.getItem('chef_course_plans');
       const storedWebsiteData = localStorage.getItem('chef_website_data');
       const storedAdminPasscode = localStorage.getItem('chef_admin_passcode');
+      const storedInventory = localStorage.getItem('chef_inventory');
+      const storedPurchases = localStorage.getItem('chef_purchases');
 
       if (storedAdminPasscode) setAdminPasscode(storedAdminPasscode);
 
@@ -428,12 +486,20 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (storedAdmissions) setAdmissions(JSON.parse(storedAdmissions));
       else setAdmissions([]);
+
+      if (storedInventory) setInventoryItems(JSON.parse(storedInventory));
+      else setInventoryItems([]);
+
+      if (storedPurchases) setPurchaseRecords(JSON.parse(storedPurchases));
+      else setPurchaseRecords([]);
     };
 
     initFirebaseAndLoadData();
 
     return () => {
       if (unsubscribeAdmissions) unsubscribeAdmissions();
+      if (unsubscribeInventory) unsubscribeInventory();
+      if (unsubscribePurchases) unsubscribePurchases();
     };
   }, []);
 
@@ -673,6 +739,75 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const addInventoryItem = async (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => {
+    try {
+      const id = Date.now().toString();
+      const newItem: InventoryItem = { ...item, id, lastUpdated: new Date().toISOString() };
+      setInventoryItems(prev => {
+        const updated = [newItem, ...prev];
+        safeSetItem('chef_inventory', JSON.stringify(updated));
+        return updated;
+      });
+      await setDoc(doc(db, 'inventory', id), newItem);
+    } catch(e) { console.error(e); }
+  };
+
+  const updateInventoryItem = async (item: InventoryItem) => {
+    try {
+      const updatedItem = { ...item, lastUpdated: new Date().toISOString() };
+      setInventoryItems(prev => {
+        const updated = prev.map(i => i.id === item.id ? updatedItem : i);
+        safeSetItem('chef_inventory', JSON.stringify(updated));
+        return updated;
+      });
+      await setDoc(doc(db, 'inventory', item.id), updatedItem);
+    } catch(e) { console.error(e); }
+  };
+
+  const deleteInventoryItem = async (id: string) => {
+    try { 
+      setInventoryItems(prev => {
+        const updated = prev.filter(i => i.id !== id);
+        safeSetItem('chef_inventory', JSON.stringify(updated));
+        return updated;
+      });
+      await deleteDoc(doc(db, 'inventory', id)); 
+    } catch(e) { console.error(e); }
+  };
+
+  const addPurchaseRecord = async (record: Omit<PurchaseRecord, 'id' | 'date'>) => {
+    try {
+      const id = Date.now().toString();
+      const newRecord: PurchaseRecord = { ...record, id, date: new Date().toISOString() };
+      setPurchaseRecords(prev => {
+        const updated = [newRecord, ...prev];
+        safeSetItem('chef_purchases', JSON.stringify(updated));
+        return updated;
+      });
+      await setDoc(doc(db, 'purchases', id), newRecord);
+
+      // Auto update inventory stock if possible
+      const itemToUpdate = inventoryItems.find(i => i.name === record.itemName);
+      if (itemToUpdate) {
+        await updateInventoryItem({
+          ...itemToUpdate,
+          quantity: itemToUpdate.quantity + record.quantityAdded
+        });
+      }
+    } catch(e) { console.error(e); }
+  };
+
+  const deletePurchaseRecord = async (id: string) => {
+    try { 
+      setPurchaseRecords(prev => {
+        const updated = prev.filter(p => p.id !== id);
+        safeSetItem('chef_purchases', JSON.stringify(updated));
+        return updated;
+      });
+      await deleteDoc(doc(db, 'purchases', id)); 
+    } catch(e) { console.error(e); }
+  };
+
   const deleteGalleryItem = async (id: string) => {
     const updated = gallery.filter(g => g.id !== id);
     setGallery(updated);
@@ -812,6 +947,13 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       admissions,
       testimonials,
       gallery,
+      inventoryItems,
+      purchaseRecords,
+      addInventoryItem,
+      updateInventoryItem,
+      deleteInventoryItem,
+      addPurchaseRecord,
+      deletePurchaseRecord,
       coursePlans,
       updateCoursePlans,
       activeView,

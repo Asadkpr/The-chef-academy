@@ -34,3 +34,8 @@ body, html, #root {
     margin: 0.5cm;
   }
 }
+
+.brand-text-container {
+  font-family: var(--font-display);
+  line-height: 0.9;
+}

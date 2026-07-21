@@ -79,16 +79,16 @@ const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({ popupSettings, on
               className="relative w-full max-w-lg pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute -inset-2 bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-amber-600/20 rounded-3xl blur-xl pointer-events-none" />
+              <div className="absolute -inset-2 bg-gradient-to-r from-[#AE8C45]/20 via-[#C5A964]/10 to-[#AE8C45]/20 rounded-3xl blur-xl pointer-events-none" />
               <div className="relative bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden shadow-2xl shadow-black/60">
-                <div className="h-1 w-full bg-gradient-to-r from-amber-600 via-[#c19d53] to-amber-400" />
+                <div className="h-1 w-full bg-gradient-to-r from-[#AE8C45] via-[#C5A964] to-[#AE8C45]" />
                 <div className="flex items-start justify-between px-6 pt-5 pb-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                      <Megaphone className="h-5 w-5 text-amber-400" />
+                    <div className="flex-shrink-0 p-2.5 bg-[#AE8C45]/10 border border-[#AE8C45]/20 rounded-xl">
+                      <Megaphone className="h-5 w-5 text-[#C5A964]" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-amber-500/80 font-mono uppercase tracking-[0.2em] font-bold mb-0.5">
+                      <p className="text-[10px] text-[#C5A964]/80 font-mono uppercase tracking-[0.2em] font-bold mb-0.5">
                         Announcement
                       </p>
                       <h2 className="font-serif text-lg sm:text-xl font-bold text-white leading-tight">
@@ -120,14 +120,14 @@ const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({ popupSettings, on
                 </div>
                 {(popupSettings?.startDate || popupSettings?.endDate) && (
                   <div className="mx-6 mb-4 flex items-center gap-2 bg-slate-800/60 border border-slate-700/40 rounded-lg px-3 py-2">
-                    <Calendar className="h-3.5 w-3.5 text-amber-500/70 flex-shrink-0" />
+                    <Calendar className="h-3.5 w-3.5 text-[#C5A964]/70 flex-shrink-0" />
                     <span className="text-[11px] text-slate-400 font-sans">
                       {popupSettings.startDate && (
-                        <>Valid from <span className="text-amber-400">{new Date(popupSettings.startDate).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span></>
+                        <>Valid from <span className="text-[#C5A964]">{new Date(popupSettings.startDate).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span></>
                       )}
-                      {popupSettings.startDate && popupSettings.endDate && " — "}
+                      {popupSettings.startDate && popupSettings.endDate && " ï¿½ "}
                       {popupSettings.endDate && (
-                        <>until <span className="text-amber-400">{new Date(popupSettings.endDate).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span></>
+                        <>until <span className="text-[#C5A964]">{new Date(popupSettings.endDate).toLocaleDateString("en-PK", { day: "numeric", month: "short", year: "numeric" })}</span></>
                       )}
                     </span>
                   </div>
@@ -135,7 +135,7 @@ const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({ popupSettings, on
                 <div className="px-6 pb-5 pt-1 flex items-center gap-3">
                   <button
                     onClick={handleCtaClick}
-                    className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-500/20"
+                    className="flex-1 flex items-center justify-center gap-2 px-5 py-2.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] text-xs font-bold uppercase tracking-wider rounded-xl transition-all active:scale-95 shadow-lg shadow-[#AE8C45]/20"
                   >
                     <span>Apply Now</span>
                     <ArrowRight className="h-3.5 w-3.5" />

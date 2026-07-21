@@ -11,6 +11,7 @@ import Footer from './components/Footer';
 import CMSAdmin from './components/CMSAdmin';
 import Website from './components/Website';
 import AnnouncementPopup from './components/AnnouncementPopup';
+import TcaLoader from './components/TcaLoader';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageCircle, AlertTriangle, X } from 'lucide-react';
 
@@ -57,9 +58,22 @@ function StorageWarningToast() {
 
 function AppContent() {
   const { activeView, setView, websiteData } = useAcademy();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Initial artificial delay for the loader (e.g. 2.5 seconds)
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-[#c19d53] selection:text-slate-950">
+      <AnimatePresence>
+        {isLoading && <TcaLoader key="tca-global-loader" />}
+      </AnimatePresence>
+
       {activeView !== 'home' && <Navbar />}
       
       <AnimatePresence mode="wait">
@@ -108,10 +122,10 @@ function AppContent() {
         />
       )}
 
-      {/* Floating WhatsApp Quick-Connect Button only on portal view */}
-      {activeView === 'portal' && (
+      {/* Floating WhatsApp Quick-Connect Button on portal and admin views */}
+      {(activeView === 'portal' || activeView === 'cms') && (
         <a
-          href="https://wa.me/923339123456?text=Hi%21+I+am+interested+in+joining+The+Chef%27s+Academy+Lahore.+Please+send+me+the+next+batch+details."
+          href="https://wa.me/923288888907?text=Hi%21+I+am+interested+in+joining+The+Chef%27s+Academy+Lahore.+Please+send+me+the+next+batch+details."
           target="_blank"
           rel="noreferrer"
           className="fixed bottom-6 right-6 z-40 bg-emerald-500 hover:bg-emerald-400 text-slate-950 p-4 rounded-full shadow-2xl flex items-center justify-center group transition-all duration-300 hover:scale-110 active:scale-95 border border-emerald-400/20"
