@@ -5,7 +5,7 @@ import { BookOpen, Clock, Users, ArrowRight, X, BadgePercent, CheckCircle, Spark
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function CourseCatalog() {
-  const { courses, setSection, addAdmission } = useAcademy();
+  const { courses, setSection, addAdmission, coursePlans } = useAcademy();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
@@ -123,24 +123,37 @@ export default function CourseCatalog() {
                       </div>
                     </div>
 
-                    <h3 className="font-serif text-xl font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors duration-200">
-                      {course.title}
-                    </h3>
-
-                    <p className="font-sans text-slate-400 text-xs sm:text-sm leading-relaxed line-clamp-3">
-                      {course.description}
-                    </p>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t border-slate-900">
-                    {/* Price Tag */}
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-slate-500 text-xs font-sans uppercase tracking-wider">Course Fees</span>
-                      <div className="text-right">
-                        <span className="text-2xl font-serif font-bold text-white">PKR {course.fees.toLocaleString()}</span>
-                        <span className="block text-[10px] text-slate-400 mt-0.5">+{course.registrationFee.toLocaleString()} Reg. Fee</span>
-                      </div>
                     </div>
+
+                    {/* Determine the fee from global coursePlans if available, else fallback to course.fees */}
+                    {(() => {
+                      const plan = (coursePlans && coursePlans[course.title] && coursePlans[course.title][0]) || null;
+                      const displayFee = plan ? plan.fee : course.fees;
+                      const displayRegFee = plan ? plan.regFee : course.registrationFee;
+                      
+                      return (
+                        <>
+                          <h3 className="font-serif text-xl font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors duration-200">
+                            {course.title}
+                          </h3>
+
+                          <p className="font-sans text-slate-400 text-xs sm:text-sm leading-relaxed line-clamp-3">
+                            {course.description}
+                          </p>
+                        </div>
+
+                        <div className="space-y-4 pt-4 border-t border-slate-900">
+                          {/* Price Tag */}
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-slate-500 text-xs font-sans uppercase tracking-wider">Course Fees</span>
+                            <div className="text-right">
+                              <span className="text-2xl font-serif font-bold text-white">PKR {displayFee.toLocaleString()}</span>
+                              <span className="block text-[10px] text-slate-400 mt-0.5">+{displayRegFee.toLocaleString()} Reg. Fee</span>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
 
                     {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-3">
@@ -266,20 +279,30 @@ export default function CourseCatalog() {
                     <BadgePercent className="h-5 w-5" />
                     <span className="text-xs font-sans font-bold uppercase tracking-wider">Fees & Cost Structure</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm font-sans">
-                    <div>
-                      <span className="text-slate-400 block text-xs">Registration Fee</span>
-                      <span className="text-white block font-semibold mt-0.5">PKR {selectedCourse.registrationFee.toLocaleString()}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-xs">Tuition Fee</span>
-                      <span className="text-white block font-semibold mt-0.5">PKR {selectedCourse.fees.toLocaleString()}</span>
-                    </div>
-                    <div className="col-span-2 sm:col-span-1">
-                      <span className="text-amber-400 block text-xs font-semibold">Total Course Fees</span>
-                      <span className="text-amber-400 block font-bold text-base mt-0.5">PKR {(selectedCourse.fees + selectedCourse.registrationFee).toLocaleString()}</span>
-                    </div>
-                  </div>
+                  
+                  {(() => {
+                    const selectedPlan = (coursePlans && coursePlans[selectedCourse.title] && coursePlans[selectedCourse.title][0]) || null;
+                    const selDisplayFee = selectedPlan ? selectedPlan.fee : selectedCourse.fees;
+                    const selDisplayRegFee = selectedPlan ? selectedPlan.regFee : selectedCourse.registrationFee;
+                    
+                    return (
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800">
+                        <div>
+                          <span className="text-slate-500 text-[10px] font-sans uppercase tracking-wider block">Registration Fee</span>
+                          <span className="text-white block font-semibold mt-0.5">PKR {selDisplayRegFee.toLocaleString()}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 text-[10px] font-sans uppercase tracking-wider block">Tuition Fee</span>
+                          <span className="text-white block font-semibold mt-0.5">PKR {selDisplayFee.toLocaleString()}</span>
+                        </div>
+                        <div className="col-span-2 pt-2 border-t border-slate-800">
+                          <span className="text-slate-400 text-[10px] font-sans uppercase tracking-wider block">Total Required Enrollment Fee</span>
+                          <span className="text-amber-400 block font-bold text-base mt-0.5">PKR {(selDisplayFee + selDisplayRegFee).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  
                   <div className="text-[11px] text-slate-400 italic">
                     * The registration fee is paid at the time of admission form submission to secure the seat. The tuition fee is paid in full or monthly installments.
                   </div>

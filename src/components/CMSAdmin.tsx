@@ -2673,7 +2673,7 @@ export default function CMSAdmin() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-slate-400 font-bold uppercase text-[10px]">Tuition Fee (PKR) *</label>
+                      <label className="text-slate-400 font-bold uppercase text-[10px]">Base Tuition Fee (PKR) *</label>
                       <input
                         type="number"
                         required
@@ -2684,7 +2684,7 @@ export default function CMSAdmin() {
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-slate-400 font-bold uppercase text-[10px]">Registration Fee (PKR) *</label>
+                      <label className="text-slate-400 font-bold uppercase text-[10px]">Base Registration Fee (PKR) *</label>
                       <input
                         type="number"
                         required
@@ -2692,6 +2692,7 @@ export default function CMSAdmin() {
                         onChange={(e) => setCourseFormData(prev => ({ ...prev, registrationFee: Number(e.target.value) }))}
                         className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200"
                       />
+                      <p className="text-[10px] text-amber-500 italic mt-1">Note: Actual registration/invoice fees are managed in "System Settings &gt; Fee Management". These are just fallback values.</p>
                     </div>
 
                     <div className="space-y-1">
