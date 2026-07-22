@@ -107,7 +107,7 @@ export default function CMSAdmin() {
     loginAdmin,
     logoutAdmin,
     changeAdminPasscode,
-    resetAllData, coursePlans, updateCoursePlans,
+    resetAllData, coursePlans, updateCoursePlans, purgeFeeCache,
     updateAdmissionDiscountAndFees, websiteData, updateWebsiteData,
     inventoryItems, purchaseRecords,
     addInventoryItem, updateInventoryItem, deleteInventoryItem,
@@ -1615,13 +1615,25 @@ export default function CMSAdmin() {
 
                 {/* SECTION 1: DYNAMIC ADMISSION PLANS & FEE HEADS */}
                 <div className="space-y-6">
-                  <div className="border-l-2 border-[#AE8C45] pl-3">
-                    <h3 className="text-white font-bold uppercase tracking-wider text-xs">
-                      Course Programs, Durations & Fee Heads Editor
-                    </h3>
-                    <p className="text-slate-500 text-[11px] mt-0.5">
-                      Configure different durations, Tuition Fees, and Reservation Fees (the fee heads) for each course.
-                    </p>
+                  <div className="flex flex-wrap justify-between items-center border-l-2 border-[#AE8C45] pl-3 gap-2">
+                    <div>
+                      <h3 className="text-white font-bold uppercase tracking-wider text-xs">
+                        Course Programs, Durations & Fee Heads Editor
+                      </h3>
+                      <p className="text-slate-500 text-[11px] mt-0.5">
+                        Configure different durations, Tuition Fees, and Reservation Fees (the fee heads) for each course.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        purgeFeeCache();
+                        alert('Local fee cache purged! Fresh fees synced directly from Firestore DB.');
+                      }}
+                      className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-[#C5A964] px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      <span>Purge Cache & Re-Sync DB</span>
+                    </button>
                   </div>
 
                   {/* Course plans layout */}

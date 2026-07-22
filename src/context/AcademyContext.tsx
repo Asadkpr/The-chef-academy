@@ -92,6 +92,7 @@ interface AcademyContextType {
   logoutAdmin: () => void;
   changeAdminPasscode: (newPasscode: string) => void;
   resetAllData: () => void;
+  purgeFeeCache: () => void;
 }
 
 const AcademyContext = createContext<AcademyContextType | undefined>(undefined);
@@ -156,6 +157,35 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     let unsubscribeAdmissions: (() => void) | null = null;
     let unsubscribeInventory: (() => void) | null = null;
     let unsubscribePurchases: (() => void) | null = null;
+    let unsubscribeCoursePlans: (() => void) | null = null;
+    let unsubscribeCourses: (() => void) | null = null;
+
+    // Real-time listener for Course Plans & Fees (ALWAYS ACTIVE)
+    try {
+      const plansRef = doc(db, 'course_plans', 'main');
+      unsubscribeCoursePlans = onSnapshot(plansRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data() as CoursePlans;
+          setCoursePlans(data);
+          setCacheItem('cache_course_plans', data);
+          safeSetItem('chef_course_plans', JSON.stringify(data));
+        }
+      });
+    } catch (e) { console.warn('Course plans listener error:', e); }
+
+    // Real-time listener for Courses (ALWAYS ACTIVE)
+    try {
+      const coursesRef = collection(db, 'courses');
+      unsubscribeCourses = onSnapshot(coursesRef, (snapshot) => {
+        if (!snapshot.empty) {
+          const loaded: Course[] = [];
+          snapshot.forEach(d => loaded.push(d.data() as Course));
+          setCourses(loaded);
+          setCacheItem('cache_courses', loaded);
+          safeSetItem('chef_courses', JSON.stringify(loaded));
+        }
+      });
+    } catch (e) { console.warn('Courses listener error:', e); }
 
     const initFirebaseAndLoadData = async () => {
       // Step 1: Try Anonymous Auth (non-blocking - if it fails, Firestore still works with open rules)
@@ -167,9 +197,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       // ── SMART CACHE CHECK ──────────────────────────────────────────────────
-      // Check if we have fresh cached data. If yes, load from cache instantly
-      // and skip Firebase calls for this session. Stale data triggers a
-      // background re-fetch to refresh the cache silently.
       const cachedWebsite   = getCacheItem<WebsiteData>('cache_website_data');
       const cachedPlans     = getCacheItem<CoursePlans>('cache_course_plans');
       const cachedCourses   = getCacheItem<Course[]>('cache_courses');
@@ -195,8 +222,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         console.log(`[Cache] Loaded all data from localStorage cache (${allFresh ? 'fresh ✅' : 'stale — will refresh in background 🔄'})`);
 
         if (allFresh) {
-          // Data is fresh — still setup the admissions real-time listener, then exit
-          // (admissions are always real-time so skip caching them)
           try {
             const admissionsRef = collection(db, 'admissions');
             unsubscribeAdmissions = onSnapshot(admissionsRef, (snapshot) => {
@@ -228,9 +253,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             });
           } catch (e) { console.warn('Purchases listener error:', e); }
 
-          return; // ← skip full Firebase fetch, cache is fresh
+          return; // ← skip full Firebase fetch, cache is fresh & real-time listeners are active
         }
-        // If stale: continue to re-fetch from Firebase below (UI already showing cached data)
       }
       // ── END CACHE CHECK ────────────────────────────────────────────────────
 
@@ -500,6 +524,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (unsubscribeAdmissions) unsubscribeAdmissions();
       if (unsubscribeInventory) unsubscribeInventory();
       if (unsubscribePurchases) unsubscribePurchases();
+      if (unsubscribeCoursePlans) unsubscribeCoursePlans();
+      if (unsubscribeCourses) unsubscribeCourses();
     };
   }, []);
 
@@ -861,10 +887,33 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     safeSetItem('chef_admin_auth', 'false');
   };
 
+  const purgeFeeCache = () => {
+    localStorage.removeItem('cache_website_data');
+    localStorage.removeItem('cache_course_plans');
+    localStorage.removeItem('cache_courses');
+    localStorage.removeItem('chef_course_plans');
+    localStorage.removeItem('chef_courses');
+    console.log('✅ Purged local fee cache.');
+  };
+
   const updateCoursePlans = async (plans: CoursePlans) => {
     setCoursePlans(plans);
     safeSetItem('chef_course_plans', JSON.stringify(plans));
     setCacheItem('cache_course_plans', plans); // keep cache in sync
+
+    // Sync courses fees as well so catalog matches plan fees
+    setCourses(prevCourses => {
+      const updatedCourses = prevCourses.map(c => {
+        const primaryPlan = plans[c.title]?.[0];
+        if (primaryPlan) {
+          return { ...c, fees: primaryPlan.fee, registrationFee: primaryPlan.regFee };
+        }
+        return c;
+      });
+      safeSetItem('chef_courses', JSON.stringify(updatedCourses));
+      setCacheItem('cache_courses', updatedCourses);
+      return updatedCourses;
+    });
 
     try {
       await setDoc(doc(db, 'course_plans', 'main'), plans);
@@ -978,7 +1027,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       loginAdmin,
       logoutAdmin,
       changeAdminPasscode,
-      resetAllData
+      resetAllData,
+      purgeFeeCache
     }}>
       {children}
     </AcademyContext.Provider>

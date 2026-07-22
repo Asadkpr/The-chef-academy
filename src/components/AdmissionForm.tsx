@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAcademy } from '../context/AcademyContext';
+import { useAcademy, DEFAULT_COURSE_PLANS } from '../context/AcademyContext';
 import { uploadFile } from '../lib/firebase';
 
 
@@ -11,28 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const COURSE_PLANS: Record<string, { duration: string; fee: number; regFee: number }[]> = {
-  'Culinary Arts': [
-    { duration: '1 Month Course', fee: 50000, regFee: 10000 },
-    { duration: '3 Month Course', fee: 150000, regFee: 10000 },
-    { duration: '6 Month Course', fee: 300000, regFee: 10000 }
-  ],
-  'Professional Chef': [
-    { duration: '1 Month Course', fee: 50000, regFee: 10000 },
-    { duration: '3 Month Course', fee: 150000, regFee: 10000 },
-    { duration: '6 Month Course', fee: 300000, regFee: 10000 }
-  ],
-  'Baking & Desserts': [
-    { duration: '1 Month Course', fee: 50000, regFee: 10000 },
-    { duration: '3 Month Course', fee: 150000, regFee: 10000 },
-    { duration: '6 Month Course', fee: 300000, regFee: 10000 }
-  ],
-  'Barista Skills': [
-    { duration: '1 Month Course', fee: 50000, regFee: 10000 },
-    { duration: '3 Month Course', fee: 150000, regFee: 10000 },
-    { duration: '6 Month Course', fee: 300000, regFee: 10000 }
-  ]
-};
+const COURSE_PLANS = DEFAULT_COURSE_PLANS;
 
 export default function AdmissionForm() {
   const { courses, admissions, addAdmission, updateAdmissionReceipt, updateAdmissionInvoiceHtml, coursePlans, websiteData } = useAcademy();
