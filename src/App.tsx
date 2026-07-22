@@ -18,6 +18,7 @@ import { MessageCircle, AlertTriangle, X } from 'lucide-react';
 function StorageWarningToast() {
   const [visible, setVisible] = useState(false);
 
+
   useEffect(() => {
     const handleQuotaExceeded = () => {
       setVisible(true);
@@ -61,10 +62,10 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Initial artificial delay for the loader (e.g. 2.5 seconds)
+    // Reduced artificial delay for the loader to make site load faster
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2500);
+    }, 800);
     return () => clearTimeout(timer);
   }, []);
 

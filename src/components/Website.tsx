@@ -481,6 +481,9 @@ export default function Website() {
           width: 38px;
           height: 38px;
           object-fit: contain;
+          background: transparent !important;
+          background-color: transparent !important;
+          mix-blend-mode: screen;
         }
 
       `}</style>

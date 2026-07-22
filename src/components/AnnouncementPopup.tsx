@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Megaphone, Calendar, ArrowRight } from "lucide-react";
 import { PopupSettings } from "../types";
@@ -10,9 +10,13 @@ interface AnnouncementPopupProps {
 
 const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({ popupSettings, onNavigateToPortal }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const hasTriggered = useRef(false);
 
   useEffect(() => {
     if (!popupSettings?.enabled) return;
+    
+    // Check if we've already triggered the popup in this page load
+    if (hasTriggered.current) return;
 
     const now = new Date();
     const start = popupSettings.startDate ? new Date(popupSettings.startDate) : null;
@@ -25,9 +29,12 @@ const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({ popupSettings, on
       if (now > endOfDay) return;
     }
 
+    // Show popup almost immediately after loader finishes
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, 600);
+      // Mark as triggered so it doesn't show again if popupSettings update
+      hasTriggered.current = true;
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [popupSettings]);
@@ -43,7 +50,9 @@ const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({ popupSettings, on
     };
   }, [isVisible]);
 
-  const handleClose = () => setIsVisible(false);
+  const handleClose = () => {
+    setIsVisible(false);
+  };
 
   const handleCtaClick = () => {
     setIsVisible(false);

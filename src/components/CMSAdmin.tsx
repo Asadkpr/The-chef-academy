@@ -1620,7 +1620,7 @@ export default function CMSAdmin() {
                       Course Programs, Durations & Fee Heads Editor
                     </h3>
                     <p className="text-slate-500 text-[11px] mt-0.5">
-                      Configure different durations, Tuition Fees, and Admission Registration Fees (the fee heads) for each course.
+                      Configure different durations, Tuition Fees, and Reservation Fees (the fee heads) for each course.
                     </p>
                   </div>
 
@@ -1658,7 +1658,7 @@ export default function CMSAdmin() {
                                     <tr className="border-b border-slate-900 text-slate-500 font-bold uppercase tracking-wider text-[10px] pb-2">
                                       <th className="py-2 px-3">Duration / Category</th>
                                       <th className="py-2 px-3">Tuition Fee (PKR)</th>
-                                      <th className="py-2 px-3">Registration (PKR)</th>
+                                      <th className="py-2 px-3">Reservation Fee (PKR)</th>
                                       <th className="py-2 px-3">Plan Details (Website)</th>
                                       <th className="py-2 px-3 text-right">Actions</th>
                                     </tr>
@@ -1698,7 +1698,7 @@ export default function CMSAdmin() {
                                             )}
                                           </td>
 
-                                          {/* Registration Fee */}
+                                          {/* Reservation Fee */}
                                           <td className="py-2.5 px-3">
                                             {isEditing ? (
                                               <input
@@ -1802,7 +1802,7 @@ export default function CMSAdmin() {
                                       <td className="py-3 px-3">
                                         <input
                                           type="number"
-                                          placeholder="Reg Fee (PKR)"
+                                          placeholder="Reservation Fee (PKR)"
                                           value={addRowData.regFee || ''}
                                           onChange={(e) => setNewPlanData(prev => ({
                                             ...prev,

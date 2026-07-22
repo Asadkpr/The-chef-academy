@@ -302,7 +302,7 @@ function generateInvoiceHtml(data: {
           
           <div class="header">
             <h1 class="logo-text">The Chef's Academy</h1>
-            <p class="logo-sub">Lahore & Peshawar Campus</p>
+            <p class="logo-sub">Gulberg III, Lahore Campus</p>
           </div>
           
           <div class="content">
@@ -310,7 +310,7 @@ function generateInvoiceHtml(data: {
             
             <p class="intro-text">
               Dear <strong>${data.studentName}</strong>,<br><br>
-              Alhamdulillah, your admission registration request has been successfully recorded. Your application tracking code is <strong class="code-display">${data.trackingId}</strong>.
+              Your admission registration request has been successfully recorded. Your application tracking code is <strong class="code-display">${data.trackingId}</strong>.
               <br><br>
               Please review the registration invoice details below. Kindly pay the outstanding registration fee to secure your batch seat.
             </p>
@@ -359,7 +359,7 @@ function generateInvoiceHtml(data: {
                   <td style="text-align: right; vertical-align: middle;">PKR ${data.tuitionFee.toLocaleString()}</td>
                 </tr>
                 <tr>
-                  <td>Admission Registration & Enrollment Fee</td>
+                  <td>Reservation Fee</td>
                   <td style="text-align: right; vertical-align: middle;">PKR ${data.regFee.toLocaleString()}</td>
                 </tr>
                 ${data.discount && data.discount > 0 ? `
@@ -396,8 +396,8 @@ function generateInvoiceHtml(data: {
           </div>
           
           <div class="footer">
-            <strong>The Chef's Academy Lahore & Peshawar</strong><br>
-            Main GT Road, Near University of Peshawar, Peshawar / Lahore Campus, Pakistan<br>
+            <strong>The Chef's Academy — Lahore</strong><br>
+            79-B3 Gulberg III, Lahore, Pakistan<br>
             Helpline: <a href="https://wa.me/923339123456">0333-9123456</a> | Email: <a href="mailto:info@thechefsacademy.pk">info@thechefsacademy.pk</a>
           </div>
           

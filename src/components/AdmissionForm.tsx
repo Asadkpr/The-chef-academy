@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAcademy } from '../context/AcademyContext';
 import { uploadFile } from '../lib/firebase';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+
+
 import { 
   GraduationCap, CheckCircle, ArrowLeft, ArrowRight, ClipboardCheck, 
   Landmark, CheckSquare, Search, SearchCode, ShieldCheck, User, 
@@ -40,6 +40,7 @@ export default function AdmissionForm() {
   const [portalTab, setPortalTab] = useState<'apply' | 'status'>('apply');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailMessage, setEmailMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
   // Status Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -327,18 +328,134 @@ export default function AdmissionForm() {
     }
   };
 
-  // Download Invoice as PDF
-  const handleDownloadPdf = async () => {
+  // Print Invoice / Save as PDF via browser print dialog
+  const handleDownloadPdf = () => {
     const element = document.getElementById('invoice-content');
     if (!element) return;
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Invoice-${submittedId || 'invoice'}.pdf`);
+
+    // Collect the invoice inner HTML (button row hidden via .no-print in CSS)
+    const invoiceHtml = element.outerHTML;
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      alert('Pop-ups are blocked. Please allow pop-ups for this site in your browser, then try again.');
+      return;
+    }
+
+    printWin.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Invoice - ${submittedId || 'TCA'}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #fff; font-family: 'Inter', sans-serif; }
+    /* Hide button row in print */
+    .no-print { display: none !important; }
+    /* Replicate key Tailwind classes used in the invoice */
+    .font-display { font-family: 'Cinzel', serif; }
+    .font-mono  { font-family: ui-monospace, monospace; }
+    .font-sans  { font-family: 'Inter', sans-serif; }
+    .text-white { color: #fff; }
+    .text-slate-900 { color: #0f172a; }
+    .text-slate-800 { color: #1e293b; }
+    .text-slate-700 { color: #334155; }
+    .text-slate-600 { color: #475569; }
+    .text-slate-500 { color: #64748b; }
+    .text-slate-400 { color: #94a3b8; }
+    .text-amber-600 { color: #d97706; }
+    .text-amber-500 { color: #f59e0b; }
+    .\[\#c19d53\], .text-\[\#c19d53\] { color: #c19d53; }
+    .bg-white { background: #fff; }
+    .bg-slate-50 { background: #f8fafc; }
+    .bg-slate-950 { background: #020617; }
+    .border { border: 1px solid #e2e8f0; }
+    .border-b { border-bottom: 1px solid #e2e8f0; }
+    .border-t { border-top: 1px solid #e2e8f0; }
+    .border-slate-100 { border-color: #f1f5f9; }
+    .border-slate-100\/60 { border-color: rgba(241,245,249,.6); }
+    .border-amber-500\/25 { border-color: rgba(245,158,11,.25); }
+    .rounded-2xl { border-radius: 1rem; }
+    .rounded-xl  { border-radius: .75rem; }
+    .rounded-lg  { border-radius: .5rem; }
+    .p-6  { padding: 1.5rem; }
+    .p-4  { padding: 1rem; }
+    .pb-5 { padding-bottom: 1.25rem; }
+    .pt-1 { padding-top: .25rem; }
+    .pt-2 { padding-top: .5rem; }
+    .px-4 { padding-left:1rem; padding-right:1rem; }
+    .py-1\.5 { padding-top:.375rem; padding-bottom:.375rem; }
+    .space-y-6 > * + * { margin-top: 1.5rem; }
+    .space-y-3 > * + * { margin-top: .75rem; }
+    .space-y-2\.5 > * + * { margin-top: .625rem; }
+    .space-x-1\.5 > * + * { margin-left: .375rem; }
+    .flex { display: flex; }
+    .items-start { align-items: flex-start; }
+    .items-center { align-items: center; }
+    .items-end { align-items: flex-end; }
+    .justify-between { justify-content: space-between; }
+    .gap-1 { gap: .25rem; }
+    .grid { display: grid; }
+    .grid-cols-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .gap-4 { gap: 1rem; }
+    .gap-x-4 { column-gap: 1rem; }
+    .gap-y-2 { row-gap: .5rem; }
+    .col-span-2, .sm\:col-span-2 { grid-column: span 2 / span 2; }
+    .block { display: block; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .uppercase { text-transform: uppercase; }
+    .font-light  { font-weight: 300; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .font-bold   { font-weight: 700; }
+    .font-black  { font-weight: 900; }
+    .text-lg   { font-size: 1.125rem; }
+    .text-base { font-size: .875rem; }
+    .text-sm   { font-size: .75rem; }
+    .text-xs   { font-size: .7rem; }
+    .text-\[10px\] { font-size: 10px; }
+    .text-\[9px\]  { font-size: 9px; }
+    .leading-none    { line-height: 1; }
+    .leading-relaxed { line-height: 1.625; }
+    .leading-\[0\.9\] { line-height: 0.9; }
+    .tracking-wide    { letter-spacing: .025em; }
+    .tracking-wider   { letter-spacing: .05em; }
+    .tracking-widest  { letter-spacing: .1em; }
+    .mt-0\.5 { margin-top: .125rem; }
+    .mt-1    { margin-top: .25rem; }
+    .mt-2    { margin-top: .5rem; }
+    .-mt-0\.5 { margin-top: -.125rem; }
+    .overflow-hidden { overflow: hidden; }
+    .relative { position: relative; }
+    .absolute { position: absolute; }
+    .top-6  { top: 1.5rem; }
+    .right-6 { right: 1.5rem; }
+    .rotate-12 { transform: rotate(12deg); }
+    .select-none { user-select: none; }
+    .border-2 { border-width: 2px; }
+    .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0,0,0,.1); }
+    /* Page setup */
+    @page { size: A4 portrait; margin: 10mm; }
+    @media print {
+      html, body { width: 210mm; }
+      #invoice-content {
+        border: none !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  ${invoiceHtml}
+  <script>
+    window.onload = function() { window.print(); };
+  <\/script>
+</body>
+</html>`);
+    printWin.document.close();
   };
 
   const handleSearchStatus = (e: React.FormEvent) => {
@@ -665,7 +782,7 @@ export default function AdmissionForm() {
                       </div>
 
                       <div className="flex justify-between text-xs pb-2 border-b border-slate-100/60">
-                        <span className="text-slate-700">Admission Registration & Workspace Setup Fee</span>
+                        <span className="text-slate-700">Reservation Fee</span>
                         <span className="font-mono text-slate-700 font-semibold">PKR {activePlan.regFee.toLocaleString()}</span>
                       </div>
 
@@ -708,10 +825,10 @@ export default function AdmissionForm() {
                     <button
                       id="download-btn"
                       onClick={handleDownloadPdf}
-                      className="inline-flex items-center space-x-1.5 bg-slate-950 text-white hover:bg-amber-600 px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      className="inline-flex items-center space-x-1.5 bg-slate-950 text-white hover:bg-amber-600 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                     >
-                      <Download className="h-4 w-4 text-[#c19d53]" />
-                      <span>Download Invoice</span>
+                      <Printer className="h-4 w-4 text-[#c19d53]" />
+                      <span>Print / Save as PDF</span>
                     </button>
                   </div>
                 </div>

@@ -39,3 +39,9 @@ body, html, #root {
   font-family: var(--font-display);
   line-height: 0.9;
 }
+
+.brand-logo-img {
+  background: transparent !important;
+  background-color: transparent !important;
+  mix-blend-mode: screen;
+}
