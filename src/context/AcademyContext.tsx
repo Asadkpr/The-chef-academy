@@ -106,24 +106,24 @@ export const useAcademy = () => {
 
 export const DEFAULT_COURSE_PLANS: CoursePlans = {
   'Culinary Arts': [
-    { duration: '1 Month Course', fee: 25000, regFee: 3000, detail: 'Schedule & Batches: Mon-Wed, Morning/Evening\nDetailed Course Outline: \n• Knife Skills\n• Mother Sauces\n• Foundation Techniques' },
-    { duration: '3 Month Course', fee: 55000, regFee: 5000, detail: 'Schedule & Batches: Mon-Thu, Morning/Evening\nDetailed Course Outline: \n• Continental Cuisine\n• Pakistani Cuisine\n• Plating Techniques' },
-    { duration: '6 Month Course', fee: 95000, regFee: 8000, detail: 'Schedule & Batches: Mon-Fri, Full Day\nDetailed Course Outline: \n• Professional Diploma Curriculum\n• Advanced Culinary Management\n• Internship Placement' }
+    { duration: '1 Month Course', fee: 50000, regFee: 10000, detail: 'Schedule & Batches: Mon-Wed, Morning/Evening\nDetailed Course Outline: \n• Knife Skills\n• Mother Sauces\n• Foundation Techniques' },
+    { duration: '3 Month Course', fee: 150000, regFee: 10000, detail: 'Schedule & Batches: Mon-Thu, Morning/Evening\nDetailed Course Outline: \n• Continental Cuisine\n• Pakistani Cuisine\n• Plating Techniques' },
+    { duration: '6 Month Course', fee: 300000, regFee: 10000, detail: 'Schedule & Batches: Mon-Fri, Full Day\nDetailed Course Outline: \n• Professional Diploma Curriculum\n• Advanced Culinary Management\n• Internship Placement' }
   ],
   'Professional Chef': [
-    { duration: '1 Month Course', fee: 30000, regFee: 3500, detail: 'Schedule & Batches: Weekends, Morning\nDetailed Course Outline: \n• Fast-track Operations\n• Bulk Cooking Basics' },
-    { duration: '3 Month Course', fee: 65000, regFee: 5000, detail: 'Schedule & Batches: Mon-Thu, Evening\nDetailed Course Outline: \n• Hotel-Standard Operations\n• Butchery\n• Multi-cuisine Line Cooking' },
-    { duration: '6 Month Course', fee: 110000, regFee: 10000, detail: 'Schedule & Batches: Mon-Fri, Morning\nDetailed Course Outline: \n• Executive Chef Training\n• Cost Control & Menu Engineering\n• Brigade Management' }
+    { duration: '1 Month Course', fee: 50000, regFee: 10000, detail: 'Schedule & Batches: Weekends, Morning\nDetailed Course Outline: \n• Fast-track Operations\n• Bulk Cooking Basics' },
+    { duration: '3 Month Course', fee: 150000, regFee: 10000, detail: 'Schedule & Batches: Mon-Thu, Evening\nDetailed Course Outline: \n• Hotel-Standard Operations\n• Butchery\n• Multi-cuisine Line Cooking' },
+    { duration: '6 Month Course', fee: 300000, regFee: 10000, detail: 'Schedule & Batches: Mon-Fri, Morning\nDetailed Course Outline: \n• Executive Chef Training\n• Cost Control & Menu Engineering\n• Brigade Management' }
   ],
   'Baking & Desserts': [
-    { duration: '1 Month Course', fee: 25000, regFee: 3000, detail: 'Schedule & Batches: Tue-Thu, Evening\nDetailed Course Outline: \n• Baking Science\n• Basic Sponges & Cookies' },
-    { duration: '3 Month Course', fee: 50000, regFee: 4000, detail: 'Schedule & Batches: Mon-Wed, Morning\nDetailed Course Outline: \n• Advanced Pastry\n• Artisan Breads\n• Basic Cake Decoration' },
-    { duration: '6 Month Course', fee: 85000, regFee: 7000, detail: 'Schedule & Batches: Mon-Fri, Full Day\nDetailed Course Outline: \n• Master Level Patisserie\n• Chocolate Work\n• Wedding Cakes' }
+    { duration: '1 Month Course', fee: 50000, regFee: 10000, detail: 'Schedule & Batches: Tue-Thu, Evening\nDetailed Course Outline: \n• Baking Science\n• Basic Sponges & Cookies' },
+    { duration: '3 Month Course', fee: 150000, regFee: 10000, detail: 'Schedule & Batches: Mon-Wed, Morning\nDetailed Course Outline: \n• Advanced Pastry\n• Artisan Breads\n• Basic Cake Decoration' },
+    { duration: '6 Month Course', fee: 300000, regFee: 10000, detail: 'Schedule & Batches: Mon-Fri, Full Day\nDetailed Course Outline: \n• Master Level Patisserie\n• Chocolate Work\n• Wedding Cakes' }
   ],
   'Barista Skills': [
-    { duration: '1 Month Course', fee: 20000, regFee: 2500, detail: 'Schedule & Batches: Weekends Only\nDetailed Course Outline: \n• Espresso Extraction\n• Milk Texturing\n• Basic Latte Art' },
-    { duration: '3 Month Course', fee: 45000, regFee: 4000, detail: 'Schedule & Batches: Mon-Wed, Evening\nDetailed Course Outline: \n• Advanced Brewing Methods\n• Recipe Creation\n• Cafe Operations' },
-    { duration: '6 Month Course', fee: 75000, regFee: 6000, detail: 'Schedule & Batches: Mon-Fri, Morning\nDetailed Course Outline: \n• Coffee Roasting Basics\n• Equipment Maintenance\n• Cafe Business Management' }
+    { duration: '1 Month Course', fee: 50000, regFee: 10000, detail: 'Schedule & Batches: Weekends Only\nDetailed Course Outline: \n• Espresso Extraction\n• Milk Texturing\n• Basic Latte Art' },
+    { duration: '3 Month Course', fee: 150000, regFee: 10000, detail: 'Schedule & Batches: Mon-Wed, Evening\nDetailed Course Outline: \n• Advanced Brewing Methods\n• Recipe Creation\n• Cafe Operations' },
+    { duration: '6 Month Course', fee: 300000, regFee: 10000, detail: 'Schedule & Batches: Mon-Fri, Morning\nDetailed Course Outline: \n• Coffee Roasting Basics\n• Equipment Maintenance\n• Cafe Business Management' }
   ]
 };
 

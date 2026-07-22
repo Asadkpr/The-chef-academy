@@ -13,24 +13,24 @@ import { motion, AnimatePresence } from 'motion/react';
 
 const COURSE_PLANS: Record<string, { duration: string; fee: number; regFee: number }[]> = {
   'Culinary Arts': [
-    { duration: '1 Month Course', fee: 25000, regFee: 3000 },
-    { duration: '3 Month Course', fee: 55000, regFee: 5000 },
-    { duration: '6 Month Course', fee: 95000, regFee: 8000 }
+    { duration: '1 Month Course', fee: 50000, regFee: 10000 },
+    { duration: '3 Month Course', fee: 150000, regFee: 10000 },
+    { duration: '6 Month Course', fee: 300000, regFee: 10000 }
   ],
   'Professional Chef': [
-    { duration: '1 Month Course', fee: 30000, regFee: 3500 },
-    { duration: '3 Month Course', fee: 65000, regFee: 5000 },
-    { duration: '6 Month Course', fee: 110000, regFee: 10000 }
+    { duration: '1 Month Course', fee: 50000, regFee: 10000 },
+    { duration: '3 Month Course', fee: 150000, regFee: 10000 },
+    { duration: '6 Month Course', fee: 300000, regFee: 10000 }
   ],
   'Baking & Desserts': [
-    { duration: '1 Month Course', fee: 25000, regFee: 3000 },
-    { duration: '3 Month Course', fee: 50000, regFee: 4000 },
-    { duration: '6 Month Course', fee: 85000, regFee: 7000 }
+    { duration: '1 Month Course', fee: 50000, regFee: 10000 },
+    { duration: '3 Month Course', fee: 150000, regFee: 10000 },
+    { duration: '6 Month Course', fee: 300000, regFee: 10000 }
   ],
   'Barista Skills': [
-    { duration: '1 Month Course', fee: 20000, regFee: 2500 },
-    { duration: '3 Month Course', fee: 45000, regFee: 4000 },
-    { duration: '6 Month Course', fee: 75000, regFee: 6000 }
+    { duration: '1 Month Course', fee: 50000, regFee: 10000 },
+    { duration: '3 Month Course', fee: 150000, regFee: 10000 },
+    { duration: '6 Month Course', fee: 300000, regFee: 10000 }
   ]
 };
 
