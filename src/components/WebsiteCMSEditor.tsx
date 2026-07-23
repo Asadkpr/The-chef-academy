@@ -588,7 +588,7 @@ export default function WebsiteCMSEditor() {
       {/* Tab Header Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800 pb-4 gap-4">
         <div>
-          <h2 className="font-serif text-xl font-bold text-amber-400 flex items-center gap-2">
+          <h2 className="font-serif text-xl font-bold text-[#C5A964] flex items-center gap-2">
             <Globe className="h-5 w-5" />
             <span>Website CMS Section Editor</span>
           </h2>
@@ -629,7 +629,7 @@ export default function WebsiteCMSEditor() {
                 onClick={() => setActiveSection(sec.id as any)}
                 className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 text-left ${
                   active 
-                    ? 'bg-amber-500 text-slate-950 font-extrabold shadow shadow-amber-500/10' 
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-md shadow-[#AE8C45]/20' 
                     : 'bg-slate-950/80 text-slate-400 hover:text-white hover:bg-slate-900'
                 }`}
               >
@@ -646,7 +646,7 @@ export default function WebsiteCMSEditor() {
           {/* 0. LOGO & BRANDING SECTION */}
           {activeSection === 'logo' && (
             <div className="space-y-4 text-xs sm:text-sm">
-              <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Logo & Branding Identity</span>
+              <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Logo & Branding Identity</span>
               
               <div className="bg-slate-950 p-6 border border-slate-900 rounded-xl space-y-4">
                 <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -686,7 +686,7 @@ export default function WebsiteCMSEditor() {
           {/* 1. HERO SECTION */}
           {activeSection === 'hero' && (
             <form onSubmit={handleSaveHero} className="space-y-4 text-xs sm:text-sm">
-              <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Hero Configuration</span>
+              <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Hero Configuration</span>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -746,7 +746,7 @@ export default function WebsiteCMSEditor() {
                 </div>
               </div>
 
-              <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+              <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                 <Save className="h-4 w-4" /> Save Hero Settings
               </button>
             </form>
@@ -756,7 +756,7 @@ export default function WebsiteCMSEditor() {
           {activeSection === 'collabs' && (
             <div className="space-y-6">
               <form onSubmit={handleSaveCollabMeta} className="space-y-4 text-xs sm:text-sm">
-                <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Collaborations Header</span>
+                <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Collaborations Header</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-slate-400 font-bold uppercase text-[10px]">Eyebrow Label</label>
@@ -767,7 +767,7 @@ export default function WebsiteCMSEditor() {
                     <input type="text" name="title" defaultValue={websiteData.collaborations.title} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
                   </div>
                 </div>
-                <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+                <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                   <Save className="h-4 w-4" /> Save Header Titles
                 </button>
               </form>
@@ -792,7 +792,7 @@ export default function WebsiteCMSEditor() {
                       });
                       triggerSuccess('New partner slot added! You can now type their name and change their logo below.');
                     }}
-                    className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3.5 py-2 rounded-lg text-xs uppercase cursor-pointer transition-all self-start"
+                    className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-3.5 py-2 rounded-lg text-xs uppercase cursor-pointer transition-all self-start"
                   >
                     <Plus className="h-4 w-4" /> Add Partner
                   </button>
@@ -872,7 +872,7 @@ export default function WebsiteCMSEditor() {
           {activeSection === 'why' && (
             <div className="space-y-6">
               <form onSubmit={handleSaveWhyMeta} className="space-y-4 text-xs sm:text-sm">
-                <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Why Choose Us Configuration</span>
+                <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Why Choose Us Configuration</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <label className="text-slate-400 font-bold uppercase text-[10px]">Section Eyebrow Label</label>
@@ -915,7 +915,7 @@ export default function WebsiteCMSEditor() {
                   </div>
                 </div>
 
-                <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+                <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                   <Save className="h-4 w-4" /> Save Why Settings
                 </button>
               </form>
@@ -927,7 +927,7 @@ export default function WebsiteCMSEditor() {
                   {websiteData.why.features.map((feat, idx) => (
                     <div key={feat.id} className="bg-slate-950 p-4 border border-slate-900 rounded-xl space-y-3">
                       <div className="flex justify-between items-center border-b border-slate-900 pb-2">
-                        <span className="text-[10px] text-amber-500 font-bold uppercase tracking-wide">Feature #{idx + 1}</span>
+                        <span className="text-[10px] text-[#C5A964] font-bold uppercase tracking-wide">Feature #{idx + 1}</span>
                         <select 
                           value={feat.icon} 
                           onChange={(e) => handleUpdateWhyFeature(idx, 'icon', e.target.value)}
@@ -967,7 +967,7 @@ export default function WebsiteCMSEditor() {
           {activeSection === 'kitchens' && (
             <div className="space-y-6">
               <form onSubmit={handleSaveKitchenMeta} className="space-y-4 text-xs sm:text-sm">
-                <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Kitchen Gallery Headings</span>
+                <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Kitchen Gallery Headings</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-slate-400 font-bold uppercase text-[10px]">Section Main Title</label>
@@ -978,7 +978,7 @@ export default function WebsiteCMSEditor() {
                     <input type="text" name="lead" defaultValue={websiteData.kitchens.lead} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
                   </div>
                 </div>
-                <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+                <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                   <Save className="h-4 w-4" /> Save Titles
                 </button>
               </form>
@@ -1046,7 +1046,7 @@ export default function WebsiteCMSEditor() {
           {activeSection === 'faculty' && (
             <div className="space-y-6">
               <form onSubmit={handleSaveFacultyMeta} className="space-y-4 text-xs sm:text-sm">
-                <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Faculty Section Header</span>
+                <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Faculty Section Header</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-slate-400 font-bold uppercase text-[10px]">Eyebrow Label</label>
@@ -1057,7 +1057,7 @@ export default function WebsiteCMSEditor() {
                     <input type="text" name="title" defaultValue={websiteData.faculty.title} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
                   </div>
                 </div>
-                <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+                <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                   <Save className="h-4 w-4" /> Save Titles
                 </button>
               </form>
@@ -1065,7 +1065,7 @@ export default function WebsiteCMSEditor() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Instructor profiles ({websiteData.faculty.instructors.length})</span>
-                  <button onClick={handleAddInstructor} className="flex items-center gap-1 text-amber-500 hover:text-white text-[10px] font-bold uppercase tracking-wider">
+                  <button onClick={handleAddInstructor} className="flex items-center gap-1 text-[#C5A964] hover:text-white text-[10px] font-bold uppercase tracking-wider cursor-pointer">
                     <Plus className="h-3 w-3 stroke-[3]" /> Add Instructor Profile
                   </button>
                 </div>
@@ -1110,7 +1110,7 @@ export default function WebsiteCMSEditor() {
                             type="text" 
                             value={inst.role} 
                             onChange={(e) => handleUpdateInstructor(inst.id, 'role', e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-amber-500 font-semibold" 
+                            className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-[#C5A964] font-semibold" 
                           />
                         </div>
                         <div className="space-y-1 sm:col-span-2">
@@ -1138,7 +1138,7 @@ export default function WebsiteCMSEditor() {
           {activeSection === 'competitions' && (
             <div className="space-y-6">
               <form onSubmit={handleSaveCompMeta} className="space-y-4 text-xs sm:text-sm">
-                <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Competitions Configuration</span>
+                <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Competitions Configuration</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-slate-400 font-bold uppercase text-[10px]">Section Eyebrow Label</label>
@@ -1149,7 +1149,7 @@ export default function WebsiteCMSEditor() {
                     <input type="text" name="title" defaultValue={websiteData.competitions.title} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
                   </div>
                 </div>
-                <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+                <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                   <Save className="h-4 w-4" /> Save Titles
                 </button>
               </form>
@@ -1157,7 +1157,7 @@ export default function WebsiteCMSEditor() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Competition Videos ({websiteData.competitions.items.length})</span>
-                  <button onClick={handleAddCompVideo} className="flex items-center gap-1 text-amber-500 hover:text-white text-[10px] font-bold uppercase tracking-wider">
+                  <button onClick={handleAddCompVideo} className="flex items-center gap-1 text-[#C5A964] hover:text-white text-[10px] font-bold uppercase tracking-wider cursor-pointer">
                     <Plus className="h-3 w-3 stroke-[3]" /> Add Competition Video
                   </button>
                 </div>
@@ -1213,7 +1213,7 @@ export default function WebsiteCMSEditor() {
           {activeSection === 'testimonials' && (
             <div className="space-y-6">
               <form onSubmit={handleSaveTestMeta} className="space-y-4 text-xs sm:text-sm">
-                <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Video Reviews Section Headers</span>
+                <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Video Reviews Section Headers</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-slate-400 font-bold uppercase text-[10px]">Section Eyebrow</label>
@@ -1224,7 +1224,7 @@ export default function WebsiteCMSEditor() {
                     <input type="text" name="title" defaultValue={websiteData.testimonials.title} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
                   </div>
                 </div>
-                <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+                <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                   <Save className="h-4 w-4" /> Save Titles
                 </button>
               </form>
@@ -1232,7 +1232,7 @@ export default function WebsiteCMSEditor() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Student video reviews ({websiteData.testimonials.items.length})</span>
-                  <button onClick={handleAddTestimonialVideo} className="flex items-center gap-1 text-amber-500 hover:text-white text-[10px] font-bold uppercase tracking-wider">
+                  <button onClick={handleAddTestimonialVideo} className="flex items-center gap-1 text-[#C5A964] hover:text-white text-[10px] font-bold uppercase tracking-wider cursor-pointer">
                     <Plus className="h-3 w-3 stroke-[3]" /> Add Student Video
                   </button>
                 </div>
@@ -1297,7 +1297,7 @@ export default function WebsiteCMSEditor() {
           {activeSection === 'faqs' && (
             <div className="space-y-6">
               <form onSubmit={handleSaveFaqMeta} className="space-y-4 text-xs sm:text-sm">
-                <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">FAQ Section Configuration</span>
+                <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">FAQ Section Configuration</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-slate-400 font-bold uppercase text-[10px]">Section Eyebrow</label>
@@ -1308,7 +1308,7 @@ export default function WebsiteCMSEditor() {
                     <input type="text" name="title" defaultValue={websiteData.faqs.title} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200" required />
                   </div>
                 </div>
-                <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+                <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                   <Save className="h-4 w-4" /> Save Titles
                 </button>
               </form>
@@ -1316,7 +1316,7 @@ export default function WebsiteCMSEditor() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="block text-slate-400 font-bold uppercase tracking-wider text-[10px]">Custom FAQ Items ({websiteData.faqs.items.length})</span>
-                  <button onClick={handleAddFaq} className="flex items-center gap-1 text-amber-500 hover:text-white text-[10px] font-bold uppercase tracking-wider">
+                  <button onClick={handleAddFaq} className="flex items-center gap-1 text-[#C5A964] hover:text-white text-[10px] font-bold uppercase tracking-wider cursor-pointer">
                     <Plus className="h-3 w-3 stroke-[3]" /> Add FAQ Item
                   </button>
                 </div>
@@ -1356,7 +1356,7 @@ export default function WebsiteCMSEditor() {
           {/* 9. FOOTER SECTION */}
           {activeSection === 'footer' && (
             <form onSubmit={handleSaveFooter} className="space-y-4 text-xs sm:text-sm">
-              <span className="block text-amber-500 font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Footer Contact Details</span>
+              <span className="block text-[#C5A964] font-bold uppercase tracking-wider text-xs pb-2 border-b border-slate-900 mb-4">Footer Contact Details</span>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -1394,7 +1394,7 @@ export default function WebsiteCMSEditor() {
                 <textarea name="mapUrl" defaultValue={websiteData.footer.mapUrl} rows={2} className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200 font-mono text-xs resize-none" required></textarea>
               </div>
 
-              <button type="submit" className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
+              <button type="submit" className="flex items-center gap-1.5 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2.5 rounded-lg text-xs uppercase shadow transition-all cursor-pointer">
                 <Save className="h-4 w-4" /> Save Contact Settings
               </button>
             </form>

@@ -24,6 +24,7 @@ export default function AdmissionForm() {
   // Status Search State
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
+  const [submittedAdmission, setSubmittedAdmission] = useState<any>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
   // Upload receipt state for a tracked application
@@ -130,12 +131,12 @@ export default function AdmissionForm() {
     }
   };
 
-  // Convert File to Base64
+  // Convert & Compress File to Base64
   const processReceiptFile = (file: File) => {
     if (!file) return;
     
-    if (file.size > 8 * 1024 * 1024) {
-      setUploadMessage({ type: 'error', text: 'File size too large. Please upload an image under 8MB.' });
+    if (file.size > 15 * 1024 * 1024) {
+      setUploadMessage({ type: 'error', text: 'File size too large. Please upload an image under 15MB.' });
       return;
     }
 
@@ -144,10 +145,59 @@ export default function AdmissionForm() {
       return;
     }
 
+    // For PDFs, convert directly to data URL
+    if (file.type === 'application/pdf') {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReceiptBase64(reader.result as string);
+        setUploadMessage(null);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // For Images, resize and compress via HTML5 canvas for lighting-fast uploads
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setReceiptBase64(reader.result as string);
-      setUploadMessage(null);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          setReceiptBase64(compressedDataUrl);
+          setUploadMessage(null);
+        } else {
+          setReceiptBase64(e.target?.result as string);
+          setUploadMessage(null);
+        }
+      };
+      img.onerror = () => {
+        setReceiptBase64(e.target?.result as string);
+        setUploadMessage(null);
+      };
+      img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
@@ -201,14 +251,23 @@ export default function AdmissionForm() {
       // Upload the receipt to Firebase Storage and get URL
       const downloadUrl = await uploadFile(receiptBase64, `receipt-${searchResult.id}.jpg`);
       
-      // Update local storage and context with the URL
-      updateAdmissionReceipt(searchResult.id, slipNumber, downloadUrl);
+      // Update local storage and context with the URL (await Firestore setDoc merge)
+      await updateAdmissionReceipt(searchResult.id, slipNumber, downloadUrl);
       
       // Update the searched local object so the UI refreshes
-      setSearchResult(prev => prev ? ({
+      setSearchResult((prev: any) => prev ? ({
         ...prev,
         receiptNumber: slipNumber,
         receiptFile: downloadUrl,
+        feeStatus: 'Uploaded',
+        status: 'Pending'
+      }) : prev);
+
+      setSubmittedAdmission((prev: any) => (prev && prev.id === searchResult.id) ? ({
+        ...prev,
+        receiptNumber: slipNumber,
+        receiptFile: downloadUrl,
+        feeStatus: 'Uploaded',
         status: 'Pending'
       }) : prev);
 
@@ -232,7 +291,7 @@ export default function AdmissionForm() {
 
     // Save admission to local context
     const matchedCourse = courses.find(c => c.title.toLowerCase().includes(formData.selectedCourseName.toLowerCase())) || courses[0];
-    const admissionId = addAdmission({
+    const createdAdmission = addAdmission({
       studentName: formData.studentName,
       fatherName: formData.fatherName,
       email: formData.email,
@@ -255,7 +314,8 @@ export default function AdmissionForm() {
       notes: formData.notes,
     });
 
-    setSubmittedId(admissionId);
+    setSubmittedId(createdAdmission.id);
+    setSubmittedAdmission(createdAdmission);
 
     // Send email invoice
     try {
@@ -268,7 +328,7 @@ export default function AdmissionForm() {
           email: formData.email,
           phone: formData.phone,
           cnic: formData.cnic,
-          trackingId: admissionId,
+          trackingId: createdAdmission.id,
           courseTitle: `${formData.selectedCourseName} (${formData.selectedDuration})`,
           shift: formData.shift,
           regFee: activePlan.regFee,
@@ -282,7 +342,7 @@ export default function AdmissionForm() {
 
       // Store invoice HTML regardless of outcome
       setGeneratedInvoiceHtml(resData.invoiceHtml || '');
-      updateAdmissionInvoiceHtml(admissionId, resData.invoiceHtml || '');
+      updateAdmissionInvoiceHtml(createdAdmission.id, resData.invoiceHtml || '');
 
       if (response.ok && resData.success) {
         setEmailMessage({
@@ -442,12 +502,21 @@ export default function AdmissionForm() {
     if (!searchQuery.trim()) return;
 
     const query = searchQuery.trim().replace(/[-\s]/g, '').toLowerCase();
-    const found = admissions.find(adm => {
-      const cleanPhone = adm.phone.replace(/[-\s]/g, '').toLowerCase();
-      const cleanCnic = adm.cnic.replace(/[-\s]/g, '').toLowerCase();
-      const cleanId = adm.id.replace(/[-\s]/g, '').toLowerCase();
+    let found = admissions.find(adm => {
+      const cleanPhone = (adm.phone || '').replace(/[-\s]/g, '').toLowerCase();
+      const cleanCnic = (adm.cnic || '').replace(/[-\s]/g, '').toLowerCase();
+      const cleanId = (adm.id || '').replace(/[-\s]/g, '').toLowerCase();
       return cleanPhone.includes(query) || cleanCnic.includes(query) || cleanId.includes(query);
     });
+
+    if (!found && submittedAdmission) {
+      const cleanPhone = (submittedAdmission.phone || '').replace(/[-\s]/g, '').toLowerCase();
+      const cleanCnic = (submittedAdmission.cnic || '').replace(/[-\s]/g, '').toLowerCase();
+      const cleanId = (submittedAdmission.id || '').replace(/[-\s]/g, '').toLowerCase();
+      if (cleanPhone.includes(query) || cleanCnic.includes(query) || cleanId.includes(query)) {
+        found = submittedAdmission;
+      }
+    }
 
     setSearchResult(found || null);
     setHasSearched(true);
@@ -834,8 +903,10 @@ export default function AdmissionForm() {
                     <button
                       onClick={() => {
                         setPortalTab('status');
-                        setSearchQuery(submittedId || '');
-                        setSearchResult(admissions.find(a => a.id === submittedId) || null);
+                        const targetId = submittedId || (submittedAdmission ? submittedAdmission.id : '');
+                        setSearchQuery(targetId);
+                        const found = admissions.find(a => a.id === targetId) || submittedAdmission;
+                        setSearchResult(found || null);
                         setHasSearched(true);
                       }}
                       className="inline-flex items-center space-x-1.5 bg-[#c19d53] text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider hover:brightness-110 shadow-lg shadow-[#c19d53]/15 transition-all cursor-pointer"

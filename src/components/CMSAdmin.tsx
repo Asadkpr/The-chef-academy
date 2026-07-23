@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAcademy } from '../context/AcademyContext';
-import { Course, Admission, InventoryItem, PurchaseRecord } from '../types';
+import { Course, Admission, InventoryItem, PurchaseRecord, ShopProduct } from '../types';
 import { uploadFile } from '../lib/firebase';
 import { 
   Users, BookOpen, GraduationCap, DollarSign, Plus, Edit, Trash2, 
@@ -111,7 +111,8 @@ export default function CMSAdmin() {
     updateAdmissionDiscountAndFees, websiteData, updateWebsiteData,
     inventoryItems, purchaseRecords,
     addInventoryItem, updateInventoryItem, deleteInventoryItem,
-    addPurchaseRecord, deletePurchaseRecord
+    addPurchaseRecord, deletePurchaseRecord,
+    shopProducts, shopOrders, addShopProduct, updateShopProduct, deleteShopProduct, updateShopOrderStatus
   } = useAcademy();
 
   const [passcode, setPasscode] = useState('');
@@ -127,13 +128,21 @@ export default function CMSAdmin() {
   const [cmsTab, setCmsTab] = useState<'dashboard' | 'courses' | 'admissions' | 'content' | 'settings' | 'website' | 'payment' | 'popup' | 'shop'>('dashboard');
 
   // TCA Shop / Inventory state
-  const [shopSubTab, setShopSubTab] = useState<'inventory' | 'purchases' | 'report'>('inventory');
+  const [shopSubTab, setShopSubTab] = useState<'inventory' | 'purchases' | 'store_products' | 'customer_orders' | 'report'>('inventory');
   const [newInventoryItem, setNewInventoryItem] = useState({ name: '', category: '', quantity: 0, unit: 'pcs' });
   const [newPurchase, setNewPurchase] = useState({ itemName: '', cost: 0, quantityAdded: 0, unit: 'pcs', purchasedBy: '' });
   const [stockAdjustItem, setStockAdjustItem] = useState<InventoryItem | null>(null);
   const [stockAdjustQty, setStockAdjustQty] = useState(0);
   const [stockAdjustMode, setStockAdjustMode] = useState<'add' | 'remove'>('add');
   const [reportFilter, setReportFilter] = useState<'week' | 'month' | 'all'>('month');
+
+  // Store Products Management state
+  const [newShopProd, setNewShopProd] = useState({
+    name: '', category: 'Uniforms', price: 0, description: '', image: '', inStock: true
+  });
+  const [editingShopProd, setEditingShopProd] = useState<ShopProduct | null>(null);
+  const [isShopProdImgUploading, setIsShopProdImgUploading] = useState(false);
+  const shopProdImgRef = useRef<HTMLInputElement>(null);
 
   // Payment Settings state
   const [paymentSettings, setPaymentSettings] = useState({
@@ -383,33 +392,33 @@ export default function CMSAdmin() {
       const fallback = getFallbackDetails(course.title);
       
       setCourseFormData({
-        title: course.title,
-        duration: course.duration,
-        fees: course.fees,
-        registrationFee: course.registrationFee,
-        shifts: course.shifts,
-        category: course.category,
-        description: course.description,
-        image: course.image,
-        instructor: course.instructor,
-        syllabus: course.syllabus.join('\n'),
-        totalSeats: course.totalSeats,
-        overview: course.overview || fallback.overview || course.description,
-        apply: course.apply && course.apply.length > 0 ? course.apply.join('\n') : (fallback.apply || []).join('\n'),
-        careers: course.careers && course.careers.length > 0 ? course.careers.join('\n') : (fallback.careers || []).join('\n'),
+        title: course.title || '',
+        duration: course.duration || '',
+        fees: typeof course.fees === 'number' ? course.fees : 0,
+        registrationFee: typeof course.registrationFee === 'number' ? course.registrationFee : 0,
+        shifts: Array.isArray(course.shifts) ? course.shifts : ['Morning (09:00 AM - 12:00 PM)'],
+        category: course.category || 'Diploma',
+        description: course.description || '',
+        image: course.image || '',
+        instructor: course.instructor || '',
+        syllabus: Array.isArray(course.syllabus) ? course.syllabus.join('\n') : (typeof course.syllabus === 'string' ? course.syllabus : ''),
+        totalSeats: course.totalSeats || 25,
+        overview: course.overview || fallback.overview || course.description || '',
+        apply: Array.isArray(course.apply) && course.apply.length > 0 ? course.apply.join('\n') : (typeof course.apply === 'string' ? course.apply : (fallback.apply || []).join('\n')),
+        careers: Array.isArray(course.careers) && course.careers.length > 0 ? course.careers.join('\n') : (typeof course.careers === 'string' ? course.careers : (fallback.careers || []).join('\n')),
         heroVideo: course.heroVideo || fallback.heroVideo || '',
       });
 
       // Outline Modules
-      const finalOutline = course.outline && course.outline.length > 0
-        ? course.outline.map(o => ({ t: o.t, d: o.d.join('\n') }))
-        : (fallback.outline || []).map((o: any) => ({ t: o.t, d: o.d.join('\n') }));
+      const finalOutline = Array.isArray(course.outline) && course.outline.length > 0
+        ? course.outline.map(o => ({ t: o.t || '', d: Array.isArray(o.d) ? o.d.join('\n') : (typeof o.d === 'string' ? o.d : '') }))
+        : (fallback.outline || []).map((o: any) => ({ t: o.t || '', d: Array.isArray(o.d) ? o.d.join('\n') : (typeof o.d === 'string' ? o.d : '') }));
       setCourseOutline(finalOutline);
 
       // FAQs
-      const finalFaqs = course.faqs && course.faqs.length > 0
-        ? course.faqs.map(f => ({ q: f.q, a: f.a }))
-        : (fallback.faqs || []).map((f: any) => ({ q: f.q, a: f.a }));
+      const finalFaqs = Array.isArray(course.faqs) && course.faqs.length > 0
+        ? course.faqs.map(f => ({ q: f.q || '', a: f.a || '' }))
+        : (fallback.faqs || []).map((f: any) => ({ q: f.q || '', a: f.a || '' }));
       setCourseFaqs(finalFaqs);
     } else {
       setEditingCourse(null);
@@ -1038,95 +1047,122 @@ export default function CMSAdmin() {
                 </div>
 
                 <div className="space-y-3">
-                  {courses.map(course => (
-                    <div key={course.id} className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-                      {/* Course Card Header */}
-                      <div className="flex space-x-4 items-start p-4">
-                        <img
-                          src={course.image}
-                          alt={course.title}
-                          className="w-20 h-20 rounded-lg object-cover flex-shrink-0 border border-slate-800"
-                        />
-                        <div className="space-y-1 w-full min-w-0 flex-1">
-                          <span className="text-[9px] uppercase tracking-wider text-[#C5A964] font-bold bg-[#AE8C45]/5 border border-[#AE8C45]/10 px-2 py-0.5 rounded">
-                            {course.category}
-                          </span>
-                          <h3 className="font-serif font-bold text-sm text-white">{course.title}</h3>
-                          <p className="text-[11px] text-slate-400 font-sans line-clamp-2 leading-relaxed">{course.description}</p>
-                          <div className="flex flex-wrap gap-3 pt-1 text-[10px] font-sans text-slate-400">
-                            <span>Fees: <strong className="text-slate-200">PKR {course.fees.toLocaleString()}</strong></span>
-                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.heroVideo ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                              {course.heroVideo ? '✓ Video' : '✗ No Video'}
-                            </span>
-                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.outline && course.outline.length > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20'}`}>
-                              {course.outline && course.outline.length > 0 ? `✓ ${course.outline.length} Modules` : '⚠ No Outline'}
-                            </span>
-                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.faqs && course.faqs.length > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20'}`}>
-                              {course.faqs && course.faqs.length > 0 ? `✓ ${course.faqs.length} FAQs` : '⚠ No FAQs'}
-                            </span>
+                  {(!courses || courses.length === 0) ? (
+                    <div className="bg-slate-950 border border-dashed border-slate-800 rounded-2xl p-8 text-center space-y-4">
+                      <BookOpen className="h-12 w-12 text-[#C5A964]/40 mx-auto" />
+                      <div className="space-y-1">
+                        <h3 className="text-base font-bold text-white font-serif">No Courses Active in Catalog</h3>
+                        <p className="text-xs text-slate-400 max-w-md mx-auto">
+                          There are currently no course items in your catalog. You can create a new course manually or restore default courses.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => openCourseModal()}
+                        className="inline-flex items-center gap-2 bg-[#AE8C45] text-[#0C1B2C] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:brightness-110 active:scale-95 transition-all"
+                      >
+                        <Plus className="h-4 w-4 stroke-[2.5]" />
+                        <span>Add First Course</span>
+                      </button>
+                    </div>
+                  ) : (
+                    courses.map(course => {
+                      if (!course) return null;
+                      const safeFees = typeof course.fees === 'number' ? course.fees : 0;
+                      const syllabusCount = Array.isArray(course.syllabus) ? course.syllabus.length : (typeof course.syllabus === 'string' && course.syllabus ? 1 : 0);
+                      const outlineCount = Array.isArray(course.outline) ? course.outline.length : 0;
+                      const faqsCount = Array.isArray(course.faqs) ? course.faqs.length : 0;
+
+                      return (
+                        <div key={course.id || Math.random().toString()} className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+                          {/* Course Card Header */}
+                          <div className="flex space-x-4 items-start p-4">
+                            <img
+                              src={course.image || 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=800'}
+                              alt={course.title || 'Course'}
+                              className="w-20 h-20 rounded-lg object-cover flex-shrink-0 border border-slate-800"
+                            />
+                            <div className="space-y-1 w-full min-w-0 flex-1">
+                              <span className="text-[9px] uppercase tracking-wider text-[#C5A964] font-bold bg-[#AE8C45]/5 border border-[#AE8C45]/10 px-2 py-0.5 rounded">
+                                {course.category || 'Course'}
+                              </span>
+                              <h3 className="font-serif font-bold text-sm text-white">{course.title || 'Untitled Course'}</h3>
+                              <p className="text-[11px] text-slate-400 font-sans line-clamp-2 leading-relaxed">{course.description || 'No description provided.'}</p>
+                              <div className="flex flex-wrap gap-3 pt-1 text-[10px] font-sans text-slate-400">
+                                <span>Fees: <strong className="text-slate-200">PKR {safeFees.toLocaleString()}</strong></span>
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${course.heroVideo ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                  {course.heroVideo ? '✓ Video' : '✗ No Video'}
+                                </span>
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${outlineCount > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20'}`}>
+                                  {outlineCount > 0 ? `✓ ${outlineCount} Modules` : '⚠ No Outline'}
+                                </span>
+                                <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${faqsCount > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20'}`}>
+                                  {faqsCount > 0 ? `✓ ${faqsCount} FAQs` : '⚠ No FAQs'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-col gap-1.5 flex-shrink-0">
+                              <button
+                                onClick={() => openCourseModal(course)}
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-[#C5A964] hover:text-white hover:bg-[#AE8C45] rounded-lg transition-colors cursor-pointer text-[10px] font-bold uppercase whitespace-nowrap"
+                                title="Edit Basic Info"
+                              >
+                                <Edit className="h-3 w-3" /> Edit
+                              </button>
+                              <button
+                                onClick={() => deleteCourse(course.id)}
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-red-400 hover:text-white hover:bg-red-500 rounded-lg transition-colors cursor-pointer text-[10px] font-bold uppercase whitespace-nowrap"
+                                title="Delete Course"
+                              >
+                                <Trash2 className="h-3 w-3" /> Delete
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Detail Page Quick-Edit Sections */}
+                          <div className="border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-800">
+                            <button
+                              onClick={() => openCourseModal(course, 'overview')}
+                              className="p-3 text-left hover:bg-slate-900 transition-colors group"
+                            >
+                              <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Overview & Video</span>
+                              <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors truncate">
+                                {course.overview ? course.overview.slice(0, 40) + '...' : '⚠ Click to add overview'}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => openCourseModal(course, 'syllabus')}
+                              className="p-3 text-left hover:bg-slate-900 transition-colors group"
+                            >
+                              <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Syllabus & Careers</span>
+                              <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
+                                {syllabusCount > 0 ? `${syllabusCount} learning points` : '⚠ Click to add syllabus'}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => openCourseModal(course, 'outline')}
+                              className="p-3 text-left hover:bg-slate-900 transition-colors group"
+                            >
+                              <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Module Outline</span>
+                              <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
+                                {outlineCount > 0 ? `${outlineCount} modules defined` : '⚠ Click to add modules'}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => openCourseModal(course, 'faqs')}
+                              className="p-3 text-left hover:bg-slate-900 transition-colors group"
+                            >
+                              <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Course FAQs</span>
+                              <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
+                                {faqsCount > 0 ? `${faqsCount} FAQs saved` : '⚠ Click to add FAQs'}
+                              </span>
+                            </button>
                           </div>
                         </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex flex-col gap-1.5 flex-shrink-0">
-                          <button
-                            onClick={() => openCourseModal(course)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-[#C5A964] hover:text-white hover:bg-[#AE8C45] rounded-lg transition-colors cursor-pointer text-[10px] font-bold uppercase whitespace-nowrap"
-                            title="Edit Basic Info"
-                          >
-                            <Edit className="h-3 w-3" /> Edit
-                          </button>
-                          <button
-                            onClick={() => deleteCourse(course.id)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 text-red-400 hover:text-white hover:bg-red-500 rounded-lg transition-colors cursor-pointer text-[10px] font-bold uppercase whitespace-nowrap"
-                            title="Delete Course"
-                          >
-                            <Trash2 className="h-3 w-3" /> Delete
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Detail Page Quick-Edit Sections */}
-                      <div className="border-t border-slate-800 grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-800">
-                        <button
-                          onClick={() => openCourseModal(course, 'overview')}
-                          className="p-3 text-left hover:bg-slate-900 transition-colors group"
-                        >
-                          <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Overview & Video</span>
-                          <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors truncate">
-                            {course.overview ? course.overview.slice(0, 40) + '...' : '⚠ Click to add overview'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => openCourseModal(course, 'syllabus')}
-                          className="p-3 text-left hover:bg-slate-900 transition-colors group"
-                        >
-                          <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Syllabus & Careers</span>
-                          <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
-                            {course.syllabus?.length > 0 ? `${course.syllabus.length} learning points` : '⚠ Click to add syllabus'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => openCourseModal(course, 'outline')}
-                          className="p-3 text-left hover:bg-slate-900 transition-colors group"
-                        >
-                          <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Module Outline</span>
-                          <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
-                            {course.outline?.length > 0 ? `${course.outline.length} modules defined` : '⚠ Click to add modules'}
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => openCourseModal(course, 'faqs')}
-                          className="p-3 text-left hover:bg-slate-900 transition-colors group"
-                        >
-                          <span className="block text-[9px] text-slate-500 uppercase tracking-wider font-bold mb-0.5">Course FAQs</span>
-                          <span className="block text-xs text-slate-300 group-hover:text-[#C5A964] transition-colors">
-                            {course.faqs?.length > 0 ? `${course.faqs.length} FAQs saved` : '⚠ Click to add FAQs'}
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })
+                  )}
                 </div>
 
               </div>
@@ -2194,11 +2230,11 @@ export default function CMSAdmin() {
                       <p className="text-xs text-slate-500 mt-0.5">Track purchases, manage stock levels & generate expense reports</p>
                     </div>
                     {/* Sub-tab switcher */}
-                    <div className="flex gap-2">
-                      {(['inventory','purchases','report'] as const).map(t => (
+                    <div className="flex gap-2 flex-wrap">
+                      {(['inventory','purchases','store_products','customer_orders','report'] as const).map(t => (
                         <button key={t} onClick={() => setShopSubTab(t)}
                           className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${shopSubTab===t ? 'bg-[#AE8C45] text-[#0C1B2C]' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
-                          {t === 'inventory' ? '📦 Inventory' : t === 'purchases' ? '🛒 Purchases' : '📊 Report'}
+                          {t === 'inventory' ? '📦 Inventory' : t === 'purchases' ? '🛒 Purchases' : t === 'store_products' ? '🛍 Store Products' : t === 'customer_orders' ? '📦 Customer Orders' : '📊 Report'}
                         </button>
                       ))}
                     </div>
@@ -2393,6 +2429,288 @@ export default function CMSAdmin() {
                             ))}
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===== STORE PRODUCTS SUB-TAB ===== */}
+                  {shopSubTab === 'store_products' && (
+                    <div className="space-y-6 font-sans">
+                      {/* Add / Edit Shop Product Form */}
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider flex items-center gap-2">
+                            <ShoppingBag className="h-4 w-4" />
+                            {editingShopProd ? 'Edit Store Product' : 'Add New Store Product'}
+                          </h3>
+                          {editingShopProd && (
+                            <button 
+                              onClick={() => {
+                                setEditingShopProd(null);
+                                setNewShopProd({ name: '', category: 'Uniforms', price: 0, description: '', image: '', inStock: true });
+                              }}
+                              className="text-xs text-slate-400 hover:text-white cursor-pointer"
+                            >
+                              Cancel Edit
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="sm:col-span-2 space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Product Name *</label>
+                            <input 
+                              type="text"
+                              value={editingShopProd ? editingShopProd.name : newShopProd.name} 
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (editingShopProd) setEditingShopProd({ ...editingShopProd, name: val });
+                                else setNewShopProd(p => ({ ...p, name: val }));
+                              }}
+                              placeholder="e.g. TCA Executive Chef Uniform Set"
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" 
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Category</label>
+                            <select 
+                              value={editingShopProd ? editingShopProd.category : newShopProd.category} 
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (editingShopProd) setEditingShopProd({ ...editingShopProd, category: val });
+                                else setNewShopProd(p => ({ ...p, category: val }));
+                              }}
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#AE8C45]"
+                            >
+                              <option value="Uniforms">Uniforms</option>
+                              <option value="Tools & Cutlery">Tools & Cutlery</option>
+                              <option value="Bakery Gear">Bakery Gear</option>
+                              <option value="Barista Gear">Barista Gear</option>
+                              <option value="Books & Courses">Books & Courses</option>
+                            </select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Price (PKR) *</label>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={editingShopProd ? editingShopProd.price : newShopProd.price} 
+                              onChange={e => {
+                                const val = Number(e.target.value);
+                                if (editingShopProd) setEditingShopProd({ ...editingShopProd, price: val });
+                                else setNewShopProd(p => ({ ...p, price: val }));
+                              }}
+                              placeholder="6500"
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" 
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2 space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Image URL or Upload</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="text"
+                                value={editingShopProd ? editingShopProd.image : newShopProd.image} 
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  if (editingShopProd) setEditingShopProd({ ...editingShopProd, image: val });
+                                  else setNewShopProd(p => ({ ...p, image: val }));
+                                }}
+                                placeholder="https://images.unsplash.com/photo-..."
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" 
+                              />
+                              <input 
+                                type="file" 
+                                ref={shopProdImgRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    handleCmsImageUpload(file, setIsShopProdImgUploading, (url) => {
+                                      if (editingShopProd) setEditingShopProd({ ...editingShopProd, image: url });
+                                      else setNewShopProd(p => ({ ...p, image: url }));
+                                    });
+                                  }
+                                }}
+                              />
+                              <button 
+                                type="button"
+                                onClick={() => shopProdImgRef.current?.click()}
+                                disabled={isShopProdImgUploading}
+                                className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 hover:text-white flex items-center gap-1 cursor-pointer"
+                              >
+                                <Upload className="h-3.5 w-3.5" />
+                                <span>{isShopProdImgUploading ? '...' : 'Upload'}</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="sm:col-span-3 space-y-1">
+                            <label className="text-[10px] text-slate-400 uppercase tracking-wider">Description / Detail</label>
+                            <textarea 
+                              rows={2}
+                              value={editingShopProd ? editingShopProd.description : newShopProd.description} 
+                              onChange={e => {
+                                const val = e.target.value;
+                                if (editingShopProd) setEditingShopProd({ ...editingShopProd, description: val });
+                                else setNewShopProd(p => ({ ...p, description: val }));
+                              }}
+                              placeholder="Product details, fabric quality, knife specifications..."
+                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45] resize-none" 
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2">
+                          <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer">
+                            <input 
+                              type="checkbox"
+                              checked={editingShopProd ? editingShopProd.inStock : newShopProd.inStock}
+                              onChange={e => {
+                                const checked = e.target.checked;
+                                if (editingShopProd) setEditingShopProd({ ...editingShopProd, inStock: checked });
+                                else setNewShopProd(p => ({ ...p, inStock: checked }));
+                              }}
+                              className="rounded bg-slate-900 border-slate-700 text-[#AE8C45] focus:ring-[#AE8C45]"
+                            />
+                            <span>Available In Stock</span>
+                          </label>
+
+                          <button 
+                            onClick={async () => {
+                              if (editingShopProd) {
+                                if (!editingShopProd.name.trim()) return;
+                                await updateShopProduct(editingShopProd);
+                                setEditingShopProd(null);
+                              } else {
+                                if (!newShopProd.name.trim() || !newShopProd.price) return;
+                                await addShopProduct(newShopProd);
+                                setNewShopProd({ name: '', category: 'Uniforms', price: 0, description: '', image: '', inStock: true });
+                              }
+                            }}
+                            className="inline-flex items-center gap-2 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold text-xs px-5 py-2.5 rounded-lg transition-colors cursor-pointer"
+                          >
+                            <Save className="h-3.5 w-3.5" />
+                            <span>{editingShopProd ? 'Update Product' : 'Save New Product'}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Products List Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {shopProducts.map(prod => (
+                          <div key={prod.id} className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3 relative flex flex-col justify-between">
+                            <div className="space-y-2">
+                              <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden relative">
+                                <img src={prod.image || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=800'} alt={prod.name} className="w-full h-full object-cover" />
+                                <span className="absolute top-2 left-2 px-2 py-0.5 bg-slate-950/80 text-[#C5A964] text-[9px] font-bold rounded uppercase">{prod.category}</span>
+                              </div>
+                              <h4 className="text-sm font-bold text-white leading-snug">{prod.name}</h4>
+                              <p className="text-xs text-slate-400 line-clamp-2">{prod.description}</p>
+                              <div className="text-sm font-bold text-[#C5A964]">PKR {prod.price.toLocaleString()}</div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
+                              <button 
+                                onClick={() => updateShopProduct({ ...prod, inStock: !prod.inStock })}
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded cursor-pointer ${prod.inStock ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'}`}
+                              >
+                                {prod.inStock ? 'In Stock' : 'Out of Stock'}
+                              </button>
+
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => setEditingShopProd(prod)} className="text-[#C5A964] hover:text-white cursor-pointer" title="Edit"><Edit className="h-4 w-4" /></button>
+                                <button onClick={() => deleteShopProduct(prod.id)} className="text-rose-400 hover:text-rose-300 cursor-pointer" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===== CUSTOMER ORDERS SUB-TAB ===== */}
+                  {shopSubTab === 'customer_orders' && (
+                    <div className="space-y-5 font-sans">
+                      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-300">Customer Shop Orders</span>
+                          <span className="text-[10px] text-[#C5A964] font-bold">{shopOrders.length} total orders</span>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs">
+                            <thead className="bg-slate-900 border-b border-slate-800">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Order ID</th>
+                                <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Date</th>
+                                <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Customer Info</th>
+                                <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Items Ordered</th>
+                                <th className="px-4 py-3 text-right text-[10px] text-slate-400 uppercase">Total</th>
+                                <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Payment / TRX</th>
+                                <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800">
+                              {shopOrders.length === 0 ? (
+                                <tr>
+                                  <td colSpan={7} className="px-4 py-8 text-center text-slate-600 italic">No shop orders received yet. Orders placed by customers from the website shop catalog will appear here.</td>
+                                </tr>
+                              ) : shopOrders.map(order => (
+                                <tr key={order.id} className="hover:bg-slate-900/50">
+                                  <td className="px-4 py-3 font-bold text-[#C5A964] whitespace-nowrap">{order.id}</td>
+                                  <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString()}</td>
+                                  <td className="px-4 py-3">
+                                    <div className="font-bold text-white">{order.customerName}</div>
+                                    <div className="text-[11px] text-slate-400">{order.phone}</div>
+                                    <div className="text-[10px] text-slate-500 line-clamp-1">{order.address}</div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="space-y-0.5">
+                                      {order.items.map((item, idx) => (
+                                        <div key={idx} className="text-[11px] text-slate-300">
+                                          {item.quantity}x <span className="font-medium text-white">{item.productName}</span> (PKR {item.price.toLocaleString()})
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-bold text-[#C5A964] whitespace-nowrap">
+                                    PKR {order.totalAmount.toLocaleString()}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="text-slate-300 font-semibold">{order.paymentMethod}</div>
+                                    <div className="text-[11px] text-[#C5A964]">TRX: {order.transactionRef || 'N/A'}</div>
+                                    {order.receiptFile && (
+                                      <a href={order.receiptFile} target="_blank" rel="noreferrer" className="text-[10px] text-cyan-400 underline hover:text-cyan-300">
+                                        View Slip Photo
+                                      </a>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 text-center whitespace-nowrap">
+                                    <select
+                                      value={order.status}
+                                      onChange={(e) => updateShopOrderStatus(order.id, e.target.value as any)}
+                                      className={`px-2 py-1 rounded text-[10px] font-bold border focus:outline-none cursor-pointer ${
+                                        order.status === 'Approved' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' :
+                                        order.status === 'Dispatched' ? 'bg-cyan-950 text-cyan-400 border-cyan-800' :
+                                        order.status === 'Cancelled' ? 'bg-rose-950 text-rose-400 border-rose-800' :
+                                        'bg-amber-950 text-amber-400 border-amber-800'
+                                      }`}
+                                    >
+                                      <option value="Pending">Pending</option>
+                                      <option value="Approved">Approved</option>
+                                      <option value="Dispatched">Dispatched</option>
+                                      <option value="Cancelled">Cancelled</option>
+                                    </select>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
                   )}

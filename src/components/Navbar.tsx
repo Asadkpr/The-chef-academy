@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAcademy } from '../context/AcademyContext';
-import { Menu, X, ChevronRight, LayoutDashboard, SearchCode, Sparkles, LogIn, MessageCircle } from 'lucide-react';
+import { Menu, X, ChevronRight, LayoutDashboard, SearchCode, Sparkles, LogIn, MessageCircle, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Navbar() {
@@ -53,12 +53,25 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Right Side buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            {activeView === 'portal' ? (
+          <div className="hidden md:flex items-center space-x-3">
+            <button
+              onClick={() => setView('shop')}
+              className={`px-4 py-2 rounded-lg font-sans text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center space-x-1.5 cursor-pointer ${
+                activeView === 'shop'
+                  ? 'bg-[#c19d53] text-slate-950 shadow-md shadow-[#c19d53]/20'
+                  : 'bg-slate-900/90 border border-slate-800 text-[#c19d53] hover:bg-slate-800 hover:text-white'
+              }`}
+              title="Official TCA Culinary Store & Gear"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span>TCA Shop</span>
+            </button>
+
+            {activeView === 'portal' || activeView === 'shop' ? (
               <>
                 <button
                   onClick={() => setView('home')}
-                  className="text-xs font-sans font-bold text-slate-300 hover:text-white transition-colors duration-200 tracking-wider uppercase px-3 py-2 mr-2"
+                  className="text-xs font-sans font-bold text-slate-300 hover:text-white transition-colors duration-200 tracking-wider uppercase px-3 py-2 mr-1"
                 >
                   Back to Website
                 </button>
@@ -67,25 +80,25 @@ export default function Navbar() {
                   href="https://wa.me/923339123456?text=Hi%21+I+am+interested+in+joining+The+Chef%27s+Academy+Lahore.+Please+send+me+more+information."
                   target="_blank"
                   rel="noreferrer"
-                  className="px-5 py-2.5 rounded-lg font-sans text-xs font-bold uppercase tracking-wider border border-[#c19d53] text-[#c19d53] hover:bg-[#c19d53]/5 transition-all duration-300 flex items-center space-x-1.5"
+                  className="px-4 py-2 rounded-lg font-sans text-xs font-bold uppercase tracking-wider border border-[#c19d53] text-[#c19d53] hover:bg-[#c19d53]/5 transition-all duration-300 flex items-center space-x-1.5"
                 >
                   <MessageCircle className="h-4 w-4" />
-                  <span>WhatsApp Help</span>
+                  <span>WhatsApp</span>
                 </a>
 
                 <button
                   onClick={() => setView('cms')}
-                  className="bg-slate-900 border border-slate-800 text-[#c19d53] px-5 py-2.5 rounded-lg font-sans text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-all duration-300 flex items-center space-x-1.5 cursor-pointer"
+                  className="bg-slate-900 border border-slate-800 text-[#c19d53] px-4 py-2 rounded-lg font-sans text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-all duration-300 flex items-center space-x-1.5 cursor-pointer"
                   title="Academy CMS Admin Panel"
                 >
                   <LogIn className="h-4 w-4" />
-                  <span>Admin Login</span>
+                  <span>Admin</span>
                 </button>
               </>
             ) : (
               <button
                 onClick={() => setView('home')}
-                className="flex items-center space-x-2 px-5 py-2.5 rounded-lg font-sans text-xs font-bold uppercase tracking-wider transition-all duration-300 bg-[#c19d53] text-slate-950 hover:brightness-110 shadow-lg"
+                className="flex items-center space-x-2 px-5 py-2 rounded-lg font-sans text-xs font-bold uppercase tracking-wider transition-all duration-300 bg-[#c19d53] text-slate-950 hover:brightness-110 shadow-lg"
               >
                 <LayoutDashboard className="h-4 w-4" />
                 <span>Exit Admin Portal</span>

@@ -221,3 +221,37 @@ export interface PurchaseRecord {
   quantityAdded: number;
   unit: string;
 }
+
+export interface ShopProduct {
+  id: string;
+  name: string;
+  category: 'Uniforms' | 'Tools & Cutlery' | 'Bakery Gear' | 'Barista Gear' | 'Books & Courses' | string;
+  price: number;
+  description: string;
+  image: string;
+  inStock: boolean;
+  stockQty?: number;
+  createdAt: string;
+}
+
+export interface ShopOrderItem {
+  productId: string;
+  productName: string;
+  price: number;
+  quantity: number;
+}
+
+export interface ShopOrder {
+  id: string;
+  customerName: string;
+  phone: string;
+  email: string;
+  address: string;
+  items: ShopOrderItem[];
+  totalAmount: number;
+  paymentMethod: 'JazzCash' | 'EasyPaisa' | 'Bank Transfer' | string;
+  transactionRef: string;
+  receiptFile?: string;
+  status: 'Pending' | 'Approved' | 'Dispatched' | 'Cancelled';
+  createdAt: string;
+}

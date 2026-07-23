@@ -1,4 +1,4 @@
-import { Course, Testimonial, GalleryItem } from '../types';
+import { Course, Testimonial, GalleryItem, ShopProduct } from '../types';
 
 export const INITIAL_COURSES: Course[] = [
   {
@@ -113,3 +113,72 @@ export const INITIAL_TESTIMONIALS: Testimonial[] = [
 ];
 
 export const INITIAL_GALLERY: GalleryItem[] = [];
+
+export const INITIAL_SHOP_PRODUCTS: ShopProduct[] = [
+  {
+    id: 'prod-1',
+    name: "TCA Official Executive Chef Uniform Set",
+    category: 'Uniforms',
+    price: 6500,
+    description: "Premium double-breasted white chef jacket with gold-embroidered TCA crest, black houndstooth kitchen trousers, and adjustable chef toque hat.",
+    image: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=800',
+    inStock: true,
+    stockQty: 50,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'prod-2',
+    name: "German High-Carbon Steel 8-Piece Chef Knife Set",
+    category: 'Tools & Cutlery',
+    price: 18500,
+    description: "Hand-forged razor-sharp knife roll including 8-inch Chef knife, Santoku, Paring, Utility, Boning knife, Honing steel, and leather carrying case.",
+    image: 'https://images.unsplash.com/photo-1593618998160-e34014e67546?auto=format&fit=crop&q=80&w=800',
+    inStock: true,
+    stockQty: 30,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'prod-3',
+    name: "Master Pastry & Fondant Cake Decorating Toolkit",
+    category: 'Bakery Gear',
+    price: 9200,
+    description: "Complete 48-piece patisserie set with stainless piping tips, silicone turn-table, fondant smoothers, cake sculpting tools, and pastry bags.",
+    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800',
+    inStock: true,
+    stockQty: 40,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'prod-4',
+    name: "Commercial Barista Milk Pitcher & Precision Tamper Set",
+    category: 'Barista Gear',
+    price: 4800,
+    description: "Teflon non-stick 600ml milk frothing pitcher with eagle-spout for latte art, 58mm stainless heavy tamper, and silicone tamping mat.",
+    image: 'https://images.unsplash.com/photo-1570968915860-54d5c301fc9f?auto=format&fit=crop&q=80&w=800',
+    inStock: true,
+    stockQty: 25,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'prod-5',
+    name: "The Chef's Academy Heavy-Duty Embroidered Apron",
+    category: 'Uniforms',
+    price: 2200,
+    description: "Durable cross-back canvas kitchen apron with genuine leather straps, brass towel loop, and large utility pockets for thermometer and pens.",
+    image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=800',
+    inStock: true,
+    stockQty: 100,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'prod-6',
+    name: "Commercial Culinary Recipe & HACCP Hygiene Guidebook",
+    category: 'Books & Courses',
+    price: 3500,
+    description: "Comprehensive hardcover reference manual featuring 200+ hotel standard recipes, costing formulas, mother sauce matrices, and HACCP safety standards.",
+    image: 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?auto=format&fit=crop&q=80&w=800',
+    inStock: true,
+    stockQty: 60,
+    createdAt: new Date().toISOString()
+  }
+];

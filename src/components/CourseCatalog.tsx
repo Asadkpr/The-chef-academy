@@ -123,37 +123,34 @@ export default function CourseCatalog() {
                       </div>
                     </div>
 
-                    </div>
+                    <h3 className="font-serif text-xl font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors duration-200">
+                      {course.title}
+                    </h3>
 
-                    {/* Determine the fee from global coursePlans if available, else fallback to course.fees */}
-                    {(() => {
-                      const plan = (coursePlans && coursePlans[course.title] && coursePlans[course.title][0]) || null;
-                      const displayFee = plan ? plan.fee : course.fees;
-                      const displayRegFee = plan ? plan.regFee : course.registrationFee;
-                      
-                      return (
-                        <>
-                          <h3 className="font-serif text-xl font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors duration-200">
-                            {course.title}
-                          </h3>
+                    <p className="font-sans text-slate-400 text-xs sm:text-sm leading-relaxed line-clamp-3">
+                      {course.description}
+                    </p>
+                  </div>
 
-                          <p className="font-sans text-slate-400 text-xs sm:text-sm leading-relaxed line-clamp-3">
-                            {course.description}
-                          </p>
-                        </div>
-
-                        <div className="space-y-4 pt-4 border-t border-slate-900">
-                          {/* Price Tag */}
-                          <div className="flex items-baseline justify-between">
-                            <span className="text-slate-500 text-xs font-sans uppercase tracking-wider">Course Fees</span>
-                            <div className="text-right">
-                              <span className="text-2xl font-serif font-bold text-white">PKR {displayFee.toLocaleString()}</span>
-                              <span className="block text-[10px] text-slate-400 mt-0.5">+{displayRegFee.toLocaleString()} Reg. Fee</span>
-                            </div>
+                  {/* Determine the fee from global coursePlans if available, else fallback to course.fees */}
+                  {(() => {
+                    const plan = (coursePlans && coursePlans[course.title] && coursePlans[course.title][0]) || null;
+                    const displayFee = plan ? plan.fee : (course.fees || 0);
+                    const displayRegFee = plan ? plan.regFee : (course.registrationFee || 0);
+                    
+                    return (
+                      <div className="space-y-4 pt-4 border-t border-slate-900">
+                        {/* Price Tag */}
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-slate-500 text-xs font-sans uppercase tracking-wider">Course Fees</span>
+                          <div className="text-right">
+                            <span className="text-2xl font-serif font-bold text-white">PKR {displayFee.toLocaleString()}</span>
+                            <span className="block text-[10px] text-slate-400 mt-0.5">+{displayRegFee.toLocaleString()} Reg. Fee</span>
                           </div>
-                        </>
-                      );
-                    })()}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                     {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-3">
@@ -178,8 +175,6 @@ export default function CourseCatalog() {
                     </div>
 
                   </div>
-
-                </div>
 
               </motion.div>
             ))}

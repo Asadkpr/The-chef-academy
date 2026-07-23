@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAcademy, DEFAULT_COURSE_PLANS } from '../context/AcademyContext';
 import { 
   MessageCircle, Phone, Menu, X, Play, BookOpen, Users, 
-  HelpCircle, Star, ArrowRight, Download, Check, Award, MapPin, Mail
+  HelpCircle, Star, ArrowRight, Download, Check, Award, MapPin, Mail, ShoppingBag
 } from 'lucide-react';
 
 export default function Website() {
@@ -514,6 +514,10 @@ export default function Website() {
             <button onClick={() => handleNavClick('home-about')} className="hover:text-[#C5A964] transition-colors">About</button>
             <button onClick={() => handleNavClick('home-courses')} className="hover:text-[#C5A964] transition-colors">Courses</button>
             <button onClick={() => handleNavClick('home-student-life')} className="hover:text-[#C5A964] transition-colors">Student Life</button>
+            <button onClick={() => setView('shop')} className="hover:text-[#C5A964] text-[#C5A964] font-bold transition-colors flex items-center gap-1.5 cursor-pointer">
+              <ShoppingBag className="h-4 w-4" />
+              <span>TCA Shop</span>
+            </button>
             <button onClick={() => handleNavClick('home-faqs')} className="hover:text-[#C5A964] transition-colors">FAQs</button>
             <button onClick={() => handleNavClick('home-contact')} className="hover:text-[#C5A964] transition-colors">Contact</button>
           </nav>
@@ -524,14 +528,15 @@ export default function Website() {
               href={`https://wa.me/${websiteData.footer.whatsapp.replace(/\D/g, '')}?text=Hi!%20I'd%20like%20information%20about%20courses%20at%20The%20Chef's%20Academy.`}
               target="_blank"
               rel="noreferrer"
-              className="hidden sm:inline-flex border border-[#AE8C45] text-[#C5A964] hover:bg-[#AE8C45] hover:text-white transition-all text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg"
+              className="hidden sm:inline-flex border border-[#AE8C45] text-[#C5A964] hover:bg-[#AE8C45] hover:text-white transition-all text-xs font-bold uppercase tracking-wider px-4 py-2.5 rounded-lg flex items-center gap-1.5"
             >
-              WhatsApp
+              <MessageCircle className="h-4 w-4" />
+              <span>WhatsApp</span>
             </a>
 
             <button 
               onClick={() => setView('portal')}
-              className="bg-[#AE8C45] text-[#0C1B2C] hover:bg-[#C5A964] transition-all text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg"
+              className="bg-[#AE8C45] text-[#0C1B2C] hover:bg-[#C5A964] transition-all text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg shadow-md shadow-[#AE8C45]/20 cursor-pointer"
             >
               Apply Now
             </button>
@@ -558,15 +563,24 @@ export default function Website() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-[#13283F] flex flex-col justify-center gap-6 px-10 pt-24 text-center">
-          <button onClick={() => handleNavClick('home-about')} className="text-2xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">About</button>
-          <button onClick={() => handleNavClick('home-courses')} className="text-2xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">Courses</button>
-          <button onClick={() => handleNavClick('home-student-life')} className="text-2xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">Student Life</button>
-          <button onClick={() => handleNavClick('home-faqs')} className="text-2xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">FAQs</button>
-          <button onClick={() => handleNavClick('home-contact')} className="text-2xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">Contact</button>
+        <div className="fixed inset-0 z-40 bg-[#13283F] flex flex-col justify-center gap-5 px-10 pt-24 text-center">
+          <button onClick={() => handleNavClick('home-about')} className="text-xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">About</button>
+          <button onClick={() => handleNavClick('home-courses')} className="text-xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">Courses</button>
+          <button onClick={() => handleNavClick('home-student-life')} className="text-xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">Student Life</button>
+          <button onClick={() => handleNavClick('home-faqs')} className="text-xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">FAQs</button>
+          <button onClick={() => handleNavClick('home-contact')} className="text-xl font-serif text-[#F7F2DE] hover:text-[#C5A964] py-2 border-b border-white/5">Contact</button>
+          
+          <button 
+            onClick={() => { setMobileMenuOpen(false); setView('shop'); }}
+            className="w-full bg-[#AE8C45] text-[#0C1B2C] font-bold text-sm uppercase tracking-wider py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer shadow-lg mt-2"
+          >
+            <ShoppingBag className="h-4 w-4 stroke-[2.5]" />
+            <span>TCA Shop</span>
+          </button>
+
           <button 
             onClick={() => { setMobileMenuOpen(false); setView('portal'); }}
-            className="btn-primary-web justify-center mt-4 w-full"
+            className="btn-primary-web justify-center w-full"
           >
             Apply Online (Admissions)
           </button>

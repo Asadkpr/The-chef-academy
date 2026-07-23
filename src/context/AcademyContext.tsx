@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Course, Admission, Testimonial, GalleryItem, CoursePlans, CoursePlanItem, WebsiteData, InventoryItem, PurchaseRecord } from '../types';
-import { INITIAL_COURSES, INITIAL_TESTIMONIALS, INITIAL_GALLERY } from '../data/defaultData';
+import { Course, Admission, Testimonial, GalleryItem, CoursePlans, CoursePlanItem, WebsiteData, InventoryItem, PurchaseRecord, ShopProduct, ShopOrder } from '../types';
+import { INITIAL_COURSES, INITIAL_TESTIMONIALS, INITIAL_GALLERY, INITIAL_SHOP_PRODUCTS } from '../data/defaultData';
 import { INITIAL_WEBSITE_DATA } from '../data/websiteDefaultData';
 import { auth, db } from '../lib/firebase';
 import { signInAnonymously } from 'firebase/auth';
@@ -62,14 +62,21 @@ interface AcademyContextType {
   gallery: GalleryItem[];
   inventoryItems: InventoryItem[];
   purchaseRecords: PurchaseRecord[];
+  shopProducts: ShopProduct[];
+  shopOrders: ShopOrder[];
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => void;
   updateInventoryItem: (item: InventoryItem) => void;
   deleteInventoryItem: (id: string) => void;
   addPurchaseRecord: (record: Omit<PurchaseRecord, 'id' | 'date'>) => void;
   deletePurchaseRecord: (id: string) => void;
+  addShopProduct: (product: Omit<ShopProduct, 'id' | 'createdAt'>) => void;
+  updateShopProduct: (product: ShopProduct) => void;
+  deleteShopProduct: (id: string) => void;
+  createShopOrder: (order: Omit<ShopOrder, 'id' | 'createdAt' | 'status'>) => ShopOrder;
+  updateShopOrderStatus: (id: string, status: ShopOrder['status']) => void;
   coursePlans: CoursePlans;
   updateCoursePlans: (plans: CoursePlans) => void;
-  activeView: 'home' | 'cms' | 'portal';
+  activeView: 'home' | 'cms' | 'portal' | 'shop';
   currentSection: string;
   isAdminAuthenticated: boolean;
   websiteData: WebsiteData;
@@ -77,7 +84,7 @@ interface AcademyContextType {
   addCourse: (course: Omit<Course, 'id' | 'seatsAvailable'>) => void;
   updateCourse: (course: Course) => void;
   deleteCourse: (id: string) => void;
-  addAdmission: (admission: Omit<Admission, 'id' | 'status' | 'createdAt'>) => string;
+  addAdmission: (admission: Omit<Admission, 'id' | 'status' | 'createdAt'>) => Admission;
   updateAdmissionStatus: (id: string, status: Admission['status'], remarks?: string) => void;
   updateAdmissionReceipt: (id: string, receiptNumber: string, receiptFile: string) => void;
   updateAdmissionInvoiceHtml: (id: string, invoiceHtml: string) => void;
@@ -86,7 +93,7 @@ interface AcademyContextType {
   deleteTestimonial: (id: string) => void;
   addGalleryItem: (item: Omit<GalleryItem, 'id'>) => void;
   deleteGalleryItem: (id: string) => void;
-  setView: (view: 'home' | 'cms' | 'portal') => void;
+  setView: (view: 'home' | 'cms' | 'portal' | 'shop') => void;
   setSection: (section: string) => void;
   loginAdmin: (passcode: string) => boolean;
   logoutAdmin: () => void;
@@ -136,18 +143,63 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [purchaseRecords, setPurchaseRecords] = useState<PurchaseRecord[]>([]);
   const [coursePlans, setCoursePlans] = useState<CoursePlans>({});
-  const [activeView, setActiveView] = useState<'home' | 'cms' | 'portal'>('home');
+  const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
+  const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
+  const [activeView, setActiveView] = useState<'home' | 'cms' | 'portal' | 'shop'>('home');
   const [currentSection, setCurrentSection] = useState<'hero' | 'about' | 'courses' | 'admission' | 'gallery' | 'testimonials'>('hero');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [websiteData, setWebsiteData] = useState<WebsiteData>(INITIAL_WEBSITE_DATA);
   const [adminPasscode, setAdminPasscode] = useState<string>('admin123'); // Default fallback
 
-  // Load from Firebase on start, with localStorage fallback
+  // Load from Firebase on start, with localStorage fallback & SPA Browser History setup
   useEffect(() => {
+    // Initial view detection & Browser History setup
+    const hash = window.location.hash.toLowerCase();
     const params = new URLSearchParams(window.location.search);
-    if (params.get('cms') === 'true') {
-      setActiveView('cms');
+    
+    let initialView: 'home' | 'cms' | 'portal' | 'shop' = 'home';
+    if (params.get('cms') === 'true' || hash.includes('admin') || hash.includes('cms')) {
+      initialView = 'cms';
+    } else if (hash.includes('portal') || hash.includes('apply')) {
+      initialView = 'portal';
+    } else if (hash.includes('shop') || hash.includes('store')) {
+      initialView = 'shop';
     }
+
+    setActiveView(initialView);
+
+    // Initialize root history entries so back button stays in SPA if landed on deep view
+    if (initialView !== 'home') {
+      window.history.replaceState({ view: 'home' }, '', '#home');
+      window.history.pushState({ view: initialView }, '', initialView === 'portal' ? '#portal' : initialView === 'cms' ? '#admin' : '#shop');
+    } else {
+      window.history.replaceState({ view: 'home' }, '', '#home');
+    }
+
+    // Handle Browser Back & Forward button navigation
+    const handlePopState = (event: PopStateEvent) => {
+      let targetView: 'home' | 'cms' | 'portal' | 'shop' = 'home';
+      
+      if (event.state && event.state.view) {
+        targetView = event.state.view;
+      } else {
+        const currentHash = window.location.hash.toLowerCase();
+        if (currentHash.includes('portal') || currentHash.includes('apply')) {
+          targetView = 'portal';
+        } else if (currentHash.includes('admin') || currentHash.includes('cms')) {
+          targetView = 'cms';
+        } else if (currentHash.includes('shop') || currentHash.includes('store')) {
+          targetView = 'shop';
+        } else {
+          targetView = 'home';
+        }
+      }
+
+      setActiveView(targetView);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.addEventListener('popstate', handlePopState);
 
     const storedAuth = localStorage.getItem('chef_admin_auth');
     if (storedAuth) {
@@ -159,6 +211,37 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     let unsubscribePurchases: (() => void) | null = null;
     let unsubscribeCoursePlans: (() => void) | null = null;
     let unsubscribeCourses: (() => void) | null = null;
+    let unsubscribeShopProducts: (() => void) | null = null;
+    let unsubscribeShopOrders: (() => void) | null = null;
+
+    // Real-time listener for Shop Products
+    try {
+      const prodsRef = collection(db, 'shop_products');
+      unsubscribeShopProducts = onSnapshot(prodsRef, (snapshot) => {
+        if (!snapshot.empty) {
+          const loaded: ShopProduct[] = [];
+          snapshot.forEach(d => loaded.push(d.data() as ShopProduct));
+          setShopProducts(loaded);
+          safeSetItem('chef_shop_products', JSON.stringify(loaded));
+        } else {
+          setShopProducts(INITIAL_SHOP_PRODUCTS);
+        }
+      });
+    } catch (e) { console.warn('Shop products listener error:', e); }
+
+    // Real-time listener for Shop Orders
+    try {
+      const ordersRef = collection(db, 'shop_orders');
+      unsubscribeShopOrders = onSnapshot(ordersRef, (snapshot) => {
+        if (!snapshot.empty) {
+          const loaded: ShopOrder[] = [];
+          snapshot.forEach(d => loaded.push(d.data() as ShopOrder));
+          loaded.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setShopOrders(loaded);
+          safeSetItem('chef_shop_orders', JSON.stringify(loaded));
+        }
+      });
+    } catch (e) { console.warn('Shop orders listener error:', e); }
 
     // Real-time listener for Course Plans & Fees (ALWAYS ACTIVE)
     try {
@@ -521,6 +604,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     initFirebaseAndLoadData();
 
     return () => {
+      window.removeEventListener('popstate', handlePopState);
       if (unsubscribeAdmissions) unsubscribeAdmissions();
       if (unsubscribeInventory) unsubscribeInventory();
       if (unsubscribePurchases) unsubscribePurchases();
@@ -529,16 +613,94 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, []);
 
-  // Set active view (Home or CMS Admin or Portal)
-  const setView = (view: 'home' | 'cms' | 'portal') => {
+  // Set active view (Home or CMS Admin or Portal or Shop) with Browser History pushState
+  const setView = (view: 'home' | 'cms' | 'portal' | 'shop', pushHistory = true) => {
     setActiveView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const targetHash = view === 'portal' ? '#portal' : view === 'cms' ? '#admin' : view === 'shop' ? '#shop' : '#home';
+    
+    if (pushHistory) {
+      if (!window.history.state || window.history.state.view !== view) {
+        window.history.pushState({ view }, '', targetHash);
+      }
+    } else {
+      window.history.replaceState({ view }, '', targetHash);
+    }
+  };
+
+  // Shop Product actions
+  const addShopProduct = async (product: Omit<ShopProduct, 'id' | 'createdAt'>) => {
+    const id = `prod-${Date.now()}`;
+    const freshProduct: ShopProduct = {
+      ...product,
+      id,
+      createdAt: new Date().toISOString()
+    };
+    setShopProducts(prev => [freshProduct, ...prev]);
+    try {
+      await setDoc(doc(db, 'shop_products', id), freshProduct);
+    } catch (err) {
+      console.error('Failed to sync shop product to Firestore:', err);
+    }
+  };
+
+  const updateShopProduct = async (product: ShopProduct) => {
+    setShopProducts(prev => prev.map(p => p.id === product.id ? product : p));
+    try {
+      await setDoc(doc(db, 'shop_products', product.id), product, { merge: true });
+    } catch (err) {
+      console.error('Failed to update shop product in Firestore:', err);
+    }
+  };
+
+  const deleteShopProduct = async (id: string) => {
+    setShopProducts(prev => prev.filter(p => p.id !== id));
+    try {
+      await deleteDoc(doc(db, 'shop_products', id));
+    } catch (err) {
+      console.error('Failed to delete shop product from Firestore:', err);
+    }
+  };
+
+  // Shop Order actions
+  const createShopOrder = (order: Omit<ShopOrder, 'id' | 'createdAt' | 'status'>): ShopOrder => {
+    const code = Math.floor(100000 + Math.random() * 900000);
+    const orderId = `SHOP-${code}`;
+    const freshOrder: ShopOrder = {
+      ...order,
+      id: orderId,
+      status: 'Pending',
+      createdAt: new Date().toISOString()
+    };
+
+    setShopOrders(prev => [freshOrder, ...prev]);
+
+    (async () => {
+      try {
+        await setDoc(doc(db, 'shop_orders', orderId), freshOrder);
+        console.log('✅ Shop order saved to Firebase:', orderId);
+      } catch (err) {
+        console.error('Failed to sync shop order to Firestore:', err);
+      }
+    })();
+
+    return freshOrder;
+  };
+
+  const updateShopOrderStatus = async (id: string, status: ShopOrder['status']) => {
+    setShopOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+    try {
+      await setDoc(doc(db, 'shop_orders', id), { status }, { merge: true });
+    } catch (err) {
+      console.error('Failed to update shop order status in Firestore:', err);
+    }
   };
 
   // Set page section
   const setSection = (section: string) => {
     setCurrentSection(section as any);
-    setActiveView('home');
+    setView('home');
     setTimeout(() => {
       const element = document.getElementById(section);
       if (element) {
@@ -594,7 +756,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   // Admission actions
-  const addAdmission = (newAdmission: Omit<Admission, 'id' | 'status' | 'createdAt'>) => {
+  const addAdmission = (newAdmission: Omit<Admission, 'id' | 'status' | 'createdAt'>): Admission => {
     const code = Math.floor(100000 + Math.random() * 900000);
     const admissionId = `ADM-${code}`;
     
@@ -629,7 +791,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     })();
 
-    return admissionId;
+    return freshAdmission;
   };
 
   const updateAdmissionStatus = async (id: string, status: Admission['status'], remarks?: string) => {
@@ -644,7 +806,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     try {
       const targetAdm = updated.find(a => a.id === id);
       if (targetAdm) {
-        await setDoc(doc(db, 'admissions', id), targetAdm);
+        await setDoc(doc(db, 'admissions', id), targetAdm, { merge: true });
       }
     } catch (err) {
       console.error('Failed to sync admission status to Firestore:', err);
@@ -652,19 +814,21 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const updateAdmissionReceipt = async (id: string, receiptNumber: string, receiptFile: string) => {
-    const updated = admissions.map(adm => {
+    setAdmissions(prev => prev.map(adm => {
       if (adm.id === id) {
         return { ...adm, receiptNumber, receiptFile, status: 'Pending' as const, feeStatus: 'Uploaded' };
       }
       return adm;
-    });
-    setAdmissions(updated);
+    }));
 
     try {
-      const targetAdm = updated.find(a => a.id === id);
-      if (targetAdm) {
-        await setDoc(doc(db, 'admissions', id), targetAdm);
-      }
+      await setDoc(doc(db, 'admissions', id), {
+        receiptNumber,
+        receiptFile,
+        feeStatus: 'Uploaded',
+        status: 'Pending'
+      }, { merge: true });
+      console.log('✅ Receipt synced directly to Firestore document for ID:', id);
     } catch (err) {
       console.error('Failed to sync admission receipt to Firestore:', err);
     }
@@ -998,11 +1162,18 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       gallery,
       inventoryItems,
       purchaseRecords,
+      shopProducts,
+      shopOrders,
       addInventoryItem,
       updateInventoryItem,
       deleteInventoryItem,
       addPurchaseRecord,
       deletePurchaseRecord,
+      addShopProduct,
+      updateShopProduct,
+      deleteShopProduct,
+      createShopOrder,
+      updateShopOrderStatus,
       coursePlans,
       updateCoursePlans,
       activeView,

@@ -10,6 +10,7 @@ import AdmissionForm from './components/AdmissionForm';
 import Footer from './components/Footer';
 import CMSAdmin from './components/CMSAdmin';
 import Website from './components/Website';
+import ShopCatalog from './components/ShopCatalog';
 import AnnouncementPopup from './components/AnnouncementPopup';
 import TcaLoader from './components/TcaLoader';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,38 +19,26 @@ import { MessageCircle, AlertTriangle, X } from 'lucide-react';
 function StorageWarningToast() {
   const [visible, setVisible] = useState(false);
 
-
   useEffect(() => {
-    const handleQuotaExceeded = () => {
-      setVisible(true);
-    };
-
+    const handleQuotaExceeded = () => setVisible(true);
     window.addEventListener('storage-quota-exceeded', handleQuotaExceeded);
-    return () => {
-      window.removeEventListener('storage-quota-exceeded', handleQuotaExceeded);
-    };
+    return () => window.removeEventListener('storage-quota-exceeded', handleQuotaExceeded);
   }, []);
 
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 right-6 md:left-auto md:max-w-md z-50 bg-slate-900/95 backdrop-blur border border-amber-500/40 p-4 rounded-xl shadow-2xl flex items-start gap-3 transition-all">
-      <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500 flex-shrink-0">
-        <AlertTriangle className="h-5 w-5" />
-      </div>
-      <div className="flex-1 min-w-0 text-left">
-        <h4 className="text-sm font-bold text-slate-200">Browser Storage Quota Reached</h4>
-        <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-          The uploaded file is too large to fit in your browser's persistent database. 
-          Your updates are fully active in-memory for this session, but could not be saved permanently.
-        </p>
-        <p className="text-[10px] text-amber-500 mt-1.5 font-medium">
-          💡 Try uploading smaller, compressed images or using direct links/URLs for video files.
+    <div className="fixed bottom-4 right-4 z-50 max-w-sm bg-amber-950/90 border border-amber-500/40 p-4 rounded-xl shadow-2xl backdrop-blur text-amber-200 text-xs flex items-start space-x-3">
+      <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+      <div className="flex-1 space-y-1">
+        <p className="font-bold text-amber-100">Browser Storage Quota Exceeded</p>
+        <p className="text-[11px] leading-relaxed text-amber-300/90">
+          Your browser's local storage is full. Changes will still be saved to the database.
         </p>
       </div>
       <button 
-        onClick={() => setVisible(false)} 
-        className="text-slate-500 hover:text-slate-200 p-1 hover:bg-slate-800 rounded transition-colors flex-shrink-0"
+        onClick={() => setVisible(false)}
+        className="text-amber-400 hover:text-white p-1"
       >
         <X className="h-4 w-4" />
       </button>
@@ -98,6 +87,17 @@ function AppContent() {
             className="pt-20"
           >
             <AdmissionForm />
+          </motion.div>
+        ) : activeView === 'shop' ? (
+          <motion.div
+            key="shop-view"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="pt-20"
+          >
+            <ShopCatalog />
           </motion.div>
         ) : (
           <motion.div
