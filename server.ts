@@ -474,7 +474,7 @@ app.post('/api/send-invoice', async (req, res) => {
       });
 
       const mailOptions = {
-        from: process.env.SMTP_FROM || `"The Chef's Academy" <${process.env.SMTP_USER}>`,
+        from: process.env.SMTP_FROM || `"The Chef's Academy Lahore" <${process.env.SMTP_USER}>`,
         to: email,
         subject: `Admission Invoice & Tracking Code: ${trackingId} — The Chef's Academy`,
         html: htmlContent

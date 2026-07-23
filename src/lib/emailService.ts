@@ -122,13 +122,17 @@ export function generateInvoiceHtml(data: InvoicePayload): string {
 
 export async function sendInvoiceEmail(payload: InvoicePayload): Promise<{ success: boolean; method: string; message: string; invoiceHtml: string; error?: string }> {
   const localInvoiceHtml = generateInvoiceHtml(payload);
+  const emailSubject = `Admission Invoice & Tracking Code: ${payload.trackingId} — The Chef's Academy`;
 
   // Step 1: Try primary API endpoint /api/send-invoice
   try {
     const res = await window.fetch('/api/send-invoice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        senderName: "The Chef's Academy Lahore",
+      }),
     });
 
     if (res.ok) {
@@ -155,14 +159,19 @@ export async function sendInvoiceEmail(payload: InvoicePayload): Promise<{ succe
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        _subject: `Admission Invoice & Tracking Code: ${payload.trackingId} — The Chef's Academy`,
-        studentName: payload.studentName,
-        trackingId: payload.trackingId,
-        courseProgram: payload.courseTitle,
-        totalPayable: `PKR ${payload.totalFee.toLocaleString()}`,
-        registrationFeeDue: `PKR ${payload.regFee.toLocaleString()}`,
-        paymentDetails: `Bank: ${payload.paymentSettings?.bankName || 'Bank Alfalah'} | Acc: ${payload.paymentSettings?.accountNumber || '5502-9018274619'} | Mobile: ${payload.paymentSettings?.mobileNumber || '0333-9123456'}`,
-        instructions: `Please return to portal with Tracking Code ${payload.trackingId} to upload receipt.`,
+        _subject: emailSubject,
+        _autoresponse: localInvoiceHtml,
+        _captcha: 'false',
+        "Sender Name": "The Chef's Academy Lahore",
+        "Student Name": payload.studentName,
+        "Father Name": payload.fatherName,
+        "Tracking Code": payload.trackingId,
+        "Course Selected": payload.courseTitle,
+        "Shift": payload.shift,
+        "Registration Fee Due": `PKR ${payload.regFee.toLocaleString()}`,
+        "Total Payable Fee": `PKR ${payload.totalFee.toLocaleString()}`,
+        "Bank Details": `Bank: ${payload.paymentSettings?.bankName || 'Bank Alfalah'} | Acc: ${payload.paymentSettings?.accountNumber || '5502-9018274619'} | Title: ${payload.paymentSettings?.accountTitle || "The Chef's Academy"}`,
+        "Easypaisa/JazzCash": `${payload.paymentSettings?.mobileName || 'Wallet'}: ${payload.paymentSettings?.mobileNumber || '0333-9123456'}`,
       }),
     });
 
