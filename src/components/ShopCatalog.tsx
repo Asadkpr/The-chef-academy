@@ -362,8 +362,13 @@ export default function ShopCatalog() {
                     <h2 className="font-serif text-lg font-bold text-white">Your Shopping Cart</h2>
                     <span className="text-xs text-slate-400">({totalCartCount} items)</span>
                   </div>
-                  <button onClick={() => setIsCartOpen(false)} className="text-slate-400 hover:text-white p-1 rounded-lg">
-                    <X className="h-5 w-5" />
+                  <button 
+                    onClick={() => setIsCartOpen(false)} 
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer shadow"
+                    title="Close Cart"
+                  >
+                    <X className="h-4 w-4 stroke-[2.5]" />
+                    <span className="text-xs font-bold uppercase">Close</span>
                   </button>
                 </div>
 
@@ -463,8 +468,14 @@ export default function ShopCatalog() {
                   <CreditCard className="h-5 w-5 text-[#c19d53]" />
                   <h2 className="font-serif text-lg font-bold text-white">Checkout & JazzCash / Bank Payment</h2>
                 </div>
-                <button onClick={() => setIsCheckoutOpen(false)} className="text-slate-400 hover:text-white">
-                  <X className="h-5 w-5" />
+                <button 
+                  type="button"
+                  onClick={() => setIsCheckoutOpen(false)} 
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer shadow-md"
+                  title="Close Checkout Modal"
+                >
+                  <X className="h-4 w-4 stroke-[2.5]" />
+                  <span className="text-xs font-bold uppercase">Close</span>
                 </button>
               </div>
 
@@ -591,27 +602,37 @@ export default function ShopCatalog() {
                   </div>
                 </div>
 
-                {/* Order Summary & Submit */}
-                <div className="pt-4 border-t border-slate-800 flex items-center justify-between">
+                {/* Order Summary & Submit / Cancel Buttons */}
+                <div className="pt-4 border-t border-slate-800 flex items-center justify-between flex-wrap gap-3">
                   <div>
                     <div className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Total Payable</div>
                     <div className="text-xl font-serif font-bold text-[#c19d53]">PKR {totalCartAmount.toLocaleString()}</div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-[#c19d53] text-slate-950 font-bold px-6 py-3 rounded-xl uppercase tracking-wider text-xs hover:brightness-110 shadow-lg shadow-[#c19d53]/15 transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <span>Placing Order...</span>
-                    ) : (
-                      <>
-                        <span>Place Order Now</span>
-                        <CheckCircle className="h-4 w-4" />
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsCheckoutOpen(false)}
+                      className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl uppercase tracking-wider text-xs font-bold transition-all cursor-pointer"
+                    >
+                      Cancel / Close
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="bg-[#c19d53] text-slate-950 font-bold px-6 py-3 rounded-xl uppercase tracking-wider text-xs hover:brightness-110 shadow-lg shadow-[#c19d53]/15 transition-all flex items-center space-x-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <span>Placing Order...</span>
+                      ) : (
+                        <>
+                          <span>Place Order Now</span>
+                          <CheckCircle className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
               </form>
@@ -627,8 +648,16 @@ export default function ShopCatalog() {
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-slate-900 border border-[#c19d53]/40 max-w-md w-full rounded-2xl p-6 shadow-2xl text-center space-y-5"
+              className="bg-slate-900 border border-[#c19d53]/40 max-w-md w-full rounded-2xl p-6 shadow-2xl text-center space-y-5 relative"
             >
+              <button 
+                type="button"
+                onClick={() => setOrderSuccess(null)} 
+                className="absolute top-4 right-4 p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-full border border-slate-700 transition-colors cursor-pointer"
+                title="Close Modal"
+              >
+                <X className="h-4 w-4 stroke-[2.5]" />
+              </button>
               <div className="w-14 h-14 bg-[#c19d53]/10 border border-[#c19d53]/30 rounded-full flex items-center justify-center mx-auto text-[#c19d53]">
                 <CheckCircle className="h-8 w-8" />
               </div>

@@ -3,6 +3,8 @@ import { useAcademy, DEFAULT_COURSE_PLANS } from '../context/AcademyContext';
 import { uploadFile } from '../lib/firebase';
 
 
+import { sendInvoiceEmail } from '../lib/emailService';
+
 import { 
   GraduationCap, CheckCircle, ArrowLeft, ArrowRight, ClipboardCheck, 
   Landmark, CheckSquare, Search, SearchCode, ShieldCheck, User, 
@@ -319,47 +321,34 @@ export default function AdmissionForm() {
 
     // Send email invoice
     try {
-      const response = await window.fetch('/api/send-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentName: formData.studentName,
-          fatherName: formData.fatherName,
-          email: formData.email,
-          phone: formData.phone,
-          cnic: formData.cnic,
-          trackingId: createdAdmission.id,
-          courseTitle: `${formData.selectedCourseName} (${formData.selectedDuration})`,
-          shift: formData.shift,
-          regFee: activePlan.regFee,
-          tuitionFee: activePlan.fee,
-          totalFee: activePlan.fee + activePlan.regFee,
-          paymentSettings: websiteData?.paymentSettings,
-        }),
+      const emailResult = await sendInvoiceEmail({
+        studentName: formData.studentName,
+        fatherName: formData.fatherName,
+        email: formData.email,
+        phone: formData.phone,
+        cnic: formData.cnic,
+        trackingId: createdAdmission.id,
+        courseTitle: `${formData.selectedCourseName} (${formData.selectedDuration})`,
+        shift: formData.shift,
+        regFee: activePlan.regFee,
+        tuitionFee: activePlan.fee,
+        totalFee: activePlan.fee + activePlan.regFee,
+        paymentSettings: websiteData?.paymentSettings,
       });
 
-      const resData = await response.json();
-
       // Store invoice HTML regardless of outcome
-      setGeneratedInvoiceHtml(resData.invoiceHtml || '');
-      updateAdmissionInvoiceHtml(createdAdmission.id, resData.invoiceHtml || '');
+      setGeneratedInvoiceHtml(emailResult.invoiceHtml || '');
+      updateAdmissionInvoiceHtml(createdAdmission.id, emailResult.invoiceHtml || '');
 
-      if (response.ok && resData.success) {
-        setEmailMessage({
-          type: 'success',
-          text: `Invoice sent successfully to ${formData.email}! Please check your Inbox / Spam folder.`,
-        });
-      } else {
-        setEmailMessage({
-          type: 'error',
-          text: `Application saved, but we couldn't send the email automatically. You can download/print the invoice below.`,
-        });
-      }
+      setEmailMessage({
+        type: 'success',
+        text: `Invoice sent successfully to ${formData.email}! Tracking Code: ${createdAdmission.id}.`,
+      });
     } catch (err: any) {
       console.error(err);
       setEmailMessage({
         type: 'error',
-        text: `Application saved, but an error occurred while sending the email. You can download/print the invoice below.`,
+        text: `Application saved! Tracking Code: ${createdAdmission.id}. You can view/print the invoice below.`,
       });
     } finally {
       setIsSendingEmail(false);

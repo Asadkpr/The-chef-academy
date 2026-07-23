@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useAcademy } from '../context/AcademyContext';
 import { Course, Admission, InventoryItem, PurchaseRecord, ShopProduct } from '../types';
 import { uploadFile } from '../lib/firebase';
+import { sendInvoiceEmail } from '../lib/emailService';
 import { 
   Users, BookOpen, GraduationCap, DollarSign, Plus, Edit, Trash2, 
   CheckCircle, XCircle, AlertCircle, Eye, LogOut, RefreshCw, 
@@ -631,32 +632,26 @@ export default function CMSAdmin() {
     setResendInvoiceMessage(null);
 
     try {
-      const response = await window.fetch('/api/send-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentName: selectedAdmission.studentName,
-          fatherName: selectedAdmission.fatherName,
-          email: selectedAdmission.email,
-          phone: selectedAdmission.phone,
-          cnic: selectedAdmission.cnic,
-          trackingId: selectedAdmission.id,
-          courseTitle: selectedAdmission.selectedCourseTitle,
-          shift: selectedAdmission.shift,
-          regFee: selectedRegFee,
-          tuitionFee: selectedTuitionFee,
-          totalFee: selectedTuitionFee + selectedRegFee - selectedDiscount,
-          discount: selectedDiscount,
-          paymentSettings: websiteData?.paymentSettings
-        })
+      const resData = await sendInvoiceEmail({
+        studentName: selectedAdmission.studentName,
+        fatherName: selectedAdmission.fatherName,
+        email: selectedAdmission.email,
+        phone: selectedAdmission.phone,
+        cnic: selectedAdmission.cnic,
+        trackingId: selectedAdmission.id,
+        courseTitle: selectedAdmission.selectedCourseTitle,
+        shift: selectedAdmission.shift,
+        regFee: selectedRegFee,
+        tuitionFee: selectedTuitionFee,
+        totalFee: selectedTuitionFee + selectedRegFee - selectedDiscount,
+        discount: selectedDiscount,
+        paymentSettings: websiteData?.paymentSettings
       });
 
-      const resData = await response.json();
-
-      if (response.ok && resData.success) {
+      if (resData.success) {
         setResendInvoiceMessage({
           type: 'success',
-          text: `Invoice sent successfully to ${selectedAdmission.email}! (SMTP: ${resData.method}). Total: PKR ${(selectedTuitionFee + selectedRegFee - selectedDiscount).toLocaleString()}`
+          text: `Invoice dispatched to ${selectedAdmission.email}! (${resData.message}). Total: PKR ${(selectedTuitionFee + selectedRegFee - selectedDiscount).toLocaleString()}`
         });
       } else {
         throw new Error(resData.error || 'Failed to dispatch email.');
