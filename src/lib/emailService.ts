@@ -64,15 +64,15 @@ export function generateInvoiceHtml(data: InvoicePayload): string {
       <div class="wrapper">
         <div class="container">
           <div class="header">
-            <h1 class="logo-text">The Chef's Academy</h1>
-            <p class="logo-sub">Gulberg III, Lahore Campus</p>
+            <h1 class="logo-text" style="font-weight: bold;"><strong>THE CHEF'S ACADEMY</strong></h1>
+            <p class="logo-sub" style="font-weight: bold; color: #c19d53;"><strong>79-B3 Gulberg III, Lahore, Pakistan</strong></p>
           </div>
           <div class="content">
             <h2 class="title">Admission Fee Invoice</h2>
             <p class="intro-text">
               Dear <strong>${data.studentName}</strong>,<br><br>
               Your admission registration request has been successfully recorded. Your application tracking code is <strong class="code-display">${data.trackingId}</strong>.<br><br>
-              Please pay the registration fee of <strong>PKR ${data.regFee.toLocaleString()}</strong> to secure your seat.
+              Please review the registration invoice details below. Kindly pay the outstanding registration fee to secure your batch seat.
             </p>
             <div class="invoice-card">
               <div class="grid-row"><span class="label">Date:</span><span class="val">${dateStr}</span></div>
@@ -124,7 +124,7 @@ export async function sendInvoiceEmail(payload: InvoicePayload): Promise<{ succe
   const localInvoiceHtml = generateInvoiceHtml(payload);
   const emailSubject = `Admission Invoice & Tracking Code: ${payload.trackingId} — The Chef's Academy`;
 
-  // Step 1: Try primary API endpoint /api/send-invoice
+  // Step 1: Try primary Node API endpoint /api/send-invoice
   try {
     const res = await window.fetch('/api/send-invoice', {
       method: 'POST',
@@ -147,7 +147,33 @@ export async function sendInvoiceEmail(payload: InvoicePayload): Promise<{ succe
       }
     }
   } catch (e) {
-    console.warn('[EMAIL SERVICE]: /api/send-invoice unavailable or returned 404 on live host. Switching to FormSubmit direct dispatch...');
+    console.warn('[EMAIL SERVICE]: /api/send-invoice unavailable or returned 404 on live host. Checking PHP endpoint...');
+  }
+
+  // Step 1.5: Try PHP endpoint /api/send-invoice.php (Ideal for Cloudways / Apache / NGINX)
+  try {
+    const phpRes = await window.fetch('/api/send-invoice.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...payload,
+        senderName: "The Chef's Academy Lahore",
+      }),
+    });
+
+    if (phpRes.ok) {
+      const data = await phpRes.json();
+      if (data.success) {
+        return {
+          success: true,
+          method: data.method || 'PHP_GMAIL_SMTP',
+          message: data.message || `Invoice email sent successfully to ${payload.email}`,
+          invoiceHtml: data.invoiceHtml || localInvoiceHtml,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('[EMAIL SERVICE]: /api/send-invoice.php unavailable. Switching to FormSubmit direct dispatch...');
   }
 
   // Step 2: Fallback for live static hosts (FormSubmit HTTPS endpoint)

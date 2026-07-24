@@ -282,8 +282,8 @@ function generateInvoiceHtml(data) {
         <div class="container">
           
           <div class="header">
-            <h1 class="logo-text">The Chef's Academy</h1>
-            <p class="logo-sub">Gulberg III, Lahore Campus</p>
+            <h1 class="logo-text" style="font-weight: bold;"><strong>THE CHEF'S ACADEMY</strong></h1>
+            <p class="logo-sub" style="font-weight: bold; color: #c19d53;"><strong>79-B3 Gulberg III, Lahore, Pakistan</strong></p>
           </div>
           
           <div class="content">
