@@ -21,6 +21,16 @@ export interface Course {
   faqs?: { q: string; a: string }[];
 }
 
+export interface PaymentTransaction {
+  id: string;
+  receiptNo: string;
+  amount: number;
+  paymentMode: 'Cash' | 'Bank Transfer' | 'Easypaisa' | 'JazzCash' | 'Cheque' | string;
+  date: string;
+  receivedBy?: string;
+  notes?: string;
+}
+
 export interface Admission {
   id: string;
   studentName: string;
@@ -37,7 +47,10 @@ export interface Admission {
   tuitionFee?: number;
   regFee?: number;
   discountAmount?: number;
-  feeStatus?: 'Pending' | 'Uploaded' | 'Approved' | string;
+  paidAmount?: number;
+  remainingBalance?: number;
+  paymentHistory?: PaymentTransaction[];
+  feeStatus?: 'Pending' | 'Uploaded' | 'Approved' | 'Partial' | 'Paid' | string;
   shift: string;
   city: string;
   address: string;

@@ -59,12 +59,34 @@ export default function AdmissionForm() {
   const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [generatedInvoiceHtml, setGeneratedInvoiceHtml] = useState<string>('');
 
+  // Parse the number of months from a duration string like "3 Month Course", "6 Month Course", etc.
+  const parseMonths = (duration: string): number => {
+    const match = duration.match(/(\d+)\s*month/i);
+    return match ? parseInt(match[1], 10) : 1;
+  };
+
   const getSelectedPlan = () => {
     const plans = (coursePlans && coursePlans[formData.selectedCourseName]) || COURSE_PLANS[formData.selectedCourseName] || [];
     return plans.find(p => p.duration === formData.selectedDuration) || plans[0] || { duration: '3 Month Course', fee: 55000, regFee: 5000 };
   };
 
   const activePlan = getSelectedPlan();
+
+  // Fee Calculation:
+  // The admin sets a base monthly rate in System Settings (e.g. 1 Month = 40k tuition + 10k reservation)
+  // ALL durations are derived automatically from that 1-month base:
+  //   Total for N months = (base_monthly_tuition + base_reservation) × N  = 50k × N
+  //   But reservation stays FIXED (10k always, NOT multiplied)
+  //   So: scaledTotal = monthly_total × months, scaledRegFee = reservation(fixed)
+  const allPlansForCourse = (coursePlans && coursePlans[formData.selectedCourseName]) || COURSE_PLANS[formData.selectedCourseName] || [];
+  const oneMonthPlan = allPlansForCourse.find(p => parseMonths(p.duration) === 1) || activePlan;
+  // Base monthly total = 1-month tuition + 1-month reservation (e.g. 40k + 10k = 50k)
+  const baseMonthlyTotal = oneMonthPlan.fee + oneMonthPlan.regFee;
+  const baseRegFee = oneMonthPlan.regFee; // FIXED reservation from 1-month plan (e.g. 10k)
+  const durationMonths = parseMonths(formData.selectedDuration || activePlan.duration);
+  const scaledTotal = baseMonthlyTotal * durationMonths;   // e.g. 50k × 3 = 150k
+  const scaledRegFee = baseRegFee;                          // FIXED 10k always
+  const scaledTuition = scaledTotal - scaledRegFee;         // e.g. 150k − 10k = 140k
 
   const validateStep = () => {
     const errors: Record<string, string> = {};
@@ -305,8 +327,8 @@ export default function AdmissionForm() {
       selectedCourseId: matchedCourse?.id || `course-${Date.now()}`,
       selectedCourseTitle: `${formData.selectedCourseName} (${formData.selectedDuration})`,
       selectedDuration: formData.selectedDuration,
-      tuitionFee: activePlan.fee,
-      regFee: activePlan.regFee,
+      tuitionFee: scaledTuition,
+      regFee: scaledRegFee,
       discountAmount: 0,
       feeStatus: 'Pending',
       shift: formData.shift,
@@ -330,9 +352,9 @@ export default function AdmissionForm() {
         trackingId: createdAdmission.id,
         courseTitle: `${formData.selectedCourseName} (${formData.selectedDuration})`,
         shift: formData.shift,
-        regFee: activePlan.regFee,
-        tuitionFee: activePlan.fee,
-        totalFee: activePlan.fee + activePlan.regFee,
+        regFee: scaledRegFee,
+        tuitionFee: scaledTuition,
+        totalFee: scaledTotal,
         paymentSettings: websiteData?.paymentSettings,
       });
 
@@ -694,11 +716,18 @@ export default function AdmissionForm() {
                         onChange={handleInputChange}
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 font-sans text-sm focus:border-[#c19d53]/50 focus:outline-none focus:ring-1 focus:ring-[#c19d53]/25 transition-all"
                       >
-                        {((coursePlans && coursePlans[formData.selectedCourseName]) || COURSE_PLANS[formData.selectedCourseName] || []).map((plan) => (
-                          <option key={plan.duration} value={plan.duration}>
-                            {plan.duration} — Tuition: PKR {plan.fee.toLocaleString()}
-                          </option>
-                        ))}
+                        {((coursePlans && coursePlans[formData.selectedCourseName]) || COURSE_PLANS[formData.selectedCourseName] || []).map((plan) => {
+                          const allPlans = (coursePlans && coursePlans[formData.selectedCourseName]) || COURSE_PLANS[formData.selectedCourseName] || [];
+                          const base1Month = allPlans.find(p => parseMonths(p.duration) === 1) || plan;
+                          const base1MonthTotal = base1Month.fee + base1Month.regFee;
+                          const planMonths = parseMonths(plan.duration);
+                          const planTotal = base1MonthTotal * planMonths;
+                          return (
+                            <option key={plan.duration} value={plan.duration}>
+                              {plan.duration} — PKR {planTotal.toLocaleString()}
+                            </option>
+                          );
+                        })}
                       </select>
                       {formErrors.selectedDuration && <p className="text-red-400 text-[11px] font-sans">{formErrors.selectedDuration}</p>}
                     </div>
@@ -815,17 +844,17 @@ export default function AdmissionForm() {
                           <span className="font-semibold text-slate-800 block">{formData.selectedCourseName}</span>
                           <span className="text-[10px] text-slate-500">Selected Duration: {formData.selectedDuration} | Shift: {formData.shift}</span>
                         </div>
-                        <span className="font-mono text-slate-700 font-semibold">PKR {activePlan.fee.toLocaleString()}</span>
+                        <span className="font-mono text-slate-700 font-semibold">PKR {scaledTuition.toLocaleString()}</span>
                       </div>
 
                       <div className="flex justify-between text-xs pb-2 border-b border-slate-100/60">
                         <span className="text-slate-700">Reservation Fee</span>
-                        <span className="font-mono text-slate-700 font-semibold">PKR {activePlan.regFee.toLocaleString()}</span>
+                        <span className="font-mono text-slate-700 font-semibold">PKR {scaledRegFee.toLocaleString()}</span>
                       </div>
 
                       <div className="flex justify-between items-center pt-2 text-sm">
                         <span className="font-bold text-slate-900">Total Program Enrollment Fees:</span>
-                        <span className="font-mono font-bold text-[#c19d53] text-base">PKR {(activePlan.fee + activePlan.regFee).toLocaleString()}</span>
+                        <span className="font-mono font-bold text-[#c19d53] text-base">PKR {scaledTotal.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>

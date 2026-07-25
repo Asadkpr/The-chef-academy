@@ -14,23 +14,82 @@ body, html, #root {
 }
 
 @media print {
+  *, *::before, *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide everything first using visibility (NOT display:none — that also hides ancestors) */
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
+    opacity: 0 !important;
   }
-  #print-only, #print-only * {
-    visibility: visible;
+
+  /* Show ONLY the receipt modal overlay and its children */
+  .printable-modal-overlay {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    z-index: 9999999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+    border: none !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
   }
-  #print-only {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 20px;
-    background: white;
-    color: black;
+
+  .printable-modal-overlay * {
+    visibility: visible !important;
+    opacity: 1 !important;
   }
+
+  /* Hide the floating action buttons inside the overlay during print */
+  .printable-modal-overlay .print\:hidden {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  #printable-receipt {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    max-width: 680px !important;
+    margin: 0 auto !important;
+    padding: 10px !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   @page {
+    size: A4 portrait;
     margin: 0.5cm;
   }
 }
