@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Course, Admission, PaymentTransaction, Testimonial, GalleryItem, CoursePlans, CoursePlanItem, WebsiteData, InventoryItem, PurchaseRecord, ShopProduct, ShopOrder } from '../types';
+import { Course, Admission, PaymentTransaction, Testimonial, GalleryItem, CoursePlans, CoursePlanItem, WebsiteData, InventoryItem, PurchaseRecord, ShopProduct, ShopOrder, CMSUser, DemandRecord } from '../types';
 import { INITIAL_COURSES, INITIAL_TESTIMONIALS, INITIAL_GALLERY, INITIAL_SHOP_PRODUCTS } from '../data/defaultData';
 import { INITIAL_WEBSITE_DATA } from '../data/websiteDefaultData';
 import { auth, db } from '../lib/firebase';
@@ -64,6 +64,17 @@ interface AcademyContextType {
   purchaseRecords: PurchaseRecord[];
   shopProducts: ShopProduct[];
   shopOrders: ShopOrder[];
+  users: CMSUser[];
+  demands: DemandRecord[];
+  currentUser: CMSUser | null;
+  addCMSUser: (user: Omit<CMSUser, 'id' | 'createdAt'>) => Promise<void>;
+  updateCMSUser: (user: CMSUser) => Promise<void>;
+  deleteCMSUser: (id: string) => Promise<void>;
+  loginCMSUser: (username: string, password: string) => Promise<boolean>;
+  logoutCMSUser: () => void;
+  raiseDemand: (itemId: string, quantity: number, reason: string) => Promise<void>;
+  approveDemand: (demandId: string, adminName: string) => Promise<{ success: boolean; error?: string }>;
+  rejectDemand: (demandId: string, adminName: string) => Promise<void>;
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => void;
   updateInventoryItem: (item: InventoryItem) => void;
   deleteInventoryItem: (id: string) => void;
@@ -147,6 +158,9 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [coursePlans, setCoursePlans] = useState<CoursePlans>({});
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
+  const [users, setUsers] = useState<CMSUser[]>([]);
+  const [demands, setDemands] = useState<DemandRecord[]>([]);
+  const [currentUser, setCurrentUser] = useState<CMSUser | null>(null);
   const [activeView, setActiveView] = useState<'home' | 'cms' | 'portal' | 'shop'>('home');
   const [currentSection, setCurrentSection] = useState<'hero' | 'about' | 'courses' | 'admission' | 'gallery' | 'testimonials'>('hero');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
@@ -208,6 +222,11 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setIsAdminAuthenticated(JSON.parse(storedAuth));
     }
 
+    const storedUser = localStorage.getItem('chef_current_user');
+    if (storedUser) {
+      setCurrentUser(JSON.parse(storedUser));
+    }
+
     let unsubscribeAdmissions: (() => void) | null = null;
     let unsubscribeInventory: (() => void) | null = null;
     let unsubscribePurchases: (() => void) | null = null;
@@ -215,6 +234,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     let unsubscribeCourses: (() => void) | null = null;
     let unsubscribeShopProducts: (() => void) | null = null;
     let unsubscribeShopOrders: (() => void) | null = null;
+    let unsubscribeUsers: (() => void) | null = null;
+    let unsubscribeDemands: (() => void) | null = null;
 
     // Real-time listener for Shop Products
     try {
@@ -244,6 +265,37 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       });
     } catch (e) { console.warn('Shop orders listener error:', e); }
+
+    // Real-time listener for Users
+    try {
+      const usersRef = collection(db, 'users');
+      unsubscribeUsers = onSnapshot(usersRef, (snapshot) => {
+        if (!snapshot.empty) {
+          const loaded: CMSUser[] = [];
+          snapshot.forEach(d => loaded.push(d.data() as CMSUser));
+          setUsers(loaded);
+          safeSetItem('chef_users', JSON.stringify(loaded));
+        } else {
+          setUsers([]);
+        }
+      });
+    } catch (e) { console.warn('Users listener error:', e); }
+
+    // Real-time listener for Demands
+    try {
+      const demandsRef = collection(db, 'demands');
+      unsubscribeDemands = onSnapshot(demandsRef, (snapshot) => {
+        if (!snapshot.empty) {
+          const loaded: DemandRecord[] = [];
+          snapshot.forEach(d => loaded.push(d.data() as DemandRecord));
+          loaded.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setDemands(loaded);
+          safeSetItem('chef_demands', JSON.stringify(loaded));
+        } else {
+          setDemands([]);
+        }
+      });
+    } catch (e) { console.warn('Demands listener error:', e); }
 
     // Real-time listener for Course Plans & Fees (ALWAYS ACTIVE)
     try {
@@ -612,6 +664,10 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (unsubscribePurchases) unsubscribePurchases();
       if (unsubscribeCoursePlans) unsubscribeCoursePlans();
       if (unsubscribeCourses) unsubscribeCourses();
+      if (unsubscribeShopProducts) unsubscribeShopProducts();
+      if (unsubscribeShopOrders) unsubscribeShopOrders();
+      if (unsubscribeUsers) unsubscribeUsers();
+      if (unsubscribeDemands) unsubscribeDemands();
     };
   }, []);
 
@@ -1163,8 +1219,32 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       p === 'admin123' ||
       p.toLowerCase() === 'admin'
     ) {
+      const legacyAdminUser: CMSUser = {
+        id: 'legacy-admin',
+        username: 'Admin',
+        password: '',
+        role: 'admin',
+        access: {
+          dashboard: true,
+          courses: true,
+          admissions: true,
+          walkin: true,
+          content: true,
+          website: true,
+          payment: true,
+          popup: true,
+          shop: true,
+          demands: true,
+          users: true,
+          user_access: true,
+          settings: true
+        },
+        createdAt: new Date().toISOString()
+      };
       setIsAdminAuthenticated(true);
+      setCurrentUser(legacyAdminUser);
       safeSetItem('chef_admin_auth', 'true');
+      safeSetItem('chef_current_user', JSON.stringify(legacyAdminUser));
       return true;
     }
     return false;
@@ -1197,7 +1277,9 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const logoutAdmin = () => {
     setIsAdminAuthenticated(false);
+    setCurrentUser(null);
     safeSetItem('chef_admin_auth', 'false');
+    localStorage.removeItem('chef_current_user');
   };
 
   const purgeFeeCache = () => {
@@ -1303,6 +1385,153 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const addCMSUser = async (user: Omit<CMSUser, 'id' | 'createdAt'>) => {
+    const id = `user-${Date.now()}`;
+    const defaultAccess: Record<string, boolean> = {
+      dashboard: true,
+      courses: false,
+      admissions: false,
+      walkin: false,
+      content: false,
+      website: false,
+      payment: false,
+      popup: false,
+      shop: false,
+      demands: true,
+      users: false,
+      user_access: false,
+      settings: false,
+    };
+    const freshUser: CMSUser = {
+      ...user,
+      id,
+      access: user.access || defaultAccess,
+      createdAt: new Date().toISOString()
+    };
+    try {
+      await setDoc(doc(db, 'users', id), freshUser);
+    } catch (e) {
+      console.error('Failed to add user to Firestore:', e);
+    }
+  };
+
+  const updateCMSUser = async (user: CMSUser) => {
+    try {
+      await setDoc(doc(db, 'users', user.id), user, { merge: true });
+      if (currentUser && currentUser.id === user.id) {
+        setCurrentUser(user);
+        safeSetItem('chef_current_user', JSON.stringify(user));
+      }
+    } catch (e) {
+      console.error('Failed to update user in Firestore:', e);
+    }
+  };
+
+  const deleteCMSUser = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', id));
+      if (currentUser && currentUser.id === id) {
+        logoutCMSUser();
+      }
+    } catch (e) {
+      console.error('Failed to delete user in Firestore:', e);
+    }
+  };
+
+  const loginCMSUser = async (username: string, password: string): Promise<boolean> => {
+    const uName = username.trim().toLowerCase();
+    const matched = users.find(u => u.username.trim().toLowerCase() === uName && u.password === password);
+    if (matched) {
+      setIsAdminAuthenticated(true);
+      setCurrentUser(matched);
+      safeSetItem('chef_admin_auth', 'true');
+      safeSetItem('chef_current_user', JSON.stringify(matched));
+      return true;
+    }
+    return false;
+  };
+
+  const logoutCMSUser = () => {
+    setIsAdminAuthenticated(false);
+    setCurrentUser(null);
+    safeSetItem('chef_admin_auth', 'false');
+    localStorage.removeItem('chef_current_user');
+  };
+
+  const raiseDemand = async (itemId: string, quantity: number, reason: string) => {
+    if (!currentUser) return;
+    const item = inventoryItems.find(i => i.id === itemId);
+    const itemName = item ? item.name : 'Unknown Item';
+    const id = `demand-${Date.now()}`;
+    const newDemand: DemandRecord = {
+      id,
+      userId: currentUser.id,
+      username: currentUser.username,
+      itemId,
+      itemName,
+      quantity,
+      reason,
+      status: 'Pending',
+      createdAt: new Date().toISOString()
+    };
+    try {
+      await setDoc(doc(db, 'demands', id), newDemand);
+    } catch (e) {
+      console.error('Failed to raise demand in Firestore:', e);
+    }
+  };
+
+  const approveDemand = async (demandId: string, adminName: string): Promise<{ success: boolean; error?: string }> => {
+    const demand = demands.find(d => d.id === demandId);
+    if (!demand) return { success: false, error: 'Demand not found' };
+    
+    // Check and deduct stock
+    const item = inventoryItems.find(i => i.id === demand.itemId);
+    if (!item) {
+      return { success: false, error: 'Matching inventory item not found' };
+    }
+    
+    // Perform subtraction
+    const newQty = Math.max(0, item.quantity - demand.quantity);
+    
+    try {
+      // Update inventory item quantity
+      await updateInventoryItem({
+        ...item,
+        quantity: newQty
+      });
+      
+      // Update demand status
+      const updatedDemand: DemandRecord = {
+        ...demand,
+        status: 'Approved',
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: adminName
+      };
+      await setDoc(doc(db, 'demands', demandId), updatedDemand, { merge: true });
+      return { success: true };
+    } catch (e: any) {
+      console.error('Failed to approve demand:', e);
+      return { success: false, error: e.message || 'Database transaction error' };
+    }
+  };
+
+  const rejectDemand = async (demandId: string, adminName: string) => {
+    const demand = demands.find(d => d.id === demandId);
+    if (!demand) return;
+    const updatedDemand: DemandRecord = {
+      ...demand,
+      status: 'Rejected',
+      resolvedAt: new Date().toISOString(),
+      resolvedBy: adminName
+    };
+    try {
+      await setDoc(doc(db, 'demands', demandId), updatedDemand, { merge: true });
+    } catch (e) {
+      console.error('Failed to reject demand:', e);
+    }
+  };
+
   return (
     <AcademyContext.Provider value={{
       courses,
@@ -1313,6 +1542,17 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       purchaseRecords,
       shopProducts,
       shopOrders,
+      users,
+      demands,
+      currentUser,
+      addCMSUser,
+      updateCMSUser,
+      deleteCMSUser,
+      loginCMSUser,
+      logoutCMSUser,
+      raiseDemand,
+      approveDemand,
+      rejectDemand,
       addInventoryItem,
       updateInventoryItem,
       deleteInventoryItem,

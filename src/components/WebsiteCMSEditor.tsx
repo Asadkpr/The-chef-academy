@@ -75,11 +75,11 @@ function MediaUploader({ onUpload, allowedTypes, label = 'Upload', helperText }:
       return;
     }
 
-    // Support up to 15MB for video files and 10MB for images/others
+    // Support up to 500MB for video files and 10MB for images/others
     const sizeInMB = file.size / (1024 * 1024);
-    const maxLimit = fileType.startsWith('video/') ? 15 : 10;
+    const maxLimit = fileType.startsWith('video/') ? 500 : 10;
     if (sizeInMB > maxLimit) {
-      alert(`File is too large (${sizeInMB.toFixed(1)}MB). Maximum allowed size is ${maxLimit}MB.\n\nFor videos, please compress your video to under 5MB for best results.`);
+      alert(`File is too large (${sizeInMB.toFixed(1)}MB). Maximum allowed size is ${maxLimit}MB.`);
       return;
     }
 
@@ -706,7 +706,7 @@ export default function WebsiteCMSEditor() {
                     <MediaUploader 
                       allowedTypes="video"
                       label="Upload Background Video"
-                      helperText="Accepts .mp4 up to 15MB"
+                      helperText="Accepts .mp4, .webm up to 500MB"
                       onUpload={(base64) => {
                         setHeroVideo(base64);
                         // Also auto-save to make it dynamic and immediate
@@ -897,7 +897,7 @@ export default function WebsiteCMSEditor() {
                     <MediaUploader 
                       allowedTypes="video"
                       label="Upload Tour Video"
-                      helperText="Recommended: under 5MB — max 15MB"
+                      helperText="Accepts .mp4, .webm up to 500MB"
                       onUpload={(base64) => {
                         setWhyVideo(base64);
                         // Auto-save to make it dynamic and immediate

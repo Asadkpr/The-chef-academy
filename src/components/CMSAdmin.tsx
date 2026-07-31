@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAcademy } from '../context/AcademyContext';
-import { Course, Admission, PaymentTransaction, InventoryItem, PurchaseRecord, ShopProduct } from '../types';
+import { Course, Admission, PaymentTransaction, InventoryItem, PurchaseRecord, ShopProduct, CMSUser, DemandRecord } from '../types';
 import { uploadFile } from '../lib/firebase';
 import { sendInvoiceEmail } from '../lib/emailService';
 import { PrintableReceiptModal } from './PrintableReceiptModal';
@@ -9,7 +9,8 @@ import {
   CheckCircle, XCircle, AlertCircle, Eye, LogOut, RefreshCw, 
   Image as ImageIcon, Star, MessageSquare, ClipboardList, Printer, Mail,
   Globe, Upload, CreditCard, Save, Megaphone, Calendar, X,
-  ShoppingBag, Package, TrendingUp, MinusCircle, PlusCircle, BarChart2, Archive, ShoppingCart
+  ShoppingBag, Package, TrendingUp, MinusCircle, PlusCircle, BarChart2, Archive, ShoppingCart,
+  Shield, FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import WebsiteCMSEditor from './WebsiteCMSEditor';
@@ -115,11 +116,18 @@ export default function CMSAdmin() {
     addInventoryItem, updateInventoryItem, deleteInventoryItem,
     addPurchaseRecord, deletePurchaseRecord,
     shopProducts = [], shopOrders = [], addShopProduct, updateShopProduct, deleteShopProduct, updateShopOrderStatus,
-    recordAdmissionPayment, addWalkInAdmission
+    recordAdmissionPayment, addWalkInAdmission,
+    users = [], demands = [], currentUser = null,
+    addCMSUser, updateCMSUser, deleteCMSUser, loginCMSUser, logoutCMSUser,
+    raiseDemand, approveDemand, rejectDemand
   } = useAcademy();
 
   const [passcode, setPasscode] = useState('');
   const [loginError, setLoginError] = useState(false);
+  const [loginMode, setLoginMode] = useState<'passcode' | 'staff'>('passcode');
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginStaffError, setLoginStaffError] = useState('');
 
   // Walk-in Admission & Installment Modal States
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
@@ -166,7 +174,7 @@ export default function CMSAdmin() {
   const [newCourseName, setNewCourseName] = useState('');
 
   // CMS Views
-  const [cmsTab, setCmsTab] = useState<'dashboard' | 'courses' | 'admissions' | 'fees' | 'walkin' | 'content' | 'settings' | 'website' | 'payment' | 'popup' | 'shop'>('dashboard');
+  const [cmsTab, setCmsTab] = useState<'dashboard' | 'courses' | 'admissions' | 'fees' | 'walkin' | 'content' | 'settings' | 'website' | 'payment' | 'popup' | 'shop' | 'demands' | 'users' | 'user_access'>('dashboard');
 
   // Navigate to a CMS tab AND push browser history so back arrow works within admin
   const navigateCmsTab = React.useCallback((tab: typeof cmsTab) => {
@@ -335,6 +343,24 @@ export default function CMSAdmin() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [receiptModalData.isOpen, isWalkInModalOpen, selectedAdmission, cmsTab]);
 
+  // Redirect to first permitted tab if current one is not allowed
+  React.useEffect(() => {
+    if (isAdminAuthenticated && currentUser && currentUser.role !== 'admin') {
+      const userAccess = currentUser.access || {};
+      if (!userAccess[cmsTab]) {
+        // Find first permitted tab
+        const allowedTab = Object.keys(userAccess).find(
+          key => userAccess[key] === true
+        ) as typeof cmsTab | undefined;
+        if (allowedTab) {
+          setCmsTab(allowedTab);
+        } else {
+          setCmsTab('dashboard');
+        }
+      }
+    }
+  }, [cmsTab, isAdminAuthenticated, currentUser]);
+
   const handlePasscodeChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPasscode !== confirmPasscode) {
@@ -360,6 +386,22 @@ export default function CMSAdmin() {
     e.preventDefault();
     setLoginError(false);
     loginAdmin(passcode || 'admin123');
+  };
+
+  const handleStaffLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginStaffError('');
+    if (!loginUsername.trim() || !loginPassword) {
+      setLoginStaffError('Please enter username and password.');
+      return;
+    }
+    const success = await loginCMSUser(loginUsername, loginPassword);
+    if (!success) {
+      setLoginStaffError('⚠️ Invalid username or password.');
+    } else {
+      setLoginUsername('');
+      setLoginPassword('');
+    }
   };
 
   // Save edited course plan duration row
@@ -878,55 +920,132 @@ export default function CMSAdmin() {
         <div className="absolute top-1/4 left-1/2 w-80 h-80 bg-[#AE8C45]/5 rounded-full blur-3xl pointer-events-none -translate-x-1/2"></div>
         
         <div className="bg-slate-900/60 border border-slate-800 p-8 rounded-2xl max-w-md w-full shadow-2xl backdrop-blur relative text-center space-y-6">
-          <div className="inline-flex p-3 bg-[#AE8C45]/10 rounded-xl text-[#C5A964]">
-            <ClipboardList className="h-10 w-10 stroke-[1.5]" />
+          <div className="flex flex-col items-center justify-center space-y-3 border-b border-slate-800 pb-5">
+            <div className="flex items-center gap-2">
+              <img src={websiteData.logo || "/logo.png"} alt="The Chef's Academy Logo" className="brand-logo-img h-10 w-auto object-contain" />
+              <div className="font-serif leading-[0.9] text-white text-left">
+                <div className="flex items-end gap-1">
+                  <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
+                  <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>
+                </div>
+                <div className="text-base text-[#F7F2DE] font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
+              </div>
+            </div>
+            <span className="bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20 text-[10px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+              CMS Secure Gate
+            </span>
           </div>
 
           <div className="space-y-2">
-            <h2 className="font-serif text-2xl font-bold text-white tracking-tight">
-              Academy CMS Secure Gate
-            </h2>
             <p className="font-sans text-xs text-slate-400">
               Only authorized registrar personnel, instructors, and executive admins can access the management panel.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1 text-left">
-              <label htmlFor="passcode" className="block text-[10px] font-sans font-bold uppercase tracking-wider text-slate-400">
-                Enter Administrator Code *
-              </label>
-              <input
-                type="password"
-                id="passcode"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                placeholder="Enter passcode"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center font-mono text-slate-200 focus:border-[#AE8C45]/50 focus:outline-none transition-all"
-              />
-            </div>
-
-            {loginError && (
-              <p className="text-red-500 text-xs font-sans">
-                ⚠️ Invalid passcode. Please enter the correct code.
-              </p>
-            )}
-
+          {/* Login Tabs */}
+          <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-850">
             <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-[#0C1B2C] font-sans font-bold uppercase text-xs tracking-wider py-3.5 rounded-xl hover:brightness-110 shadow-lg shadow-[#AE8C45]/10 active:scale-95 transition-all cursor-pointer"
+              onClick={() => setLoginMode('passcode')}
+              className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${
+                loginMode === 'passcode'
+                  ? 'bg-[#AE8C45] text-slate-950'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
-              Authorize Portal
+              Admin Passcode
             </button>
-
             <button
-              type="button"
-              onClick={() => loginAdmin('admin123')}
-              className="w-full bg-slate-900 border border-slate-700 text-slate-300 hover:text-white font-sans font-bold uppercase text-[11px] tracking-wider py-2.5 rounded-xl hover:bg-slate-800 transition-all cursor-pointer"
+              onClick={() => setLoginMode('staff')}
+              className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all ${
+                loginMode === 'staff'
+                  ? 'bg-[#AE8C45] text-slate-950'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
-              🔓 Direct Open Admin Panel
+              Staff Login
             </button>
-          </form>
+          </div>
+
+          {loginMode === 'passcode' ? (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1 text-left">
+                <label htmlFor="passcode" className="block text-[10px] font-sans font-bold uppercase tracking-wider text-slate-400">
+                  Enter Administrator Code *
+                </label>
+                <input
+                  type="password"
+                  id="passcode"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder="Enter passcode"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center font-mono text-slate-200 focus:border-[#AE8C45]/50 focus:outline-none transition-all"
+                />
+              </div>
+
+              {loginError && (
+                <p className="text-red-500 text-xs font-sans">
+                  ⚠️ Invalid passcode. Please enter the correct code.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-[#0C1B2C] font-sans font-bold uppercase text-xs tracking-wider py-3.5 rounded-xl hover:brightness-110 shadow-lg shadow-[#AE8C45]/10 active:scale-95 transition-all cursor-pointer"
+              >
+                Authorize Portal
+              </button>
+
+              <button
+                type="button"
+                onClick={() => loginAdmin('admin123')}
+                className="w-full bg-slate-900 border border-slate-700 text-slate-300 hover:text-white font-sans font-bold uppercase text-[11px] tracking-wider py-2.5 rounded-xl hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                🔓 Direct Open Admin Panel
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleStaffLogin} className="space-y-4">
+              <div className="space-y-3 text-left">
+                <div>
+                  <label className="block text-[10px] font-sans font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Username / Email *
+                  </label>
+                  <input
+                    type="text"
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                    placeholder="Enter username"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:border-[#AE8C45]/50 focus:outline-none transition-all font-sans text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-sans font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Enter password"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 focus:border-[#AE8C45]/50 focus:outline-none transition-all font-sans text-xs"
+                  />
+                </div>
+              </div>
+
+              {loginStaffError && (
+                <p className="text-red-500 text-xs font-sans text-left">
+                  {loginStaffError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-[#AE8C45] to-[#C5A964] text-slate-950 font-sans font-bold uppercase text-xs tracking-wider py-3.5 rounded-xl hover:brightness-110 shadow-lg shadow-[#AE8C45]/10 active:scale-95 transition-all cursor-pointer"
+              >
+                Staff Login
+              </button>
+            </form>
+          )}
 
           <p className="text-[10px] text-slate-500">
             Secure browser session. Changes are persisted locally in your sandbox workspace.
@@ -935,6 +1054,13 @@ export default function CMSAdmin() {
       </section>
     );
   }
+
+  const hasAccess = (tabId: string) => {
+    if (!isAdminAuthenticated) return false;
+    if (!currentUser) return true;
+    if (currentUser.role === 'admin' || currentUser.id === 'legacy-admin') return true;
+    return !!currentUser.access?.[tabId];
+  };
 
   return (
     <section className="min-h-screen bg-slate-950 text-white pt-24 pb-16 font-sans">
@@ -950,9 +1076,9 @@ export default function CMSAdmin() {
                 className="h-12 w-auto object-contain bg-white/5 p-1.5 rounded-lg border border-white/10"
               />
             )}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <div className="flex items-center space-x-3">
-                <div className="font-display leading-[0.9] text-white">
+                <div className="font-serif leading-[0.9] text-white">
                   <div className="flex items-end gap-1">
                     <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
                     <span className="text-lg text-[#F7F2DE] font-medium leading-none">Chef's</span>
@@ -960,11 +1086,16 @@ export default function CMSAdmin() {
                   <div className="text-base text-[#F7F2DE] font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
                 </div>
                 <span className="bg-[#AE8C45]/10 text-[#C5A964] border border-[#AE8C45]/20 text-[10px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-                  Admin Console
+                  {currentUser?.role === 'admin' ? 'Executive Registrar' : 'Staff Portal'}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Manage courses catalog, review submitted student registrations, verify payments, and curate media.
+              <h1 className="text-base sm:text-lg font-serif font-bold text-[#C5A964] mt-1.5">
+                Welcome to The Chef's Academy, <span className="text-white capitalize">{currentUser?.username || 'Personnel'}</span>!
+              </h1>
+              <p className="text-[11px] text-slate-400">
+                {currentUser?.role === 'admin' 
+                  ? 'Manage courses catalog, review student registrations, verify payments, and access full controls.'
+                  : 'Log inventory purchases, raise stock demands, and check overview metrics.'}
               </p>
             </div>
           </div>
@@ -982,134 +1113,200 @@ export default function CMSAdmin() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Sidebar Tabs Controls */}
-          <div className="lg:col-span-3 flex flex-row lg:flex-col overflow-x-auto lg:overflow-x-visible gap-2 border-b lg:border-b-0 border-slate-900 pb-4 lg:pb-0 scrollbar-none">
+          <div className="lg:col-span-3 flex flex-row lg:flex-col overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto gap-2 border-b lg:border-b-0 border-slate-900 pb-4 lg:pb-0 scrollbar-none lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)]">
             
-            <button
-              onClick={() => navigateCmsTab('dashboard')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'dashboard'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <Users className="h-4 w-4" />
-              <span>Overview Metrics</span>
-            </button>
+            {hasAccess('dashboard') && (
+              <button
+                onClick={() => navigateCmsTab('dashboard')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'dashboard'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                <span>Overview Metrics</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => navigateCmsTab('courses')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'courses'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <BookOpen className="h-4 w-4" />
-              <span>Manage Courses</span>
-              <span className="ml-auto bg-slate-950/20 px-1.5 py-0.5 rounded text-[10px]">{courses.length}</span>
-            </button>
+            {hasAccess('courses') && (
+              <button
+                onClick={() => navigateCmsTab('courses')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'courses'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+                <span>Manage Courses</span>
+                <span className="ml-auto bg-slate-950/20 px-1.5 py-0.5 rounded text-[10px]">{courses.length}</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => navigateCmsTab('admissions')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'admissions'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <GraduationCap className="h-4 w-4" />
-              <span>Review Admissions</span>
-              {pendingAdmissionsCount > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-[10px] h-5 w-5 rounded-full flex items-center justify-center font-bold font-sans">
-                  {pendingAdmissionsCount}
+            {hasAccess('admissions') && (
+              <button
+                onClick={() => navigateCmsTab('admissions')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'admissions'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <GraduationCap className="h-4 w-4" />
+                <span>Review Admissions</span>
+                {pendingAdmissionsCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] h-5 w-5 rounded-full flex items-center justify-center font-bold font-sans">
+                    {pendingAdmissionsCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            {hasAccess('walkin') && (
+              <button
+                onClick={() => navigateCmsTab('walkin')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'walkin'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <CreditCard className="h-4 w-4" />
+                <span>Walk-in & Cash Fee Manager</span>
+              </button>
+            )}
+
+            {hasAccess('content') && (
+              <button
+                onClick={() => navigateCmsTab('content')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'content'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <ImageIcon className="h-4 w-4" />
+                <span>Curate Media & Reviews</span>
+              </button>
+            )}
+
+            {hasAccess('website') && (
+              <button
+                onClick={() => navigateCmsTab('website')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'website'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <Globe className="h-4 w-4" />
+                <span>Website CMS Editor</span>
+              </button>
+            )}
+
+            {hasAccess('payment') && (
+              <button
+                onClick={() => navigateCmsTab('payment')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'payment'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <CreditCard className="h-4 w-4" />
+                <span>Payment Settings</span>
+              </button>
+            )}
+
+            {hasAccess('popup') && (
+              <button
+                onClick={() => navigateCmsTab('popup')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'popup'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <Megaphone className="h-4 w-4" />
+                <span>Popup Announcement</span>
+              </button>
+            )}
+
+            {hasAccess('shop') && (
+              <button
+                onClick={() => navigateCmsTab('shop')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'shop'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <ShoppingBag className="h-4 w-4" />
+                <span>TCA Shop & Inventory</span>
+                <span className="ml-auto bg-slate-950/20 px-1.5 py-0.5 rounded text-[10px]">{inventoryItems.length}</span>
+              </button>
+            )}
+
+            {hasAccess('demands') && (
+              <button
+                onClick={() => navigateCmsTab('demands')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'demands'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <FileText className="h-4 w-4" />
+                <span>Demand Raise</span>
+                <span className="ml-auto bg-slate-950/20 px-1.5 py-0.5 rounded text-[10px]">
+                  {currentUser?.role === 'admin' ? demands.filter(d => d.status === 'Pending').length : demands.filter(d => d.userId === currentUser?.id).length}
                 </span>
-              )}
-            </button>
+              </button>
+            )}
 
-            <button
-              onClick={() => navigateCmsTab('walkin')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'walkin'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <CreditCard className="h-4 w-4" />
-              <span>Walk-in & Cash Fee Manager</span>
-            </button>
+            {hasAccess('users') && (
+              <button
+                onClick={() => navigateCmsTab('users')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'users'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <Users className="h-4 w-4" />
+                <span>Manage Users</span>
+                <span className="ml-auto bg-slate-950/20 px-1.5 py-0.5 rounded text-[10px]">{users.length}</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => navigateCmsTab('content')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'content'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <ImageIcon className="h-4 w-4" />
-              <span>Curate Media & Reviews</span>
-            </button>
+            {hasAccess('user_access') && (
+              <button
+                onClick={() => navigateCmsTab('user_access')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'user_access'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <Shield className="h-4 w-4" />
+                <span>Users Access</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => navigateCmsTab('website')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'website'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <Globe className="h-4 w-4" />
-              <span>Website CMS Editor</span>
-            </button>
-
-            <button
-              onClick={() => navigateCmsTab('payment')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'payment'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <CreditCard className="h-4 w-4" />
-              <span>Payment Settings</span>
-            </button>
-
-            <button
-              onClick={() => navigateCmsTab('popup')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'popup'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <Megaphone className="h-4 w-4" />
-              <span>Popup Announcement</span>
-            </button>
-
-            <button
-              onClick={() => navigateCmsTab('shop')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'shop'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <ShoppingBag className="h-4 w-4" />
-              <span>TCA Shop & Inventory</span>
-              <span className="ml-auto bg-slate-950/20 px-1.5 py-0.5 rounded text-[10px]">{inventoryItems.length}</span>
-            </button>
-
-            <button
-              onClick={() => navigateCmsTab('settings')}
-              className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
-                cmsTab === 'settings'
-                  ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
-                  : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span>System Settings</span>
-            </button>
+            {hasAccess('settings') && (
+              <button
+                onClick={() => navigateCmsTab('settings')}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 w-max lg:w-full ${
+                  cmsTab === 'settings'
+                    ? 'bg-[#AE8C45] text-[#0C1B2C] font-extrabold shadow-lg shadow-[#AE8C45]/10'
+                    : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span>System Settings</span>
+              </button>
+            )}
 
           </div>
 
@@ -3324,18 +3521,513 @@ export default function CMSAdmin() {
                     </div>
 
                     {passcodeMessage.text && (
-                      <p className={`text-xs ${passcodeMessage.type === 'error' ? 'text-red-400' : 'text-emerald-400'}`}>
+                      <p className={`text-xs ${passcodeMessage.type === 'error' ? 'text-[#c59e47]' : 'text-emerald-400'}`}>
                         {passcodeMessage.text}
                       </p>
                     )}
 
                     <button
                       type="submit"
-                      className="bg-[#AE8C45] hover:bg-[#AE8C45] text-[#0C1B2C] font-bold px-4 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer w-full"
+                      className="bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold px-4 py-2 rounded-lg text-xs uppercase tracking-wider transition-colors cursor-pointer w-full"
                     >
                       Update Passcode
                     </button>
                   </form>
+                </div>
+              </div>
+            )}
+
+            {cmsTab === 'demands' && (
+              <div className="space-y-6 font-sans">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 className="font-serif text-xl font-bold text-[#C5A964] flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-emerald-400" />
+                      <span>Demand Raise System</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {currentUser?.role === 'admin' 
+                        ? "Process inventory demands raised by instructors and staff members." 
+                        : "Raise a new inventory demand for equipment, uniforms, or ingredients."}
+                    </p>
+                  </div>
+                </div>
+
+                {currentUser?.role !== 'admin' ? (
+                  /* Standard Staff / User View */
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Raise Demand Card */}
+                    <div className="md:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4 h-fit">
+                      <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider flex items-center gap-1.5">
+                        <Plus className="h-4 w-4" /> Raise New Demand
+                      </h3>
+                      
+                      <div className="space-y-3 text-xs">
+                        <div className="space-y-1">
+                          <label className="text-slate-400 font-bold uppercase text-[9px] block">Select Inventory Item *</label>
+                          <select
+                            id="demand-item"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200"
+                            defaultValue=""
+                          >
+                            <option value="" disabled>-- Select Item --</option>
+                            {inventoryItems.map(i => (
+                              <option key={i.id} value={i.id}>{i.name} (Current Stock: {i.quantity} {i.unit})</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-slate-400 font-bold uppercase text-[9px] block">Quantity Needed *</label>
+                          <input
+                            type="number"
+                            id="demand-qty"
+                            min="1"
+                            placeholder="e.g. 5"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-slate-400 font-bold uppercase text-[9px] block">Reason / Description *</label>
+                          <textarea
+                            id="demand-reason"
+                            rows={3}
+                            placeholder="Explain why this item is needed..."
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200 resize-none"
+                          />
+                        </div>
+
+                        <button
+                          onClick={async () => {
+                            const selectEl = document.getElementById('demand-item') as HTMLSelectElement;
+                            const qtyEl = document.getElementById('demand-qty') as HTMLInputElement;
+                            const reasonEl = document.getElementById('demand-reason') as HTMLTextAreaElement;
+
+                            if (!selectEl.value || !qtyEl.value || !reasonEl.value.trim()) {
+                              alert('Please fill out all fields.');
+                              return;
+                            }
+
+                            await raiseDemand(selectEl.value, Number(qtyEl.value), reasonEl.value);
+                            alert('✅ Demand raised successfully and sent to Admin!');
+                            selectEl.value = "";
+                            qtyEl.value = "";
+                            reasonEl.value = "";
+                          }}
+                          className="w-full bg-[#AE8C45] hover:bg-[#C5A964] text-slate-950 font-bold uppercase py-2.5 rounded-lg transition-colors cursor-pointer animate-none"
+                        >
+                          Submit Demand
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Personal History */}
+                    <div className="md:col-span-2 space-y-4">
+                      <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Your Raised Demands Ledger</h3>
+                      
+                      <div className="bg-slate-950 border border-slate-850 rounded-xl overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead className="bg-slate-900 border-b border-slate-800 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                              <tr>
+                                <th className="px-4 py-3">Item Name</th>
+                                <th className="px-4 py-3 text-center">Quantity</th>
+                                <th className="px-4 py-3">Reason</th>
+                                <th className="px-4 py-3 text-center">Status</th>
+                                <th className="px-4 py-3">Resolution Details</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-900">
+                              {demands.filter(d => d.userId === currentUser?.id).length === 0 ? (
+                                <tr>
+                                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500 italic">You have not raised any demands yet.</td>
+                                </tr>
+                              ) : (
+                                demands.filter(d => d.userId === currentUser?.id).map(d => (
+                                  <tr key={d.id} className="hover:bg-slate-900/40 animate-none">
+                                    <td className="px-4 py-3 text-white font-medium">{d.itemName}</td>
+                                    <td className="px-4 py-3 text-center font-bold">{d.quantity}</td>
+                                    <td className="px-4 py-3 text-slate-400 max-w-[150px] truncate" title={d.reason}>{d.reason}</td>
+                                    <td className="px-4 py-3 text-center">
+                                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                                        d.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                        d.status === 'Rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                                        'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                      }`}>
+                                        {d.status}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-500">
+                                      {d.status !== 'Pending' ? (
+                                        <div className="space-y-0.5 text-[10px] animate-none">
+                                          <span>By: {d.resolvedBy}</span>
+                                          <span className="block text-[9px]">{new Date(d.resolvedAt || '').toLocaleString()}</span>
+                                        </div>
+                                      ) : '—'}
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Admin Review View */
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">All Staff Demands Ledger</h3>
+
+                    <div className="bg-slate-950 border border-slate-850 rounded-xl overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-slate-900 border-b border-slate-800 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                            <tr>
+                              <th className="px-4 py-3">Date</th>
+                              <th className="px-4 py-3">Staff Member</th>
+                              <th className="px-4 py-3">Item Requested</th>
+                              <th className="px-4 py-3 text-center">Qty</th>
+                              <th className="px-4 py-3">Reason</th>
+                              <th className="px-4 py-3 text-center">Status</th>
+                              <th className="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-900">
+                            {demands.length === 0 ? (
+                              <tr>
+                                <td colSpan={7} className="px-4 py-8 text-center text-slate-500 italic">No demands raised by staff members yet.</td>
+                              </tr>
+                            ) : (
+                              demands.map(d => (
+                                <tr key={d.id} className="hover:bg-slate-900/40 animate-none">
+                                  <td className="px-4 py-3 text-slate-500 font-mono text-[10px]">
+                                    {new Date(d.createdAt).toLocaleDateString()}
+                                  </td>
+                                  <td className="px-4 py-3 text-white font-medium">{d.username}</td>
+                                  <td className="px-4 py-3 text-slate-200 font-semibold">{d.itemName}</td>
+                                  <td className="px-4 py-3 text-center font-bold text-sm text-[#C5A964]">{d.quantity}</td>
+                                  <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate" title={d.reason}>{d.reason}</td>
+                                  <td className="px-4 py-3 text-center">
+                                    <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                                      d.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                      d.status === 'Rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                                      'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                    }`}>
+                                      {d.status}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    {d.status === 'Pending' ? (
+                                      <div className="flex justify-end gap-1.5 animate-none">
+                                        <button
+                                          onClick={async () => {
+                                            if (confirm(`Approve demand for ${d.quantity} units of "${d.itemName}"? This will subtract stock.`)) {
+                                              const res = await approveDemand(d.id, currentUser.username);
+                                              if (res.success) {
+                                                alert('Demand approved and inventory stock updated!');
+                                              } else {
+                                                alert(`Error: ${res.error}`);
+                                              }
+                                            }
+                                          }}
+                                          className="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-2 py-1 rounded text-[10px] uppercase cursor-pointer"
+                                        >
+                                          Approve
+                                        </button>
+                                        <button
+                                          onClick={async () => {
+                                            if (confirm('Reject this demand?')) {
+                                              await rejectDemand(d.id, currentUser.username);
+                                              alert('Demand rejected.');
+                                            }
+                                          }}
+                                          className="bg-red-600 hover:bg-red-500 text-white font-bold px-2 py-1 rounded text-[10px] uppercase cursor-pointer"
+                                        >
+                                          Reject
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <span className="text-[10px] text-slate-500 animate-none">
+                                        Resolved by {d.resolvedBy}
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {cmsTab === 'users' && (
+              <div className="space-y-6 font-sans">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 className="font-serif text-xl font-bold text-[#C5A964] flex items-center gap-2">
+                      <Users className="h-5 w-5 text-emerald-400" />
+                      <span>Staff Accounts Management</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">Create, view, and reset passwords for academy registrar and staff member accounts.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Create New User Card */}
+                  <div className="md:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4 h-fit">
+                    <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider flex items-center gap-1.5">
+                      <Plus className="h-4 w-4" /> Create Staff Account
+                    </h3>
+
+                    <div className="space-y-3 text-xs">
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold uppercase text-[9px] block">Username *</label>
+                        <input
+                          type="text"
+                          id="new-user-name"
+                          placeholder="e.g. chef_john"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold uppercase text-[9px] block">Password *</label>
+                        <input
+                          type="password"
+                          id="new-user-pass"
+                          placeholder="Enter password"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold uppercase text-[9px] block">Account Role *</label>
+                        <select
+                          id="new-user-role"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-300"
+                          defaultValue="staff"
+                        >
+                          <option value="staff">Staff Member / Instructor</option>
+                          <option value="admin">Executive Registrar (Admin)</option>
+                        </select>
+                      </div>
+
+                      <button
+                        onClick={async () => {
+                          const usernameEl = document.getElementById('new-user-name') as HTMLInputElement;
+                          const passEl = document.getElementById('new-user-pass') as HTMLInputElement;
+                          const roleEl = document.getElementById('new-user-role') as HTMLSelectElement;
+
+                          if (!usernameEl.value.trim() || !passEl.value) {
+                            alert('Username and password are required.');
+                            return;
+                          }
+
+                          // Check if username already exists
+                          const exists = users.some(u => u.username.toLowerCase() === usernameEl.value.trim().toLowerCase());
+                          if (exists) {
+                            alert('Username already exists. Please choose a different one.');
+                            return;
+                          }
+
+                          await addCMSUser({
+                            username: usernameEl.value.trim(),
+                            password: passEl.value,
+                            role: roleEl.value,
+                            access: {
+                              dashboard: true,
+                              courses: false,
+                              admissions: false,
+                              walkin: false,
+                              content: false,
+                              website: false,
+                              payment: false,
+                              popup: false,
+                              shop: false,
+                              demands: true,
+                              users: false,
+                              user_access: false,
+                              settings: false
+                            }
+                          });
+
+                          alert('✅ Staff account created successfully!');
+                          usernameEl.value = "";
+                          passEl.value = "";
+                        }}
+                        className="w-full bg-[#AE8C45] hover:bg-[#C5A964] text-slate-950 font-bold uppercase py-2.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Create User
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Users List Ledger */}
+                  <div className="md:col-span-2 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Active Staff Accounts Ledger</h3>
+
+                    <div className="bg-slate-950 border border-slate-850 rounded-xl overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-slate-900 border-b border-slate-800 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                            <tr>
+                              <th className="px-4 py-3">Username</th>
+                              <th className="px-4 py-3">Role</th>
+                              <th className="px-4 py-3">Password</th>
+                              <th className="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-900">
+                            {users.length === 0 ? (
+                              <tr>
+                                <td colSpan={4} className="px-4 py-8 text-center text-slate-500 italic">No staff accounts created yet. Add one on the left panel.</td>
+                              </tr>
+                            ) : (
+                              users.map(u => (
+                                <tr key={u.id} className="hover:bg-slate-900/40 animate-none">
+                                  <td className="px-4 py-3 font-semibold text-white">{u.username}</td>
+                                  <td className="px-4 py-3">
+                                    <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${
+                                      u.role === 'admin' 
+                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+                                        : 'bg-slate-800 text-slate-400 border-slate-700'
+                                    }`}>
+                                      {u.role}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 font-mono text-slate-300">
+                                    {u.password}
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    <div className="flex justify-end gap-1.5 animate-none">
+                                      <button
+                                        onClick={() => {
+                                          const newPass = prompt(`Enter new password for ${u.username}:`, u.password);
+                                          if (newPass && newPass.trim() !== '') {
+                                            updateCMSUser({
+                                              ...u,
+                                              password: newPass.trim()
+                                            });
+                                            alert('✅ Password reset successfully!');
+                                          }
+                                        }}
+                                        className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-2 py-1 rounded text-[10px] uppercase font-bold cursor-pointer transition-colors"
+                                      >
+                                        Reset Password
+                                      </button>
+                                      <button
+                                        onClick={async () => {
+                                          if (confirm(`Are you sure you want to permanently delete account: ${u.username}?`)) {
+                                            await deleteCMSUser(u.id);
+                                            alert('User deleted.');
+                                          }
+                                        }}
+                                        className="bg-red-950/20 hover:bg-red-900/20 text-red-400 border border-red-500/10 px-2 py-1 rounded text-[10px] uppercase font-bold cursor-pointer transition-colors animate-none"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {cmsTab === 'user_access' && (
+              <div className="space-y-6 font-sans">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 className="font-serif text-xl font-bold text-[#C5A964] flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-emerald-400" />
+                      <span>Users Access & Permissions Panel</span>
+                    </h2>
+                    <p className="text-xs text-slate-400 mt-1">Configure which pages / sidebar options are visible and accessible to each staff user.</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-950 border border-slate-850 rounded-2xl p-6 shadow-xl space-y-6">
+                  {users.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500 italic">No staff users created yet. Create some under "Manage Users" first.</div>
+                  ) : (
+                    <div className="space-y-8">
+                      {users.map(u => {
+                        const tabsList = [
+                          { id: 'dashboard', label: 'Overview Metrics (Dashboard)' },
+                          { id: 'courses', label: 'Manage Courses' },
+                          { id: 'admissions', label: 'Review Admissions' },
+                          { id: 'walkin', label: 'Walk-in & Cash Fee Manager' },
+                          { id: 'content', label: 'Curate Media & Reviews' },
+                          { id: 'website', label: 'Website CMS Editor' },
+                          { id: 'payment', label: 'Payment Settings' },
+                          { id: 'popup', label: 'Popup Announcement' },
+                          { id: 'shop', label: 'TCA Shop & Inventory' },
+                          { id: 'demands', label: 'Raise & Process Demands' },
+                          { id: 'users', label: 'Manage Staff Users' },
+                          { id: 'user_access', label: 'Access Control (This tab)' },
+                          { id: 'settings', label: 'System Settings' }
+                        ];
+
+                        return (
+                          <div key={u.id} className="border border-slate-850 rounded-xl p-5 bg-slate-900/20 space-y-4 animate-none">
+                            <div className="flex items-center justify-between border-b border-slate-850 pb-2 flex-wrap gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-serif text-base font-bold text-white">{u.username}</span>
+                                <span className="text-[10px] font-bold text-slate-400 bg-slate-850 px-2 py-0.5 rounded border border-slate-800 uppercase">{u.role}</span>
+                              </div>
+                              <span className="text-[10px] text-slate-500">Created: {new Date(u.createdAt).toLocaleDateString()}</span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                              {tabsList.map(tab => {
+                                const isChecked = !!u.access?.[tab.id];
+
+                                return (
+                                  <label
+                                    key={tab.id}
+                                    className={`flex items-center space-x-3 p-3 rounded-lg border transition-all cursor-pointer select-none text-xs font-medium ${
+                                      isChecked 
+                                        ? 'bg-[#AE8C45]/10 border-[#AE8C45]/30 text-white' 
+                                        : 'bg-slate-950/60 border-slate-900 text-slate-400 hover:text-slate-200'
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => {
+                                        const updatedAccess = {
+                                          ...(u.access || {}),
+                                          [tab.id]: !isChecked
+                                        };
+                                        updateCMSUser({
+                                          ...u,
+                                          access: updatedAccess
+                                        });
+                                      }}
+                                      className="rounded bg-slate-900 border-slate-800 text-[#AE8C45] focus:ring-0 focus:ring-offset-0 h-4 w-4 cursor-pointer"
+                                    />
+                                    <span>{tab.label}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

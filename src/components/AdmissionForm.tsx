@@ -572,11 +572,23 @@ export default function AdmissionForm() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 w-full relative z-10">
         
-        {/* Simple Brand Header */}
+        {/* Brand Header */}
         <div className="text-center space-y-4 mb-10">
-          <h1 className="font-serif text-3xl sm:text-5xl font-normal tracking-tight text-white leading-tight">
-            Registration portal
-          </h1>
+          <div className="flex flex-col items-center justify-center space-y-4 mb-4 text-center">
+            <div className="flex items-center gap-2.5">
+              <img src={websiteData.logo || "/logo.png"} alt="The Chef's Academy Logo" className="brand-logo-img h-12 w-auto object-contain" />
+              <div className="font-serif leading-[0.9] text-white text-left">
+                <div className="flex items-end gap-1">
+                  <span className="text-[10px] text-[#F7F2DE] font-light">The</span>
+                  <span className="text-xl text-[#F7F2DE] font-semibold leading-none">Chef's</span>
+                </div>
+                <div className="text-lg text-[#F7F2DE] font-semibold tracking-wide -mt-0.5 leading-none">Academy</div>
+              </div>
+            </div>
+            <span className="bg-[#c19d53]/10 text-[#c19d53] border border-[#c19d53]/25 text-[10px] font-sans font-bold uppercase tracking-wider px-2.5 py-0.5 rounded">
+              Registration Portal
+            </span>
+          </div>
           <p className="font-sans text-slate-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
             Welcome to the official registration hub. Register for the upcoming professional batch, receive your email invoice, and submit payment slips for instant enrollment verification.
           </p>
@@ -797,7 +809,7 @@ export default function AdmissionForm() {
 
                   <div className="flex justify-between items-start border-b border-slate-100 pb-5">
                     <div>
-                      <div className="font-display leading-[0.9] text-slate-950">
+                      <div className="font-serif leading-[0.9] text-slate-950">
                         <div className="flex items-end gap-1">
                           <span className="text-[10px] text-slate-900 font-light">The</span>
                           <span className="text-lg text-slate-900 font-medium leading-none">Chef's</span>

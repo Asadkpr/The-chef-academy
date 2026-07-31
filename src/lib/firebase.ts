@@ -72,7 +72,26 @@ export const uploadFile = async (fileOrBase64: File | string, fileName: string):
     const cleanName = finalFileName.replace(/[^a-zA-Z0-9.-]/g, '_');
     const storagePath = `uploads/${timestamp}_${cleanName}`;
 
-    // 1. Try local raw binary upload first (Fastest!)
+    // 1. Try multipart/form-data upload (most reliable for large video files!)
+    try {
+      const formData = new FormData();
+      formData.append('file', fileBlob, finalFileName);
+      const response = await fetch('/api/upload-media', {
+        method: 'POST',
+        body: formData,
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.url) {
+          console.log('Uploaded successfully via multipart to local server:', result.url);
+          return result.url;
+        }
+      }
+    } catch (multipartError: any) {
+      console.warn('Multipart upload failed, trying raw binary:', multipartError);
+    }
+
+    // 2. Try local raw binary upload (fast fallback)
     try {
       const response = await fetch('/api/upload-raw', {
         method: 'POST',
@@ -86,31 +105,31 @@ export const uploadFile = async (fileOrBase64: File | string, fileName: string):
       if (response.ok) {
         const result = await response.json();
         if (result.success && result.url) {
-          console.log("Uploaded successfully to local server raw:", result.url);
+          console.log('Uploaded successfully to local server raw:', result.url);
           return result.url;
         }
       }
     } catch (rawError: any) {
-      console.warn("Local raw binary upload failed, falling back to Firebase Storage:", rawError);
+      console.warn('Local raw binary upload failed, falling back to Firebase Storage:', rawError);
     }
 
-    // 2. Try Primary Firebase Storage (firebasestorage.app suffix)
+    // 3. Try Primary Firebase Storage (firebasestorage.app suffix)
     try {
       console.log(`Attempting upload to Primary Firebase Storage: ${defaultBucket}`);
-      const downloadUrl = await uploadBytesWithTimeout(storage, storagePath, fileBlob, finalFileType, 4000);
-      console.log("Uploaded successfully to Primary Firebase Storage:", downloadUrl);
+      const downloadUrl = await uploadBytesWithTimeout(storage, storagePath, fileBlob, finalFileType, 30000);
+      console.log('Uploaded successfully to Primary Firebase Storage:', downloadUrl);
       return downloadUrl;
     } catch (primaryError: any) {
-      console.warn("Primary Firebase Storage upload failed or timed out:", primaryError.message || primaryError);
+      console.warn('Primary Firebase Storage upload failed or timed out:', primaryError.message || primaryError);
 
-      // 3. Try Backup Firebase Storage (appspot.com suffix)
+      // 4. Try Backup Firebase Storage (appspot.com suffix)
       try {
         console.log(`Attempting upload to Backup Firebase Storage: ${backupBucket}`);
-        const downloadUrl = await uploadBytesWithTimeout(storageBackup, storagePath, fileBlob, finalFileType, 4000);
-        console.log("Uploaded successfully to Backup Firebase Storage:", downloadUrl);
+        const downloadUrl = await uploadBytesWithTimeout(storageBackup, storagePath, fileBlob, finalFileType, 30000);
+        console.log('Uploaded successfully to Backup Firebase Storage:', downloadUrl);
         return downloadUrl;
       } catch (backupError: any) {
-        console.warn("Backup Firebase Storage upload also failed or timed out:", backupError.message || backupError);
+        console.warn('Backup Firebase Storage also failed or timed out:', backupError.message || backupError);
       }
     }
 

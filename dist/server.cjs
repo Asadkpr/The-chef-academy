@@ -27,6 +27,7 @@ var import_path = __toESM(require("path"), 1);
 var import_fs = __toESM(require("fs"), 1);
 var import_dotenv = __toESM(require("dotenv"), 1);
 var import_nodemailer = __toESM(require("nodemailer"), 1);
+var import_multer = __toESM(require("multer"), 1);
 var import_vite = require("vite");
 import_dotenv.default.config();
 var app = (0, import_express.default)();
@@ -82,6 +83,32 @@ app.post("/api/upload-raw", import_express.default.raw({ type: "*/*", limit: "10
   } catch (err) {
     console.error("Raw upload API failure:", err);
     res.status(500).json({ error: err.message || "Failed to save uploaded file" });
+  }
+});
+var multerStorage = import_multer.default.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const ext = import_path.default.extname(file.originalname) || ".mp4";
+    const safeBase = import_path.default.basename(file.originalname, ext).replace(/[^a-zA-Z0-9-]/g, "_");
+    cb(null, `${safeBase}-${Date.now()}${ext}`);
+  }
+});
+var upload = (0, import_multer.default)({
+  storage: multerStorage,
+  limits: { fileSize: 500 * 1024 * 1024 }
+  // 500MB hard limit
+});
+app.post("/api/upload-media", upload.single("file"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file received in multipart upload" });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    console.log(`[MULTIPART UPLOAD SUCCESS]: ${fileUrl} (${(req.file.size / (1024 * 1024)).toFixed(2)} MB)`);
+    res.json({ success: true, url: fileUrl });
+  } catch (err) {
+    console.error("Multipart upload error:", err);
+    res.status(500).json({ error: err.message || "Upload failed" });
   }
 });
 function generateInvoiceHtml(data) {

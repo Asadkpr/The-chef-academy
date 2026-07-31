@@ -268,3 +268,26 @@ export interface ShopOrder {
   status: 'Pending' | 'Approved' | 'Dispatched' | 'Cancelled';
   createdAt: string;
 }
+
+export interface CMSUser {
+  id: string;
+  username: string;
+  password: string;
+  role: 'admin' | 'staff' | string;
+  access: Record<string, boolean>;
+  createdAt: string;
+}
+
+export interface DemandRecord {
+  id: string;
+  userId: string;
+  username: string;
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  reason: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  createdAt: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}

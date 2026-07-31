@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
+import multer from 'multer';
 import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
@@ -84,6 +85,34 @@ app.post('/api/upload-raw', express.raw({ type: '*/*', limit: '100mb' }), (req, 
   } catch (err: any) {
     console.error('Raw upload API failure:', err);
     res.status(500).json({ error: err.message || 'Failed to save uploaded file' });
+  }
+});
+
+// Multipart form-data media upload (most reliable for large video files!)
+const multerStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.mp4';
+    const safeBase = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9-]/g, '_');
+    cb(null, `${safeBase}-${Date.now()}${ext}`);
+  }
+});
+const upload = multer({
+  storage: multerStorage,
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB hard limit
+});
+
+app.post('/api/upload-media', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file received in multipart upload' });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    console.log(`[MULTIPART UPLOAD SUCCESS]: ${fileUrl} (${(req.file.size / (1024 * 1024)).toFixed(2)} MB)`);
+    res.json({ success: true, url: fileUrl });
+  } catch (err: any) {
+    console.error('Multipart upload error:', err);
+    res.status(500).json({ error: err.message || 'Upload failed' });
   }
 });
 
