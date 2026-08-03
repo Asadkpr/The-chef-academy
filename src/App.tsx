@@ -51,10 +51,10 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Reduced artificial delay for the loader to make site load faster
+    // Increased loader delay by 0.5s to give more time for background resources to initialize
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 800);
+    }, 1300);
     return () => clearTimeout(timer);
   }, []);
 

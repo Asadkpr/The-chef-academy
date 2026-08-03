@@ -72,9 +72,11 @@ interface AcademyContextType {
   deleteCMSUser: (id: string) => Promise<void>;
   loginCMSUser: (username: string, password: string) => Promise<boolean>;
   logoutCMSUser: () => void;
-  raiseDemand: (itemId: string, quantity: number, reason: string) => Promise<void>;
+  raiseDemand: (itemId: string, quantity: number, reason: string, unit?: string, raisedByAdmin?: boolean) => Promise<void>;
   approveDemand: (demandId: string, adminName: string) => Promise<{ success: boolean; error?: string }>;
   rejectDemand: (demandId: string, adminName: string) => Promise<void>;
+  markDemandPurchased: (demandId: string, adminName: string, cost?: number) => Promise<{ success: boolean; error?: string }>;
+  issueDemandToUser: (demandId: string, issueQty: number, adminName: string) => Promise<{ success: boolean; error?: string }>;
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => void;
   updateInventoryItem: (item: InventoryItem) => void;
   deleteInventoryItem: (id: string) => void;
@@ -1458,21 +1460,25 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     localStorage.removeItem('chef_current_user');
   };
 
-  const raiseDemand = async (itemId: string, quantity: number, reason: string) => {
-    if (!currentUser) return;
+  const raiseDemand = async (itemId: string, quantity: number, reason: string, unit?: string, raisedByAdmin = false) => {
+    const raiser = currentUser;
+    if (!raiser) return;
     const item = inventoryItems.find(i => i.id === itemId);
     const itemName = item ? item.name : 'Unknown Item';
+    const itemUnit = unit || item?.unit || 'unit';
     const id = `demand-${Date.now()}`;
     const newDemand: DemandRecord = {
       id,
-      userId: currentUser.id,
-      username: currentUser.username,
+      userId: raiser.id,
+      username: raiser.username,
       itemId,
       itemName,
       quantity,
+      unit: itemUnit,
       reason,
       status: 'Pending',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      raisedByAdmin,
     };
     try {
       await setDoc(doc(db, 'demands', id), newDemand);
@@ -1484,29 +1490,36 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const approveDemand = async (demandId: string, adminName: string): Promise<{ success: boolean; error?: string }> => {
     const demand = demands.find(d => d.id === demandId);
     if (!demand) return { success: false, error: 'Demand not found' };
-    
-    // Check and deduct stock
-    const item = inventoryItems.find(i => i.id === demand.itemId);
-    if (!item) {
-      return { success: false, error: 'Matching inventory item not found' };
-    }
-    
-    // Perform subtraction
-    const newQty = Math.max(0, item.quantity - demand.quantity);
-    
+
     try {
-      // Update inventory item quantity
-      await updateInventoryItem({
-        ...item,
-        quantity: newQty
-      });
-      
-      // Update demand status
+      // Find or create the inventory item
+      const existingItem = inventoryItems.find(i => i.id === demand.itemId);
+
+      if (existingItem) {
+        // ADD quantity to existing inventory item
+        const newQty = existingItem.quantity + demand.quantity;
+        await updateInventoryItem({ ...existingItem, quantity: newQty });
+      } else {
+        // Create a new inventory item for this demand
+        const newItemId = demand.itemId.startsWith('demand-new-')
+          ? demand.itemId
+          : `inv-${Date.now()}`;
+        await setDoc(doc(db, 'inventory', newItemId), {
+          id: newItemId,
+          name: demand.itemName,
+          category: 'General',
+          quantity: demand.quantity,
+          unit: demand.unit || 'unit',
+          lastUpdated: new Date().toISOString(),
+        });
+      }
+
+      // Update demand status to Approved
       const updatedDemand: DemandRecord = {
         ...demand,
         status: 'Approved',
         resolvedAt: new Date().toISOString(),
-        resolvedBy: adminName
+        resolvedBy: adminName,
       };
       await setDoc(doc(db, 'demands', demandId), updatedDemand, { merge: true });
       return { success: true };
@@ -1523,7 +1536,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...demand,
       status: 'Rejected',
       resolvedAt: new Date().toISOString(),
-      resolvedBy: adminName
+      resolvedBy: adminName,
     };
     try {
       await setDoc(doc(db, 'demands', demandId), updatedDemand, { merge: true });
@@ -1531,6 +1544,72 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error('Failed to reject demand:', e);
     }
   };
+
+  const markDemandPurchased = async (demandId: string, adminName: string, cost = 0): Promise<{ success: boolean; error?: string }> => {
+    const demand = demands.find(d => d.id === demandId);
+    if (!demand) return { success: false, error: 'Demand not found' };
+    if (demand.status !== 'Approved') return { success: false, error: 'Only approved demands can be marked as purchased' };
+    try {
+      const updatedDemand: DemandRecord = {
+        ...demand,
+        status: 'Purchased',
+        purchasedAt: new Date().toISOString(),
+        purchasedBy: adminName,
+      };
+      await setDoc(doc(db, 'demands', demandId), updatedDemand, { merge: true });
+
+      // Add a purchase record so it's logged in TCA purchases
+      const purchaseId = `pur-${Date.now()}`;
+      const newPurchase: PurchaseRecord = {
+        id: purchaseId,
+        itemName: demand.itemName,
+        cost: cost,
+        date: new Date().toISOString(),
+        purchasedBy: adminName,
+        quantityAdded: 0, // Set to 0 because we already added the quantity to inventory on APPROVAL
+        unit: demand.unit || 'unit'
+      };
+      await setDoc(doc(db, 'purchases', purchaseId), newPurchase);
+
+      return { success: true };
+    } catch (e: any) {
+      console.error('Failed to mark demand as purchased:', e);
+      return { success: false, error: e.message || 'Database error' };
+    }
+  };
+
+  const issueDemandToUser = async (demandId: string, issueQty: number, adminName: string): Promise<{ success: boolean; error?: string }> => {
+    const demand = demands.find(d => d.id === demandId);
+    if (!demand) return { success: false, error: 'Demand not found' };
+    if (demand.status !== 'Purchased') return { success: false, error: 'Only purchased demands can be issued' };
+
+    // Find the inventory item
+    const item = inventoryItems.find(i => i.id === demand.itemId);
+    if (!item) return { success: false, error: 'Inventory item not found. Please check inventory.' };
+    if (item.quantity < issueQty) {
+      return { success: false, error: `Not enough stock. Available: ${item.quantity} ${item.unit}` };
+    }
+
+    try {
+      // Deduct from inventory
+      await updateInventoryItem({ ...item, quantity: item.quantity - issueQty });
+
+      // Update demand to Issued
+      const updatedDemand: DemandRecord = {
+        ...demand,
+        status: 'Issued',
+        issuedQty: issueQty,
+        issuedAt: new Date().toISOString(),
+        issuedBy: adminName,
+      };
+      await setDoc(doc(db, 'demands', demandId), updatedDemand, { merge: true });
+      return { success: true };
+    } catch (e: any) {
+      console.error('Failed to issue demand:', e);
+      return { success: false, error: e.message || 'Database error' };
+    }
+  };
+
 
   return (
     <AcademyContext.Provider value={{
@@ -1553,6 +1632,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       raiseDemand,
       approveDemand,
       rejectDemand,
+      markDemandPurchased,
+      issueDemandToUser,
       addInventoryItem,
       updateInventoryItem,
       deleteInventoryItem,

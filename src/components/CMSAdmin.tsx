@@ -3543,42 +3543,51 @@ export default function CMSAdmin() {
                   <div>
                     <h2 className="font-serif text-xl font-bold text-[#C5A964] flex items-center gap-2">
                       <FileText className="h-5 w-5 text-emerald-400" />
-                      <span>Demand Raise System</span>
+                      <span>Demand & Procurement System</span>
                     </h2>
                     <p className="text-xs text-slate-400 mt-1">
-                      {currentUser?.role === 'admin' 
-                        ? "Process inventory demands raised by instructors and staff members." 
-                        : "Raise a new inventory demand for equipment, uniforms, or ingredients."}
+                      Raise demands → Admin approves (stock added) → Mark Purchased → Issue to User (stock deducted)
                     </p>
                   </div>
                 </div>
 
-                {currentUser?.role !== 'admin' ? (
-                  /* Standard Staff / User View */
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Raise Demand Card */}
-                    <div className="md:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4 h-fit">
-                      <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider flex items-center gap-1.5">
-                        <Plus className="h-4 w-4" /> Raise New Demand
-                      </h3>
-                      
-                      <div className="space-y-3 text-xs">
-                        <div className="space-y-1">
-                          <label className="text-slate-400 font-bold uppercase text-[9px] block">Select Inventory Item *</label>
-                          <select
-                            id="demand-item"
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200"
-                            defaultValue=""
-                          >
-                            <option value="" disabled>-- Select Item --</option>
-                            {inventoryItems.map(i => (
-                              <option key={i.id} value={i.id}>{i.name} (Current Stock: {i.quantity} {i.unit})</option>
-                            ))}
-                          </select>
-                        </div>
+                {/* Workflow Legend */}
+                <div className="flex flex-wrap gap-2 text-[10px]">
+                  {[
+                    { label: '1. Pending', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+                    { label: '2. Approved → Stock Added', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+                    { label: '3. Purchased', color: 'bg-violet-500/10 text-violet-400 border-violet-500/20' },
+                    { label: '4. Issued → Stock Deducted', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+                    { label: 'Rejected', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+                  ].map(s => (
+                    <span key={s.label} className={`inline-block px-2 py-1 rounded border font-bold uppercase tracking-wider ${s.color}`}>
+                      {s.label}
+                    </span>
+                  ))}
+                </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Raise Demand Panel — available inline to BOTH Admin and Staff */}
+                  <div className="md:col-span-1 bg-slate-950 border border-slate-800 rounded-xl p-5 space-y-4 h-fit">
+                    <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider flex items-center gap-1.5">
+                      <Plus className="h-4 w-4" /> Raise New Demand
+                    </h3>
+
+                    <div className="space-y-3 text-xs">
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold uppercase text-[9px] block">Item Name *</label>
+                        <input
+                          type="text"
+                          id="demand-item-name"
+                          placeholder="e.g. Chicken, Flour, Knife Set"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200"
+                        />
+                        <p className="text-[9px] text-slate-500">Type the name of the item you need. If it exists in inventory, stock will be updated on approval.</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-slate-400 font-bold uppercase text-[9px] block">Quantity Needed *</label>
+                          <label className="text-slate-400 font-bold uppercase text-[9px] block">Quantity *</label>
                           <input
                             type="number"
                             id="demand-qty"
@@ -3587,182 +3596,266 @@ export default function CMSAdmin() {
                             className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200"
                           />
                         </div>
-
                         <div className="space-y-1">
-                          <label className="text-slate-400 font-bold uppercase text-[9px] block">Reason / Description *</label>
-                          <textarea
-                            id="demand-reason"
-                            rows={3}
-                            placeholder="Explain why this item is needed..."
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200 resize-none"
-                          />
-                        </div>
-
-                        <button
-                          onClick={async () => {
-                            const selectEl = document.getElementById('demand-item') as HTMLSelectElement;
-                            const qtyEl = document.getElementById('demand-qty') as HTMLInputElement;
-                            const reasonEl = document.getElementById('demand-reason') as HTMLTextAreaElement;
-
-                            if (!selectEl.value || !qtyEl.value || !reasonEl.value.trim()) {
-                              alert('Please fill out all fields.');
-                              return;
-                            }
-
-                            await raiseDemand(selectEl.value, Number(qtyEl.value), reasonEl.value);
-                            alert('✅ Demand raised successfully and sent to Admin!');
-                            selectEl.value = "";
-                            qtyEl.value = "";
-                            reasonEl.value = "";
-                          }}
-                          className="w-full bg-[#AE8C45] hover:bg-[#C5A964] text-slate-950 font-bold uppercase py-2.5 rounded-lg transition-colors cursor-pointer animate-none"
-                        >
-                          Submit Demand
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Personal History */}
-                    <div className="md:col-span-2 space-y-4">
-                      <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Your Raised Demands Ledger</h3>
-                      
-                      <div className="bg-slate-950 border border-slate-850 rounded-xl overflow-hidden">
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-left text-xs border-collapse">
-                            <thead className="bg-slate-900 border-b border-slate-800 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                              <tr>
-                                <th className="px-4 py-3">Item Name</th>
-                                <th className="px-4 py-3 text-center">Quantity</th>
-                                <th className="px-4 py-3">Reason</th>
-                                <th className="px-4 py-3 text-center">Status</th>
-                                <th className="px-4 py-3">Resolution Details</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-900">
-                              {demands.filter(d => d.userId === currentUser?.id).length === 0 ? (
-                                <tr>
-                                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500 italic">You have not raised any demands yet.</td>
-                                </tr>
-                              ) : (
-                                demands.filter(d => d.userId === currentUser?.id).map(d => (
-                                  <tr key={d.id} className="hover:bg-slate-900/40 animate-none">
-                                    <td className="px-4 py-3 text-white font-medium">{d.itemName}</td>
-                                    <td className="px-4 py-3 text-center font-bold">{d.quantity}</td>
-                                    <td className="px-4 py-3 text-slate-400 max-w-[150px] truncate" title={d.reason}>{d.reason}</td>
-                                    <td className="px-4 py-3 text-center">
-                                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                                        d.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                        d.status === 'Rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                                        'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                                      }`}>
-                                        {d.status}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-slate-500">
-                                      {d.status !== 'Pending' ? (
-                                        <div className="space-y-0.5 text-[10px] animate-none">
-                                          <span>By: {d.resolvedBy}</span>
-                                          <span className="block text-[9px]">{new Date(d.resolvedAt || '').toLocaleString()}</span>
-                                        </div>
-                                      ) : '—'}
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
+                          <label className="text-slate-400 font-bold uppercase text-[9px] block">Unit *</label>
+                          <select
+                            id="demand-unit"
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200"
+                          >
+                            <option value="kg">kg</option>
+                            <option value="g">g</option>
+                            <option value="litre">litre</option>
+                            <option value="ml">ml</option>
+                            <option value="pcs">pcs</option>
+                            <option value="box">box</option>
+                            <option value="pack">pack</option>
+                            <option value="unit">unit</option>
+                          </select>
                         </div>
                       </div>
+
+                      <div className="space-y-1">
+                        <label className="text-slate-400 font-bold uppercase text-[9px] block">Reason / Description *</label>
+                        <textarea
+                          id="demand-reason"
+                          rows={3}
+                          placeholder="Explain why this item is needed..."
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-slate-200 resize-none"
+                        />
+                      </div>
+
+                      <button
+                        onClick={async () => {
+                          const nameEl = document.getElementById('demand-item-name') as HTMLInputElement;
+                          const qtyEl = document.getElementById('demand-qty') as HTMLInputElement;
+                          const unitEl = document.getElementById('demand-unit') as HTMLSelectElement;
+                          const reasonEl = document.getElementById('demand-reason') as HTMLTextAreaElement;
+
+                          if (!nameEl.value.trim() || !qtyEl.value || !reasonEl.value.trim()) {
+                            alert('Please fill out all fields.');
+                            return;
+                          }
+
+                          const itemName = nameEl.value.trim();
+                          const unit = unitEl.value;
+                          const matchedItem = inventoryItems.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+                          const itemId = matchedItem ? matchedItem.id : `demand-new-${Date.now()}`;
+
+                          const id = `demand-${Date.now()}`;
+                          const newDemand = {
+                            id,
+                            userId: currentUser!.id,
+                            username: currentUser!.username,
+                            itemId,
+                            itemName,
+                            quantity: Number(qtyEl.value),
+                            unit,
+                            reason: reasonEl.value.trim(),
+                            status: 'Pending' as const,
+                            createdAt: new Date().toISOString(),
+                            raisedByAdmin: currentUser?.role === 'admin',
+                          };
+                          const { setDoc, doc } = await import('firebase/firestore');
+                          const { db } = await import('../lib/firebase');
+                          try {
+                            await setDoc(doc(db, 'demands', id), newDemand);
+                            alert('✅ Demand raised successfully!');
+                            nameEl.value = '';
+                            qtyEl.value = '';
+                            reasonEl.value = '';
+                          } catch (e) {
+                            alert('Failed to raise demand. Please try again.');
+                          }
+                        }}
+                        className="w-full bg-[#AE8C45] hover:bg-[#C5A964] text-slate-955 font-bold uppercase py-2.5 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Submit Demand
+                      </button>
                     </div>
                   </div>
-                ) : (
-                  /* Admin Review View */
-                  <div className="space-y-4">
-                    <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">All Staff Demands Ledger</h3>
 
-                    <div className="bg-slate-950 border border-slate-850 rounded-xl overflow-hidden">
+                  {/* Demands Table */}
+                  <div className="md:col-span-2 space-y-4">
+                    <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                      {currentUser?.role === 'admin' ? 'All Demands Ledger' : 'Your Raised Demands'}
+                    </h3>
+
+                    <div className="bg-slate-955 border border-slate-850 rounded-xl overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs border-collapse">
                           <thead className="bg-slate-900 border-b border-slate-800 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                             <tr>
-                              <th className="px-4 py-3">Date</th>
-                              <th className="px-4 py-3">Staff Member</th>
-                              <th className="px-4 py-3">Item Requested</th>
-                              <th className="px-4 py-3 text-center">Qty</th>
-                              <th className="px-4 py-3">Reason</th>
-                              <th className="px-4 py-3 text-center">Status</th>
-                              <th className="px-4 py-3 text-right">Actions</th>
+                              <th className="px-3 py-3">Item</th>
+                              <th className="px-3 py-3 text-center">Qty</th>
+                              {currentUser?.role === 'admin' && <th className="px-3 py-3">Raised By</th>}
+                              <th className="px-3 py-3">Reason</th>
+                              <th className="px-3 py-3 text-center">Status</th>
+                              <th className="px-3 py-3 text-right">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-900">
-                            {demands.length === 0 ? (
-                              <tr>
-                                <td colSpan={7} className="px-4 py-8 text-center text-slate-500 italic">No demands raised by staff members yet.</td>
-                              </tr>
-                            ) : (
-                              demands.map(d => (
+                            {(() => {
+                              const visibleDemands = currentUser?.role === 'admin'
+                                ? demands
+                                : demands.filter(d => d.userId === currentUser?.id);
+
+                              if (visibleDemands.length === 0) {
+                                return (
+                                  <tr>
+                                    <td colSpan={currentUser?.role === 'admin' ? 6 : 5} className="px-4 py-10 text-center text-slate-500 italic">
+                                      No demands found.
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              return visibleDemands.map(d => (
                                 <tr key={d.id} className="hover:bg-slate-900/40 animate-none">
-                                  <td className="px-4 py-3 text-slate-500 font-mono text-[10px]">
-                                    {new Date(d.createdAt).toLocaleDateString()}
+                                  <td className="px-3 py-3 text-white font-semibold">
+                                    {d.itemName}
+                                    {d.raisedByAdmin && (
+                                      <span className="ml-1 text-[9px] text-violet-400 bg-violet-500/10 border border-violet-500/20 px-1 py-0.5 rounded">Admin</span>
+                                    )}
                                   </td>
-                                  <td className="px-4 py-3 text-white font-medium">{d.username}</td>
-                                  <td className="px-4 py-3 text-slate-200 font-semibold">{d.itemName}</td>
-                                  <td className="px-4 py-3 text-center font-bold text-sm text-[#C5A964]">{d.quantity}</td>
-                                  <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate" title={d.reason}>{d.reason}</td>
-                                  <td className="px-4 py-3 text-center">
-                                    <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                                      d.status === 'Approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                      d.status === 'Rejected' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                                      'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                  <td className="px-3 py-3 text-center font-bold text-[#C5A964]">
+                                    {d.quantity} {d.unit || ''}
+                                    {d.issuedQty !== undefined && (
+                                      <div className="text-[9px] text-amber-400 font-normal">Issued: {d.issuedQty} {d.unit || ''}</div>
+                                    )}
+                                  </td>
+                                  {currentUser?.role === 'admin' && (
+                                    <td className="px-3 py-3 text-slate-400">{d.username}</td>
+                                  )}
+                                  <td className="px-3 py-3 text-slate-400 max-w-[140px] truncate" title={d.reason}>{d.reason}</td>
+                                  <td className="px-3 py-3 text-center">
+                                    <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border border-collapse ${
+                                      d.status === 'Approved'  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                      d.status === 'Rejected'  ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                      d.status === 'Purchased' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' :
+                                      d.status === 'Issued'    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                                                                 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                                     }`}>
                                       {d.status}
                                     </span>
+                                    {d.status === 'Approved' && (
+                                      <div className="text-[9px] text-emerald-500 mt-0.5">+{d.quantity} {d.unit} added to stock</div>
+                                    )}
                                   </td>
-                                  <td className="px-4 py-3 text-right">
-                                    {d.status === 'Pending' ? (
-                                      <div className="flex justify-end gap-1.5 animate-none">
-                                        <button
-                                          onClick={async () => {
-                                            if (confirm(`Approve demand for ${d.quantity} units of "${d.itemName}"? This will subtract stock.`)) {
-                                              const res = await approveDemand(d.id, currentUser.username);
+                                  <td className="px-3 py-3 text-right">
+                                    {currentUser?.role === 'admin' ? (
+                                      <div className="flex justify-end gap-1 flex-wrap">
+                                        {d.status === 'Pending' && (
+                                          <>
+                                            <button
+                                              onClick={async () => {
+                                                if (confirm(`Approve demand for ${d.quantity} ${d.unit || 'unit'} of "${d.itemName}"?\n\nThis will ADD ${d.quantity} ${d.unit || 'unit'} to inventory.`)) {
+                                                  const res = await approveDemand(d.id, currentUser.username);
+                                                  if (res.success) {
+                                                    alert(`✅ Demand approved! ${d.quantity} ${d.unit || 'unit'} of "${d.itemName}" added to inventory.`);
+                                                  } else {
+                                                    alert(`Error: ${res.error}`);
+                                                  }
+                                                }
+                                              }}
+                                              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded text-[10px] uppercase cursor-pointer text-slate-955"
+                                            >
+                                              Approve
+                                            </button>
+                                            <button
+                                              onClick={async () => {
+                                                if (confirm('Reject this demand?')) {
+                                                  await rejectDemand(d.id, currentUser.username);
+                                                  alert('Demand rejected.');
+                                                }
+                                              }}
+                                              className="bg-red-755 hover:bg-red-600 text-white font-bold px-2 py-1 rounded text-[10px] uppercase cursor-pointer"
+                                            >
+                                              Reject
+                                            </button>
+                                          </>
+                                        )}
+
+                                        {d.status === 'Approved' && (
+                                          <button
+                                            onClick={async () => {
+                                              const costStr = prompt(`Enter purchase cost (PKR) for "${d.itemName}" (Qty: ${d.quantity} ${d.unit || 'unit'}):`, "0");
+                                              if (costStr === null) return;
+                                              const cost = parseFloat(costStr) || 0;
+                                              const res = await markDemandPurchased(d.id, currentUser.username, cost);
                                               if (res.success) {
-                                                alert('Demand approved and inventory stock updated!');
+                                                alert('✅ Marked as Purchased! Logged in purchases record. Now you can issue it to the user.');
                                               } else {
                                                 alert(`Error: ${res.error}`);
                                               }
-                                            }
-                                          }}
-                                          className="bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold px-2 py-1 rounded text-[10px] uppercase cursor-pointer"
-                                        >
-                                          Approve
-                                        </button>
-                                        <button
-                                          onClick={async () => {
-                                            if (confirm('Reject this demand?')) {
-                                              await rejectDemand(d.id, currentUser.username);
-                                              alert('Demand rejected.');
-                                            }
-                                          }}
-                                          className="bg-red-600 hover:bg-red-500 text-white font-bold px-2 py-1 rounded text-[10px] uppercase cursor-pointer"
-                                        >
-                                          Reject
-                                        </button>
+                                            }}
+                                            className="bg-violet-600 hover:bg-violet-500 text-white font-bold px-2 py-1 rounded text-[10px] uppercase cursor-pointer"
+                                          >
+                                            Mark Purchased
+                                          </button>
+                                        )}
+
+                                        {d.status === 'Purchased' && (
+                                          <button
+                                            onClick={async () => {
+                                              const invItem = inventoryItems.find(i => i.id === d.itemId);
+                                              const available = invItem ? invItem.quantity : 0;
+                                              const issueStr = prompt(
+                                                `Issue "${d.itemName}" to ${d.username}\n\nDemanded: ${d.quantity} ${d.unit || 'unit'}\nAvailable in stock: ${available} ${d.unit || 'unit'}\n\nEnter quantity to issue:`
+                                              );
+                                              if (!issueStr) return;
+                                              const issueQty = parseFloat(issueStr);
+                                              if (isNaN(issueQty) || issueQty <= 0) {
+                                                alert('Please enter a valid quantity.');
+                                                return;
+                                              }
+                                              const res = await issueDemandToUser(d.id, issueQty, currentUser.username);
+                                              if (res.success) {
+                                                alert(`✅ ${issueQty} ${d.unit || 'unit'} of "${d.itemName}" issued to ${d.username}.\n\nInventory has been updated.`);
+                                              } else {
+                                                alert(`Error: ${res.error}`);
+                                              }
+                                            }}
+                                            className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold px-2 py-1 rounded text-[10px] uppercase cursor-pointer"
+                                          >
+                                            Issue to User
+                                          </button>
+                                        )}
+
+                                        {d.status === 'Issued' && (
+                                          <span className="text-[10px] text-amber-400">
+                                            Issued {d.issuedQty} {d.unit || ''} by {d.issuedBy}
+                                          </span>
+                                        )}
+                                        {d.status === 'Rejected' && (
+                                          <span className="text-[10px] text-slate-500">
+                                            By {d.resolvedBy}
+                                          </span>
+                                        )}
                                       </div>
                                     ) : (
-                                      <span className="text-[10px] text-slate-500 animate-none">
-                                        Resolved by {d.resolvedBy}
-                                      </span>
+                                      <div className="text-[10px] text-slate-500 space-y-0.5 text-right">
+                                        {d.status === 'Pending' && <span className="text-blue-400">Awaiting admin review</span>}
+                                        {d.status === 'Approved' && <span className="text-emerald-400">Approved — being procured</span>}
+                                        {d.status === 'Purchased' && <span className="text-violet-400">Purchased — pending issue</span>}
+                                        {d.status === 'Issued' && (
+                                          <div>
+                                            <div className="text-amber-400">Issued: {d.issuedQty} {d.unit}</div>
+                                            <div>{new Date(d.issuedAt || '').toLocaleDateString()}</div>
+                                          </div>
+                                        )}
+                                        {d.status === 'Rejected' && <span className="text-red-400">Rejected by {d.resolvedBy}</span>}
+                                      </div>
                                     )}
                                   </td>
                                 </tr>
-                              ))
-                            )}
+                              ));
+                            })()}
                           </tbody>
                         </table>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
             )}
 

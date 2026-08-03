@@ -602,6 +602,13 @@ export default function Website() {
               muted 
               loop 
               playsInline
+              preload="auto"
+              onLoadedMetadata={(e) => {
+                (e.target as HTMLVideoElement).playbackRate = 1.5;
+              }}
+              onPlay={(e) => {
+                (e.target as HTMLVideoElement).playbackRate = 1.5;
+              }}
             />
             
             <div className="hero-overlay"></div>
@@ -748,6 +755,13 @@ export default function Website() {
                   muted 
                   loop 
                   playsInline
+                  preload="auto"
+                  onLoadedMetadata={(e) => {
+                    (e.target as HTMLVideoElement).playbackRate = 1.25;
+                  }}
+                  onPlay={(e) => {
+                    (e.target as HTMLVideoElement).playbackRate = 1.25;
+                  }}
                 />
               </div>
 

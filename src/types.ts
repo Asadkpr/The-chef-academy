@@ -285,9 +285,19 @@ export interface DemandRecord {
   itemId: string;
   itemName: string;
   quantity: number;
+  unit?: string;
   reason: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Purchased' | 'Issued';
   createdAt: string;
   resolvedAt?: string;
   resolvedBy?: string;
+  raisedByAdmin?: boolean;
+  // Purchase step
+  purchasedAt?: string;
+  purchasedBy?: string;
+  // Issue step
+  issuedQty?: number;
+  issuedAt?: string;
+  issuedBy?: string;
 }
+
