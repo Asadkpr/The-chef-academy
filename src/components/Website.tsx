@@ -524,7 +524,6 @@ export default function Website() {
           object-fit: contain;
           background: transparent !important;
           background-color: transparent !important;
-          mix-blend-mode: screen;
         }
 
       `}</style>

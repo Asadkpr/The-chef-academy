@@ -887,11 +887,10 @@ export default function AdmissionForm() {
                         <span className="text-slate-800 font-semibold block">{websiteData?.paymentSettings?.accountTitle || "The Chef's Academy"}</span>
                       </div>
                       <div className="sm:col-span-2">
-                        <span className="text-slate-400 block text-[10px] uppercase">Account Number:</span>
-                        <span className="text-slate-900 font-bold font-mono text-xs tracking-wider">{websiteData?.paymentSettings?.accountNumber || '5502-9018274619'}</span>
-                        {websiteData?.paymentSettings?.iban && (
-                          <span className="text-slate-600 font-mono text-[10px] block mt-0.5">IBAN: {websiteData.paymentSettings.iban}</span>
-                        )}
+                        <span className="text-slate-400 block text-[10px] uppercase">IBAN Number:</span>
+                        <span className="text-slate-900 font-bold font-mono text-sm tracking-wider">
+                          {websiteData?.paymentSettings?.iban || 'PK00ALFH00000000000000'}
+                        </span>
                       </div>
                       <div className="sm:col-span-2 border-t border-slate-100 pt-2 text-[10px] text-slate-500">
                         {websiteData?.paymentSettings?.mobileName || 'Easypaisa or JazzCash'} Wallet: <strong>{websiteData?.paymentSettings?.mobileNumber || '0333-9123456'}</strong> (Title: {websiteData?.paymentSettings?.mobileTitle || "The Chef's Academy"})

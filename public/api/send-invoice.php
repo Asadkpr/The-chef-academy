@@ -113,8 +113,7 @@ $htmlContent = "
           <div class='bank-info'>
             <strong>Bank Name:</strong> {$bankName}<br>
             <strong>Account Title:</strong> {$accountTitle}<br>
-            <strong>Account Number:</strong> {$accountNumber}<br>
-            " . ($iban ? "<strong>IBAN:</strong> {$iban}<br>" : "") . "<br>
+            " . ($iban ? "<strong>IBAN Number:</strong> <strong>{$iban}</strong><br>" : "") . "<br>
             <strong>{$mobileName}:</strong> {$mobileNumber} (Title: {$mobileTitle})
           </div>
         </div>

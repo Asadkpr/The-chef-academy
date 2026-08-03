@@ -389,8 +389,7 @@ function generateInvoiceHtml(data) {
                 Please transfer/deposit the registration fee of <strong>PKR ${data.regFee.toLocaleString()}</strong> to the official academy account below to secure your workspace seat:<br><br>
                 <strong>Bank Name:</strong> ${data.paymentSettings?.bankName || "Bank Alfalah Ltd"}<br>
                 <strong>Account Title:</strong> ${data.paymentSettings?.accountTitle || "The Chef's Academy Lahore"}<br>
-                <strong>Account Number:</strong> ${data.paymentSettings?.accountNumber || "5502-9018274619"}<br>
-                ${data.paymentSettings?.iban ? `<strong>IBAN:</strong> ${data.paymentSettings.iban}<br>` : ""}<br>
+                <strong>IBAN Number:</strong> <strong>${data.paymentSettings?.iban || "PK00ALFH00000000000000"}</strong><br><br>
                 <em>Alternatively, transfer via:</em><br>
                 <strong>${data.paymentSettings?.mobileName || "Easypaisa / JazzCash"}:</strong> ${data.paymentSettings?.mobileNumber || "0333-9123456"} (Title: ${data.paymentSettings?.mobileTitle || "The Chef's Academy"})
               </div>
