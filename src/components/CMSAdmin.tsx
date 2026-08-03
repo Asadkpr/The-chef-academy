@@ -10,7 +10,7 @@ import {
   Image as ImageIcon, Star, MessageSquare, ClipboardList, Printer, Mail,
   Globe, Upload, CreditCard, Save, Megaphone, Calendar, X,
   ShoppingBag, Package, TrendingUp, MinusCircle, PlusCircle, BarChart2, Archive, ShoppingCart,
-  Shield, FileText
+  Shield, FileText, Send
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import WebsiteCMSEditor from './WebsiteCMSEditor';
@@ -117,9 +117,9 @@ export default function CMSAdmin() {
     addPurchaseRecord, deletePurchaseRecord,
     shopProducts = [], shopOrders = [], addShopProduct, updateShopProduct, deleteShopProduct, updateShopOrderStatus,
     recordAdmissionPayment, addWalkInAdmission,
-    users = [], demands = [], currentUser = null,
+    users = [], demands = [], issueRecords = [], currentUser = null,
     addCMSUser, updateCMSUser, deleteCMSUser, loginCMSUser, logoutCMSUser,
-    raiseDemand, approveDemand, rejectDemand
+    raiseDemand, approveDemand, rejectDemand, markDemandPurchased, issueDemandToUser, issueInventoryToUser
   } = useAcademy();
 
   const [passcode, setPasscode] = useState('');
@@ -190,6 +190,17 @@ export default function CMSAdmin() {
   const [stockAdjustQty, setStockAdjustQty] = useState(0);
   const [stockAdjustMode, setStockAdjustMode] = useState<'add' | 'remove'>('add');
   const [reportFilter, setReportFilter] = useState<'week' | 'month' | 'all'>('month');
+
+  // Issue to User modal state
+  const [issueModalItem, setIssueModalItem] = useState<InventoryItem | null>(null);
+  const [issueModalQty, setIssueModalQty] = useState(1);
+  const [issueModalUserId, setIssueModalUserId] = useState('');
+  const [issueModalReason, setIssueModalReason] = useState('');
+  const [issueModalLoading, setIssueModalLoading] = useState(false);
+  const [issueModalError, setIssueModalError] = useState('');
+
+  // User Ledger modal state
+  const [ledgerUser, setLedgerUser] = useState<typeof users[0] | null>(null);
 
   // Store Products Management state
   const [newShopProd, setNewShopProd] = useState({
@@ -2956,26 +2967,135 @@ export default function CMSAdmin() {
                         </button>
                       </div>
 
-                      {/* Stock Adjust Modal */}
-                      {stockAdjustItem && (
-                        <div className="bg-slate-950 border border-[#AE8C45]/40 rounded-xl p-5 space-y-3">
-                          <h3 className="text-xs font-bold text-[#C5A964] uppercase tracking-wider">Adjust Stock: <span className="text-white">{stockAdjustItem.name}</span></h3>
-                          <div className="flex gap-3 items-center flex-wrap">
-                            <div className="flex rounded-lg overflow-hidden border border-slate-700">
-                              <button onClick={()=>setStockAdjustMode('add')} className={`px-3 py-1.5 text-xs font-bold cursor-pointer ${stockAdjustMode==='add'?'bg-emerald-600 text-white':'bg-slate-900 text-slate-400'}`}>+ Add</button>
-                              <button onClick={()=>setStockAdjustMode('remove')} className={`px-3 py-1.5 text-xs font-bold cursor-pointer ${stockAdjustMode==='remove'?'bg-red-600 text-white':'bg-slate-900 text-slate-400'}`}>− Remove</button>
+                      {/* ── Issue to User Modal ────────────────────────────────────────── */}
+                      {issueModalItem && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                          <div className="bg-[#0f1d2b] border border-[#AE8C45]/40 rounded-2xl w-full max-w-md shadow-2xl">
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                              <div>
+                                <p className="text-[10px] text-[#C5A964] uppercase tracking-widest font-bold">Issue from Inventory</p>
+                                <h3 className="text-white font-serif text-lg">{issueModalItem.name}</h3>
+                              </div>
+                              <button
+                                onClick={() => { setIssueModalItem(null); setIssueModalQty(1); setIssueModalUserId(''); setIssueModalReason(''); setIssueModalError(''); }}
+                                className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+                              ><X className="h-5 w-5"/></button>
                             </div>
-                            <input type="number" min="1" value={stockAdjustQty} onChange={e=>setStockAdjustQty(+e.target.value)}
-                              className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#AE8C45]" />
-                            <span className="text-xs text-slate-400">Current: <strong className="text-white">{stockAdjustItem.quantity} {stockAdjustItem.unit}</strong></span>
-                            <button onClick={async()=>{
-                              const newQty = stockAdjustMode==='add' ? stockAdjustItem.quantity + stockAdjustQty : Math.max(0, stockAdjustItem.quantity - stockAdjustQty);
-                              await updateInventoryItem({...stockAdjustItem, quantity: newQty});
-                              setStockAdjustItem(null); setStockAdjustQty(0);
-                            }} className="inline-flex items-center gap-1 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold text-xs px-4 py-2 rounded-lg transition-colors cursor-pointer">
-                              <Save className="h-3 w-3"/> Confirm
-                            </button>
-                            <button onClick={()=>{setStockAdjustItem(null);setStockAdjustQty(0);}} className="text-slate-400 hover:text-white text-xs cursor-pointer">Cancel</button>
+
+                            {/* Body */}
+                            <div className="px-6 py-5 space-y-4">
+
+                              {/* Stock info */}
+                              <div className="flex items-center gap-3 bg-slate-900/60 rounded-xl px-4 py-3 border border-slate-800">
+                                <Package className="h-5 w-5 text-[#C5A964] flex-shrink-0"/>
+                                <div>
+                                  <p className="text-[10px] text-slate-400 uppercase tracking-wider">Available in Stock</p>
+                                  <p className={`text-xl font-bold ${issueModalItem.quantity < 5 ? 'text-red-400' : issueModalItem.quantity < 20 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                    {issueModalItem.quantity} <span className="text-sm font-normal text-slate-400">{issueModalItem.unit}</span>
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Select User */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Issue To (User) *</label>
+                                <select
+                                  value={issueModalUserId}
+                                  onChange={e => setIssueModalUserId(e.target.value)}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#AE8C45] cursor-pointer"
+                                >
+                                  <option value="">— Select a user —</option>
+                                  {users.map(u => (
+                                    <option key={u.id} value={u.id}>{u.username} ({u.role})</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* Quantity */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Quantity to Issue *</label>
+                                <div className="flex items-center gap-3">
+                                  <button
+                                    onClick={() => setIssueModalQty(q => Math.max(1, q - 1))}
+                                    className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold flex items-center justify-center cursor-pointer transition-colors"
+                                  >−</button>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={issueModalItem.quantity}
+                                    value={issueModalQty}
+                                    onChange={e => setIssueModalQty(Math.max(1, Math.min(issueModalItem.quantity, +e.target.value)))}
+                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white text-center font-bold focus:outline-none focus:border-[#AE8C45]"
+                                  />
+                                  <button
+                                    onClick={() => setIssueModalQty(q => Math.min(issueModalItem.quantity, q + 1))}
+                                    className="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold flex items-center justify-center cursor-pointer transition-colors"
+                                  >+</button>
+                                  <span className="text-xs text-slate-400 whitespace-nowrap">{issueModalItem.unit}</span>
+                                </div>
+                              </div>
+
+                              {/* Reason */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Reason / Note</label>
+                                <input
+                                  type="text"
+                                  value={issueModalReason}
+                                  onChange={e => setIssueModalReason(e.target.value)}
+                                  placeholder="e.g. Class practical, personal use..."
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#AE8C45] placeholder:text-slate-600"
+                                />
+                              </div>
+
+                              {/* Error */}
+                              {issueModalError && (
+                                <p className="text-xs text-red-400 bg-red-950/30 border border-red-800/30 rounded-lg px-3 py-2">{issueModalError}</p>
+                              )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-800">
+                              <button
+                                onClick={() => { setIssueModalItem(null); setIssueModalQty(1); setIssueModalUserId(''); setIssueModalReason(''); setIssueModalError(''); }}
+                                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 transition-colors cursor-pointer"
+                              >Cancel</button>
+                              <button
+                                disabled={issueModalLoading || !issueModalUserId || issueModalQty < 1}
+                                onClick={async () => {
+                                  if (!issueModalUserId) { setIssueModalError('Please select a user.'); return; }
+                                  if (issueModalQty < 1) { setIssueModalError('Quantity must be at least 1.'); return; }
+                                  const targetUser = users.find(u => u.id === issueModalUserId);
+                                  if (!targetUser) { setIssueModalError('User not found.'); return; }
+                                  setIssueModalLoading(true);
+                                  setIssueModalError('');
+                                  const res = await issueInventoryToUser(
+                                    issueModalItem,
+                                    issueModalQty,
+                                    { id: targetUser.id, username: targetUser.username },
+                                    issueModalReason,
+                                    currentUser?.username || 'Admin'
+                                  );
+                                  setIssueModalLoading(false);
+                                  if (res.success) {
+                                    setIssueModalItem(null);
+                                    setIssueModalQty(1);
+                                    setIssueModalUserId('');
+                                    setIssueModalReason('');
+                                    setIssueModalError('');
+                                  } else {
+                                    setIssueModalError(res.error || 'Something went wrong.');
+                                  }
+                                }}
+                                className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center justify-center gap-2"
+                              >
+                                {issueModalLoading ? (
+                                  <><span className="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full"></span> Issuing...</>
+                                ) : (
+                                  <><Send className="h-3.5 w-3.5"/> Issue to {users.find(u=>u.id===issueModalUserId)?.username || 'User'}</>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -3007,9 +3127,14 @@ export default function CMSAdmin() {
                                 <td className="px-4 py-3 text-slate-500">{new Date(item.lastUpdated).toLocaleDateString()}</td>
                                 <td className="px-4 py-3">
                                   <div className="flex items-center justify-center gap-2">
-                                    <button onClick={()=>{setStockAdjustItem(item);setStockAdjustQty(0);setStockAdjustMode('add');}}
-                                      className="text-[#C5A964] hover:text-[#AE8C45] cursor-pointer" title="Adjust Stock"><Package className="h-4 w-4"/></button>
-                                    <button onClick={()=>deleteInventoryItem(item.id)}
+                                    <button
+                                      onClick={() => { setIssueModalItem(item); setIssueModalQty(1); setIssueModalUserId(''); setIssueModalReason(''); setIssueModalError(''); }}
+                                      className="inline-flex items-center gap-1 bg-[#AE8C45]/15 hover:bg-[#AE8C45]/30 text-[#C5A964] font-bold text-[10px] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer border border-[#AE8C45]/20"
+                                      title="Issue to User"
+                                    >
+                                      <Send className="h-3 w-3"/> Issue
+                                    </button>
+                                    <button onClick={() => deleteInventoryItem(item.id)}
                                       className="text-red-400 hover:text-red-300 cursor-pointer" title="Delete"><Trash2 className="h-4 w-4"/></button>
                                   </div>
                                 </td>
@@ -3020,6 +3145,7 @@ export default function CMSAdmin() {
                       </div>
                     </div>
                   )}
+
 
                   {/* ===== PURCHASES SUB-TAB ===== */}
                   {shopSubTab === 'purchases' && (
@@ -3861,6 +3987,132 @@ export default function CMSAdmin() {
 
             {cmsTab === 'users' && (
               <div className="space-y-6 font-sans">
+
+                {/* ── User Ledger Modal ─────────────────────────────────────────── */}
+                {ledgerUser && (() => {
+                  const userDemands = demands.filter(d => d.username === ledgerUser.username);
+                  const userIssues  = issueRecords.filter(r => r.issuedToUsername === ledgerUser.username);
+
+                  // combined timeline
+                  type TimelineEntry =
+                    | { type: 'demand'; date: string; data: typeof userDemands[0] }
+                    | { type: 'issue';  date: string; data: typeof userIssues[0]  };
+                  const timeline: TimelineEntry[] = [
+                    ...userDemands.map(d => ({ type: 'demand' as const, date: d.createdAt, data: d })),
+                    ...userIssues.map(r  => ({ type: 'issue'  as const, date: r.issuedAt,  data: r })),
+                  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+                  const totalDemandQty  = userDemands.reduce((s, d) => s + d.quantity, 0);
+                  const totalIssuedQty  = userIssues.reduce((s, r) => s + r.issuedQty, 0);
+
+                  const statusColor = (s: string) => {
+                    if (s === 'Issued')    return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+                    if (s === 'Approved')  return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+                    if (s === 'Pending')   return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+                    if (s === 'Rejected')  return 'bg-red-500/10 text-red-400 border-red-500/20';
+                    if (s === 'Purchased') return 'bg-violet-500/10 text-violet-400 border-violet-500/20';
+                    return 'bg-slate-800 text-slate-400 border-slate-700';
+                  };
+
+                  return (
+                    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-2 sm:p-4">
+                      <div className="bg-[#0c1a27] border border-[#AE8C45]/30 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 flex-shrink-0">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-[#AE8C45]/20 border border-[#AE8C45]/30 flex items-center justify-center">
+                              <span className="text-[#C5A964] font-bold text-sm uppercase">{ledgerUser.username[0]}</span>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-[#C5A964] uppercase tracking-widest font-bold">User Ledger</p>
+                              <h3 className="text-white font-serif text-lg leading-tight">{ledgerUser.username}</h3>
+                            </div>
+                          </div>
+                          <button onClick={() => setLedgerUser(null)} className="text-slate-500 hover:text-white transition-colors cursor-pointer">
+                            <X className="h-5 w-5"/>
+                          </button>
+                        </div>
+
+                        {/* Summary Stats */}
+                        <div className="grid grid-cols-3 gap-px bg-slate-800 border-b border-slate-800 flex-shrink-0">
+                          {[
+                            { label: 'Total Demands', value: userDemands.length, color: 'text-blue-400' },
+                            { label: 'Total Demanded Qty', value: totalDemandQty, color: 'text-slate-200' },
+                            { label: 'Total Issued Qty', value: totalIssuedQty, color: 'text-amber-400' },
+                          ].map(s => (
+                            <div key={s.label} className="bg-[#0c1a27] px-4 py-3 text-center">
+                              <p className={`text-xl font-bold ${s.color}`}>{s.value}</p>
+                              <p className="text-[9px] text-slate-500 uppercase tracking-wider mt-0.5">{s.label}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Timeline */}
+                        <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
+                          {timeline.length === 0 ? (
+                            <div className="text-center py-12 text-slate-500 italic text-sm">No activity recorded for this user yet.</div>
+                          ) : timeline.map((entry, i) => (
+                            <div key={i} className={`flex gap-3 p-3 rounded-xl border ${entry.type === 'issue' ? 'border-amber-500/15 bg-amber-500/5' : 'border-slate-800 bg-slate-900/30'}`}>
+                              {/* Icon */}
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${entry.type === 'issue' ? 'bg-amber-500/20' : 'bg-blue-500/15'}`}>
+                                {entry.type === 'issue'
+                                  ? <Send className="h-3.5 w-3.5 text-amber-400"/>
+                                  : <Package className="h-3.5 w-3.5 text-blue-400"/>
+                                }
+                              </div>
+
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 flex-wrap">
+                                  <div>
+                                    <p className="text-white text-xs font-semibold">{entry.data.itemName}</p>
+                                    {entry.type === 'demand' ? (
+                                      <p className="text-[10px] text-slate-400 mt-0.5">
+                                        Demanded: <span className="text-slate-200 font-bold">{entry.data.quantity} {(entry.data as typeof userDemands[0]).unit || 'unit'}</span>
+                                        {(entry.data as typeof userDemands[0]).issuedQty !== undefined && (
+                                          <span className="ml-2 text-amber-400">→ Issued: <strong>{(entry.data as typeof userDemands[0]).issuedQty}</strong></span>
+                                        )}
+                                      </p>
+                                    ) : (
+                                      <p className="text-[10px] text-slate-400 mt-0.5">
+                                        Issued: <span className="text-amber-300 font-bold">{(entry.data as typeof userIssues[0]).issuedQty} {(entry.data as typeof userIssues[0]).unit}</span>
+                                        {(entry.data as typeof userIssues[0]).reason && (
+                                          <span className="ml-2 text-slate-500">· {(entry.data as typeof userIssues[0]).reason}</span>
+                                        )}
+                                      </p>
+                                    )}
+                                    <p className="text-[9px] text-slate-600 mt-1">
+                                      {new Date(entry.date).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })}
+                                      {entry.type === 'issue' && <span className="ml-2 text-slate-600">· by {(entry.data as typeof userIssues[0]).issuedBy}</span>}
+                                    </p>
+                                  </div>
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded border ${entry.type === 'issue' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : statusColor((entry.data as typeof userDemands[0]).status)}`}>
+                                      {entry.type === 'issue' ? 'Issued' : (entry.data as typeof userDemands[0]).status}
+                                    </span>
+                                    <span className={`text-[9px] uppercase tracking-wide ${entry.type === 'issue' ? 'text-amber-600' : 'text-blue-600'}`}>
+                                      {entry.type === 'issue' ? '📤 Direct Issue' : '📋 Demand'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-3 border-t border-slate-800 flex-shrink-0">
+                          <button onClick={() => setLedgerUser(null)} className="w-full py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 transition-colors cursor-pointer">
+                            Close Ledger
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* ────────────────────────────────────────────────────────────── */}
+
                 <div className="flex items-center justify-between border-b border-slate-800 pb-4">
                   <div>
                     <h2 className="font-serif text-xl font-bold text-[#C5A964] flex items-center gap-2">
@@ -3972,63 +4224,76 @@ export default function CMSAdmin() {
                             <tr>
                               <th className="px-4 py-3">Username</th>
                               <th className="px-4 py-3">Role</th>
-                              <th className="px-4 py-3">Password</th>
+                              <th className="px-4 py-3">Demands</th>
+                              <th className="px-4 py-3">Issued</th>
                               <th className="px-4 py-3 text-right">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-900">
                             {users.length === 0 ? (
                               <tr>
-                                <td colSpan={4} className="px-4 py-8 text-center text-slate-500 italic">No staff accounts created yet. Add one on the left panel.</td>
+                                <td colSpan={5} className="px-4 py-8 text-center text-slate-500 italic">No staff accounts created yet. Add one on the left panel.</td>
                               </tr>
                             ) : (
-                              users.map(u => (
-                                <tr key={u.id} className="hover:bg-slate-900/40 animate-none">
-                                  <td className="px-4 py-3 font-semibold text-white">{u.username}</td>
-                                  <td className="px-4 py-3">
-                                    <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${
-                                      u.role === 'admin' 
-                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
-                                        : 'bg-slate-800 text-slate-400 border-slate-700'
-                                    }`}>
-                                      {u.role}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-3 font-mono text-slate-300">
-                                    {u.password}
-                                  </td>
-                                  <td className="px-4 py-3 text-right">
-                                    <div className="flex justify-end gap-1.5 animate-none">
-                                      <button
-                                        onClick={() => {
-                                          const newPass = prompt(`Enter new password for ${u.username}:`, u.password);
-                                          if (newPass && newPass.trim() !== '') {
-                                            updateCMSUser({
-                                              ...u,
-                                              password: newPass.trim()
-                                            });
-                                            alert('✅ Password reset successfully!');
-                                          }
-                                        }}
-                                        className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-2 py-1 rounded text-[10px] uppercase font-bold cursor-pointer transition-colors"
-                                      >
-                                        Reset Password
-                                      </button>
-                                      <button
-                                        onClick={async () => {
-                                          if (confirm(`Are you sure you want to permanently delete account: ${u.username}?`)) {
-                                            await deleteCMSUser(u.id);
-                                            alert('User deleted.');
-                                          }
-                                        }}
-                                        className="bg-red-950/20 hover:bg-red-900/20 text-red-400 border border-red-500/10 px-2 py-1 rounded text-[10px] uppercase font-bold cursor-pointer transition-colors animate-none"
-                                      >
-                                        Delete
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))
+                              users.map(u => {
+                                const uDemands = demands.filter(d => d.username === u.username);
+                                const uIssues  = issueRecords.filter(r => r.issuedToUsername === u.username);
+                                return (
+                                  <tr key={u.id} className="hover:bg-slate-900/40 animate-none">
+                                    <td className="px-4 py-3 font-semibold text-white">{u.username}</td>
+                                    <td className="px-4 py-3">
+                                      <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase border ${
+                                        u.role === 'admin'
+                                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                          : 'bg-slate-800 text-slate-400 border-slate-700'
+                                      }`}>
+                                        {u.role}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="text-blue-400 font-bold">{uDemands.length}</span>
+                                      <span className="text-slate-600 text-[10px] ml-1">times</span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="text-amber-400 font-bold">{uIssues.reduce((s, r) => s + r.issuedQty, 0)}</span>
+                                      <span className="text-slate-600 text-[10px] ml-1">items</span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right">
+                                      <div className="flex justify-end gap-1.5 animate-none">
+                                        <button
+                                          onClick={() => setLedgerUser(u)}
+                                          className="bg-[#AE8C45]/15 hover:bg-[#AE8C45]/30 text-[#C5A964] border border-[#AE8C45]/20 px-2 py-1 rounded text-[10px] uppercase font-bold cursor-pointer transition-colors flex items-center gap-1"
+                                        >
+                                          <FileText className="h-3 w-3"/> Ledger
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            const newPass = prompt(`Enter new password for ${u.username}:`, u.password);
+                                            if (newPass && newPass.trim() !== '') {
+                                              updateCMSUser({ ...u, password: newPass.trim() });
+                                              alert('✅ Password reset successfully!');
+                                            }
+                                          }}
+                                          className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-2 py-1 rounded text-[10px] uppercase font-bold cursor-pointer transition-colors"
+                                        >
+                                          Reset Password
+                                        </button>
+                                        <button
+                                          onClick={async () => {
+                                            if (confirm(`Are you sure you want to permanently delete account: ${u.username}?`)) {
+                                              await deleteCMSUser(u.id);
+                                              alert('User deleted.');
+                                            }
+                                          }}
+                                          className="bg-red-950/20 hover:bg-red-900/20 text-red-400 border border-red-500/10 px-2 py-1 rounded text-[10px] uppercase font-bold cursor-pointer transition-colors animate-none"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })
                             )}
                           </tbody>
                         </table>
@@ -4038,6 +4303,7 @@ export default function CMSAdmin() {
                 </div>
               </div>
             )}
+
 
             {cmsTab === 'user_access' && (
               <div className="space-y-6 font-sans">
@@ -5447,6 +5713,7 @@ export default function CMSAdmin() {
           admission={receiptModalData.admission}
           transaction={receiptModalData.transaction}
           paymentSettings={websiteData?.paymentSettings}
+          logoUrl={websiteData?.logo}
           onClose={() => setReceiptModalData({ isOpen: false, admission: null })}
         />
       )}

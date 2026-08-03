@@ -6,6 +6,7 @@ interface PrintableReceiptModalProps {
   admission: Admission;
   transaction?: PaymentTransaction;
   paymentSettings?: PaymentSettings;
+  logoUrl?: string;
   onClose: () => void;
 }
 
@@ -13,6 +14,7 @@ export const PrintableReceiptModal: React.FC<PrintableReceiptModalProps> = ({
   admission,
   transaction,
   paymentSettings,
+  logoUrl,
   onClose,
 }) => {
   const tuition = admission.tuitionFee || 0;
@@ -123,7 +125,12 @@ export const PrintableReceiptModal: React.FC<PrintableReceiptModalProps> = ({
 </head>
 <body>
   <div class="header">
-    <h1>The Chef's Academy</h1>
+    <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px;">
+      ${logoUrl ? `<img src="${logoUrl}" alt="TCA Logo" style="height:64px;object-fit:contain;display:block;">` : ''}
+      <h1 style="font-size:26px; font-weight:bold; letter-spacing:0px; margin:0; line-height:1; text-align:left; font-family:Georgia, serif; color:#111; text-transform:none;">
+        <span style="font-size:18px; font-weight:normal;">The</span> Chef's<br/>Academy
+      </h1>
+    </div>
     <div class="addr">79-B3 Gulberg III, Lahore, Pakistan</div>
     <div class="contact">Helpline: 0333-9123456 | Email: info@thechefsacademy.pk | Web: www.thechefsacademy.pk</div>
     <span class="badge">Official Payment Receipt</span>
@@ -206,10 +213,6 @@ export const PrintableReceiptModal: React.FC<PrintableReceiptModalProps> = ({
       <p>1. Fee once deposited is non-refundable &amp; non-transferable.</p>
       <p>2. Please retain this official computerised receipt for batch admission verification.</p>
     </div>
-    <div class="sig">
-      <div class="line">Authorized Signature &amp; Stamp</div>
-      <div class="name">The Chef's Academy</div>
-    </div>
   </div>
 
   <script>
@@ -223,7 +226,7 @@ export const PrintableReceiptModal: React.FC<PrintableReceiptModalProps> = ({
   };
 
   return (
-    <div className="printable-modal-overlay fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[9999] flex items-center justify-center p-2 sm:p-4 overflow-y-auto print:p-0 print:bg-white print:static print:inset-auto">
+    <div className="printable-modal-overlay fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[9999] flex items-start justify-center p-2 sm:p-4 pt-16 sm:pt-20 pb-10 overflow-y-auto print:p-0 print:bg-white print:static print:inset-auto">
       
       {/* ALWAYS VISIBLE FLOATING TOP ACTION BAR (Screen Only) */}
       <div className="print:hidden fixed top-4 right-4 sm:top-6 sm:right-6 z-[10000] flex items-center space-x-2 bg-slate-950 border border-slate-700 p-2 rounded-2xl shadow-2xl backdrop-blur">
@@ -273,9 +276,19 @@ export const PrintableReceiptModal: React.FC<PrintableReceiptModalProps> = ({
           
           {/* RECEIPT HEADER */}
           <div className="border-b-2 border-slate-900 pb-3 text-center relative print:pt-0">
-            <h1 className="text-xl sm:text-2xl print:text-xl font-serif font-black uppercase tracking-wider text-slate-950 m-0">
-              THE CHEF'S ACADEMY
-            </h1>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt="TCA Logo"
+                  className="h-16 object-contain"
+                />
+              )}
+              <h1 className="font-serif font-bold text-slate-950 m-0 leading-none text-left tracking-normal">
+                <span className="block text-2xl sm:text-3xl"><span className="font-normal text-lg sm:text-xl tracking-normal">The</span> Chef's</span>
+                <span className="block text-2xl sm:text-3xl">Academy</span>
+              </h1>
+            </div>
             <p className="text-xs font-bold text-[#b45309] uppercase tracking-widest mt-0.5 m-0">
               79-B3 Gulberg III, Lahore, Pakistan
             </p>
@@ -433,12 +446,6 @@ export const PrintableReceiptModal: React.FC<PrintableReceiptModalProps> = ({
               <p className="font-bold text-slate-800 m-0">Terms & Conditions:</p>
               <p className="m-0 text-[9.5px]">1. Fee once deposited is non-refundable & non-transferable.</p>
               <p className="m-0 text-[9.5px]">2. Please retain this official computerised receipt for batch admission verification.</p>
-            </div>
-            <div className="text-center w-44">
-              <div className="border-b border-slate-400 pb-1 mb-1 font-mono text-[9px] text-slate-400">
-                Authorized Signature & Stamp
-              </div>
-              <span className="font-bold text-slate-900 text-xs">The Chef's Academy</span>
             </div>
           </div>
 

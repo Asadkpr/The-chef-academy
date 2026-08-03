@@ -301,3 +301,15 @@ export interface DemandRecord {
   issuedBy?: string;
 }
 
+export interface IssueRecord {
+  id: string;
+  inventoryItemId: string;
+  itemName: string;
+  issuedToUserId: string;
+  issuedToUsername: string;
+  issuedQty: number;
+  unit: string;
+  reason?: string;
+  issuedBy: string;
+  issuedAt: string;
+}

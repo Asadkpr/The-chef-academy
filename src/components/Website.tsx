@@ -32,7 +32,48 @@ export default function Website() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [selectedCourseSlug]);
 
+  // ── Browser history for course detail pages ──────────────────────────────
+  // When a course detail page opens, push a history entry so the back button
+  // brings the user back to the main courses section — not to the portal or
+  // another SPA view.
+  const openCourseDetail = (slug: string) => {
+    // Push: home#courses → course detail
+    window.history.pushState({ view: 'home', courseSlug: slug }, '', `#course/${slug}`);
+    setSelectedCourseSlug(slug);
+  };
+
+  const closeCourseDetail = () => {
+    setSelectedCourseSlug(null);
+    // Restore hash to #home so URL stays clean
+    window.history.replaceState({ view: 'home' }, '', '#home');
+    setTimeout(() => {
+      document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  // Handle browser back/forward within Website (popstate fired by AcademyContext
+  // resets activeView; we intercept the course-detail hash here first).
+  useEffect(() => {
+    const handleCoursePopState = (e: PopStateEvent) => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash.startsWith('#course/')) {
+        const slug = window.location.hash.slice('#course/'.length);
+        setSelectedCourseSlug(slug || null);
+      } else {
+        // Back pressed while on course detail → go back to courses list
+        setSelectedCourseSlug(null);
+      }
+    };
+    window.addEventListener('popstate', handleCoursePopState);
+    return () => window.removeEventListener('popstate', handleCoursePopState);
+  }, []);
+  // ─────────────────────────────────────────────────────────────────────────
+
   const handleNavClick = (sectionId: string) => {
+    // If course detail is open, restore history state before navigating away
+    if (selectedCourseSlug) {
+      window.history.replaceState({ view: 'home' }, '', '#home');
+    }
     setSelectedCourseSlug(null);
     setMobileMenuOpen(false);
     setTimeout(() => {
@@ -496,7 +537,7 @@ export default function Website() {
           
           {/* Brand Logo & Name */}
           <div 
-            onClick={() => setSelectedCourseSlug(null)} 
+            onClick={() => closeCourseDetail()} 
             className="flex items-center gap-2 cursor-pointer"
           >
             <img src={websiteData.logo || "/logo.png"} alt="The Chef's Academy Logo" className="brand-logo-img h-8 w-auto object-contain" />
@@ -702,7 +743,7 @@ export default function Website() {
                 {mergedCourses.map((c) => (
                   <article 
                     key={c.id}
-                    onClick={() => setSelectedCourseSlug(c.slug)}
+                    onClick={() => openCourseDetail(c.slug)}
                     className="bg-white border border-[#E7E1CF] rounded-2xl overflow-hidden hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col justify-between"
                   >
                     <img 
@@ -997,7 +1038,7 @@ export default function Website() {
           <section className="bg-[#13283F] text-[#F7F2DE] py-24">
             <div className="max-w-7xl mx-auto px-6">
               <p className="text-xs text-slate-400 mb-4 tracking-wider uppercase">
-                <span onClick={() => setSelectedCourseSlug(null)} className="cursor-pointer hover:text-[#C5A964]">Home</span> / Courses / {currentCourse.name}
+                <span onClick={() => closeCourseDetail()} className="cursor-pointer hover:text-[#C5A964]">Home</span> / Courses / {currentCourse.name}
               </p>
 
               <h1 className="text-white text-4xl sm:text-6xl font-serif mb-4 leading-tight">
@@ -1290,7 +1331,7 @@ export default function Website() {
             <ul className="text-xs space-y-2 text-slate-400">
               {mergedCourses.map((c) => (
                 <li key={c.id}>
-                  <button onClick={() => setSelectedCourseSlug(c.slug)} className="hover:text-[#C5A964] transition-colors">{c.name} Program</button>
+                  <button onClick={() => openCourseDetail(c.slug)} className="hover:text-[#C5A964] transition-colors">{c.name} Program</button>
                 </li>
               ))}
             </ul>

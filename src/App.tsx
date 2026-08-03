@@ -51,17 +51,17 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Increased loader delay by 0.5s to give more time for background resources to initialize
+    // Increased loader delay by 0.5s (to 1.8s) to give more time for background resources to initialize
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1300);
+    }, 1800);
     return () => clearTimeout(timer);
   }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-[#c19d53] selection:text-slate-950">
       <AnimatePresence>
-        {isLoading && <TcaLoader key="tca-global-loader" />}
+        {isLoading && <TcaLoader key="tca-global-loader" logoUrl={websiteData?.logo} />}
       </AnimatePresence>
 
       {activeView !== 'home' && <Navbar />}

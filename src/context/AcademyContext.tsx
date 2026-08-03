@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Course, Admission, PaymentTransaction, Testimonial, GalleryItem, CoursePlans, CoursePlanItem, WebsiteData, InventoryItem, PurchaseRecord, ShopProduct, ShopOrder, CMSUser, DemandRecord } from '../types';
+import { Course, Admission, PaymentTransaction, Testimonial, GalleryItem, CoursePlans, CoursePlanItem, WebsiteData, InventoryItem, PurchaseRecord, ShopProduct, ShopOrder, CMSUser, DemandRecord, IssueRecord } from '../types';
 import { INITIAL_COURSES, INITIAL_TESTIMONIALS, INITIAL_GALLERY, INITIAL_SHOP_PRODUCTS } from '../data/defaultData';
 import { INITIAL_WEBSITE_DATA } from '../data/websiteDefaultData';
 import { auth, db } from '../lib/firebase';
@@ -66,6 +66,7 @@ interface AcademyContextType {
   shopOrders: ShopOrder[];
   users: CMSUser[];
   demands: DemandRecord[];
+  issueRecords: IssueRecord[];
   currentUser: CMSUser | null;
   addCMSUser: (user: Omit<CMSUser, 'id' | 'createdAt'>) => Promise<void>;
   updateCMSUser: (user: CMSUser) => Promise<void>;
@@ -77,6 +78,7 @@ interface AcademyContextType {
   rejectDemand: (demandId: string, adminName: string) => Promise<void>;
   markDemandPurchased: (demandId: string, adminName: string, cost?: number) => Promise<{ success: boolean; error?: string }>;
   issueDemandToUser: (demandId: string, issueQty: number, adminName: string) => Promise<{ success: boolean; error?: string }>;
+  issueInventoryToUser: (item: InventoryItem, issueQty: number, targetUser: { id: string; username: string }, reason: string, issuedBy: string) => Promise<{ success: boolean; error?: string }>;
   addInventoryItem: (item: Omit<InventoryItem, 'id' | 'lastUpdated'>) => void;
   updateInventoryItem: (item: InventoryItem) => void;
   deleteInventoryItem: (id: string) => void;
@@ -162,6 +164,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [shopOrders, setShopOrders] = useState<ShopOrder[]>([]);
   const [users, setUsers] = useState<CMSUser[]>([]);
   const [demands, setDemands] = useState<DemandRecord[]>([]);
+  const [issueRecords, setIssueRecords] = useState<IssueRecord[]>([]);
   const [currentUser, setCurrentUser] = useState<CMSUser | null>(null);
   const [activeView, setActiveView] = useState<'home' | 'cms' | 'portal' | 'shop'>('home');
   const [currentSection, setCurrentSection] = useState<'hero' | 'about' | 'courses' | 'admission' | 'gallery' | 'testimonials'>('hero');
@@ -238,6 +241,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     let unsubscribeShopOrders: (() => void) | null = null;
     let unsubscribeUsers: (() => void) | null = null;
     let unsubscribeDemands: (() => void) | null = null;
+    let unsubscribeIssueRecords: (() => void) | null = null;
 
     // Real-time listener for Shop Products
     try {
@@ -298,6 +302,17 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       });
     } catch (e) { console.warn('Demands listener error:', e); }
+
+    // Real-time listener for Issue Records
+    try {
+      const issueRecordsRef = collection(db, 'issue_records');
+      unsubscribeIssueRecords = onSnapshot(issueRecordsRef, (snapshot) => {
+        const loaded: IssueRecord[] = [];
+        snapshot.forEach(d => loaded.push(d.data() as IssueRecord));
+        loaded.sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime());
+        setIssueRecords(loaded);
+      });
+    } catch (e) { console.warn('Issue records listener error:', e); }
 
     // Real-time listener for Course Plans & Fees (ALWAYS ACTIVE)
     try {
@@ -670,6 +685,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (unsubscribeShopOrders) unsubscribeShopOrders();
       if (unsubscribeUsers) unsubscribeUsers();
       if (unsubscribeDemands) unsubscribeDemands();
+      if (unsubscribeIssueRecords) unsubscribeIssueRecords();
     };
   }, []);
 
@@ -1610,6 +1626,42 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  // Direct inventory-to-user issue (without a demand record)
+  const issueInventoryToUser = async (
+    item: InventoryItem,
+    issueQty: number,
+    targetUser: { id: string; username: string },
+    reason: string,
+    issuedBy: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (item.quantity < issueQty) {
+      return { success: false, error: `Not enough stock. Available: ${item.quantity} ${item.unit}` };
+    }
+    try {
+      // Deduct from inventory
+      await updateInventoryItem({ ...item, quantity: item.quantity - issueQty });
+
+      // Save issue record to Firebase
+      const recordId = `issue-${Date.now()}`;
+      const issueRecord: IssueRecord = {
+        id: recordId,
+        inventoryItemId: item.id,
+        itemName: item.name,
+        issuedToUserId: targetUser.id,
+        issuedToUsername: targetUser.username,
+        issuedQty: issueQty,
+        unit: item.unit,
+        reason: reason,
+        issuedBy,
+        issuedAt: new Date().toISOString(),
+      };
+      await setDoc(doc(db, 'issue_records', recordId), issueRecord);
+      return { success: true };
+    } catch (e: any) {
+      console.error('Failed to issue inventory to user:', e);
+      return { success: false, error: e.message || 'Database error' };
+    }
+  };
 
   return (
     <AcademyContext.Provider value={{
@@ -1623,6 +1675,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       shopOrders,
       users,
       demands,
+      issueRecords,
       currentUser,
       addCMSUser,
       updateCMSUser,
@@ -1634,6 +1687,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       rejectDemand,
       markDemandPurchased,
       issueDemandToUser,
+      issueInventoryToUser,
       addInventoryItem,
       updateInventoryItem,
       deleteInventoryItem,
