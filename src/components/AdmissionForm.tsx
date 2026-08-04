@@ -185,8 +185,8 @@ export default function AdmissionForm() {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1200;
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
         let width = img.width;
         let height = img.height;
 
@@ -209,7 +209,7 @@ export default function AdmissionForm() {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
           setReceiptBase64(compressedDataUrl);
           setUploadMessage(null);
         } else {
@@ -298,6 +298,12 @@ export default function AdmissionForm() {
       setIsUploadingReceipt(false);
       setUploadMessage({ type: 'success', text: 'Your payment slip has been uploaded successfully.' });
       setSlipNumber('');
+      setReceiptBase64('');
+      
+      // Scroll to success message for mobile users
+      setTimeout(() => {
+        document.getElementById('upload-msg')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
       setReceiptBase64('');
     } catch (err) {
       setIsUploadingReceipt(false);
@@ -1083,7 +1089,7 @@ export default function AdmissionForm() {
                               </div>
 
                               {uploadMessage && (
-                                <div className={`p-4 rounded-xl border text-xs font-sans leading-relaxed ${
+                                <div id="upload-msg" className={`p-4 rounded-xl border text-xs font-sans leading-relaxed ${
                                   uploadMessage.type === 'success' 
                                     ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300' 
                                     : 'bg-red-500/5 border-red-500/20 text-red-300'
