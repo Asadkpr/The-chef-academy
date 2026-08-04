@@ -44,7 +44,13 @@ const compressImage = (base64Str: string, maxW = 1000, maxH = 1000, quality = 0.
       }
 
       ctx.drawImage(img, 0, 0, width, height);
-      const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+      
+      // Use webp to preserve transparency while allowing compression quality
+      // If the original is PNG, we could also check, but webp handles both well.
+      const mimeType = base64Str.startsWith('data:image/png') ? 'image/png' : 'image/webp';
+      
+      // Note: 'image/png' ignores the quality parameter, which is fine for logos.
+      const compressedBase64 = canvas.toDataURL(mimeType, quality);
       resolve(compressedBase64);
     };
     img.onerror = () => {

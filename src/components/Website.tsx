@@ -284,10 +284,29 @@ export default function Website() {
 
   const mergedCourses = getMergedCourses();
 
-  const handleDownloadOutline = (slug: string) => {
+  const handleDownloadOutline = (slug: string, duration?: string) => {
+    // By default (or if 1 Month), download the provided Word files
+    if (!duration || duration.includes('1 Month')) {
+      const fileMap: Record<string, string> = {
+        'baking-desserts': 'TCA_4_Week_August_Intensive_Baking_Patisserie_Desserts_Course_Outline.docx',
+        'barista-skills': 'TCA_4_Week_August_Intensive_Barista_Skills_Course_Outline.docx',
+        'culinary-arts': 'TCA_4_Week_August_Intensive_Culinary_Arts_Course_Outline.docx',
+      };
+      if (fileMap[slug]) {
+        const link = document.createElement('a');
+        link.href = `/${fileMap[slug]}`;
+        link.download = fileMap[slug];
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
+    }
+
     const c = mergedCourses.find(m => m.slug === slug || m.id === slug) || mergedCourses[0];
     if (!c) return;
-    const lines = [`${c.name} — Course Outline`, "The Chef's Academy, Peshawar", ""];
+    const durationLabel = duration ? ` (${duration})` : '';
+    const lines = [`${c.name}${durationLabel} — Course Outline`, "The Chef's Academy, Peshawar", ""];
     c.outline.forEach((m: any) => { 
       lines.push(m.t); 
       m.d.forEach((d: any) => lines.push("  - " + d)); 
@@ -768,10 +787,10 @@ export default function Website() {
                             e.stopPropagation();
                             handleDownloadOutline(c.slug);
                           }}
-                          className="text-[11px] font-mono font-bold text-slate-400 hover:text-[#AE8C45] flex items-center gap-0.5"
-                          title="Download syllabus PDF"
+                          className="bg-[#c19d53]/10 text-[#c19d53] px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider hover:bg-[#c19d53] hover:text-white transition-all flex items-center gap-1"
+                          title="Download course outline"
                         >
-                          <Download className="h-3 w-3" /> PDF
+                          <Download className="h-3 w-3" /> Outline
                         </button>
                       </div>
                     </div>
@@ -1065,26 +1084,42 @@ export default function Website() {
                 <div className="mb-10">
                   <h3 className="text-xs text-[#C5A964] font-bold uppercase tracking-widest mb-4">Available Program Durations</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {coursePlans[currentCourse.name].map((plan, idx) => (
+                    {coursePlans[currentCourse.name].map((plan, idx) => {
+                      const isOneMonth = plan.duration.includes('1 Month');
+                      const displayDetail = isOneMonth ? DEFAULT_COURSE_PLANS[currentCourse.name]?.[idx]?.detail : (plan.detail || DEFAULT_COURSE_PLANS[currentCourse.name]?.[idx]?.detail);
+                      const displayFee = isOneMonth ? DEFAULT_COURSE_PLANS[currentCourse.name]?.[idx]?.fee : plan.fee;
+                      
+                      return (
                       <div 
                         key={idx}
                         onMouseEnter={() => setHoveredPlan(idx)}
                         onMouseLeave={() => setHoveredPlan(null)}
-                        className={`relative border rounded-xl p-4 transition-all duration-300 cursor-pointer ${
+                        className={`relative border rounded-xl p-4 transition-all duration-300 cursor-pointer flex flex-col h-full ${
                           hoveredPlan === idx ? 'bg-[#C5A964] border-[#C5A964] text-[#13283F] shadow-lg transform -translate-y-1' : 'bg-white/5 border-white/20 hover:bg-white/10'
                         }`}
                       >
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-start mb-2">
                           <h4 className="font-bold text-base sm:text-lg">{plan.duration}</h4>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDownloadOutline(selectedCourseSlug, plan.duration); }}
+                            className={`text-[10px] px-2 py-1 rounded flex items-center gap-1 font-bold uppercase transition-all ${hoveredPlan === idx ? 'bg-[#13283F] text-[#C5A964] hover:brightness-125' : 'bg-[#C5A964]/20 text-[#C5A964] hover:bg-[#C5A964] hover:text-[#13283F]'}`}
+                            title={`Download ${plan.duration} Outline`}
+                          >
+                            <Download className="h-3 w-3" />
+                            Download
+                          </button>
+                        </div>
+                        <div className="flex items-center mb-2">
                           <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${hoveredPlan === idx ? 'bg-[#13283F] text-[#C5A964]' : 'bg-[#C5A964] text-[#13283F]'}`}>
-                            PKR {plan.fee.toLocaleString()}
+                            PKR {(displayFee || 40000).toLocaleString()}
                           </span>
                         </div>
-                        <div className={`text-sm whitespace-pre-line overflow-hidden transition-all duration-500 ${hoveredPlan === idx ? 'max-h-[800px] opacity-100 mt-3 border-t border-[#13283F]/20 pt-3' : 'max-h-0 opacity-0'}`}>
-                          {plan.detail || (DEFAULT_COURSE_PLANS[currentCourse.name]?.[idx]?.detail) || 'Complete hands-on training with professional certification.'}
+                        <div className={`text-sm whitespace-pre-line transition-all duration-500 overflow-y-auto overflow-x-hidden ${hoveredPlan === idx ? 'max-h-[300px] opacity-100 mt-2 border-t border-[#13283F]/20 pt-3' : 'max-h-0 opacity-0'}`}>
+                          {displayDetail || 'Complete hands-on training with professional certification.'}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1284,7 +1319,7 @@ export default function Website() {
                   onClick={() => handleDownloadOutline(selectedCourseSlug)}
                   className="btn-outline-web justify-center w-full"
                 >
-                  Download Syllabus PDF
+                  Download Course Outline
                 </button>
 
                 <p className="text-[11px] text-[#5F6772] text-center italic mt-2 leading-snug">

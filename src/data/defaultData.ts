@@ -13,10 +13,12 @@ export const INITIAL_COURSES: Course[] = [
     image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=800',
     instructor: 'Chef Jamil Ahmed (Executive Culinary Master)',
     syllabus: [
-      'Kitchen Sanitation and Knife Techniques',
-      'Continental, Chinese and Pakistani Traditional Cuisines',
-      'Stocks, Gravies, Sauces, and Emulsions',
-      'Fine Plating and Food Presentation'
+      'Kitchen hygiene, safety and professional discipline',
+      'Knife skills, cuts, mise en place and workflow',
+      'Stocks, soups, mother sauces and modern sauce applications',
+      'Grilling, roasting, sautéing, frying and wok-based cooking',
+      'Pakistani, Chinese, Continental and fast-casual cooking foundations',
+      'Plating, presentation, costing basics and final practical assessment'
     ],
     seatsAvailable: 15,
     totalSeats: 30,
@@ -57,10 +59,12 @@ export const INITIAL_COURSES: Course[] = [
     image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=800',
     instructor: 'Chef Maria Khan (Patisserie Specialist)',
     syllabus: [
-      'Bakery Ingredients Chemistry and Equipment handling',
-      'Yeast Doughs: Artisan Breads, Pizza Crusts, and Croissants',
-      'Cakes, Royal Icing, and Custom Fondant Artistry',
-      'High-end European Pastries and Chocolatier Art'
+      'Bakery hygiene, safety, weighing, measurements and oven control',
+      'Cookies, brownies, muffins, cakes, sponges and frostings',
+      'Breads, sweet doughs, savoury baked items and basic pastry handling',
+      'Modern dessert cups, cheesecakes, puddings and trending dessert concepts',
+      'Cake finishing, ganache, buttercream, piping and clean presentation',
+      'Packaging, costing basics, product styling and final practical assessment'
     ],
     seatsAvailable: 18,
     totalSeats: 30,
@@ -79,10 +83,12 @@ export const INITIAL_COURSES: Course[] = [
     image: 'https://images.unsplash.com/photo-1570968915860-54d5c301fc9f?auto=format&fit=crop&q=80&w=800',
     instructor: 'Lead Barista Zeeshan Shah',
     syllabus: [
-      'Coffee Bean Chemistry & Roast Levels',
-      'Grinding Calibration and Espresso Extraction Secrets',
-      'Milk Micro-foaming and Pouring Latte Art',
-      'Cold Brews, Smoothies, and Cafe Menu Formulation'
+      'Coffee bean knowledge, roast profiles, freshness and storage',
+      'Espresso machine handling, grinder setup, dosing and tamping',
+      'Espresso extraction, calibration, recipe discipline and troubleshooting',
+      'Milk steaming, texturing, cappuccino/latte preparation and basic latte art',
+      'Iced coffees, café-style cold beverages and trending menu drinks',
+      'Manual brewing, café workflow, hygiene, service and basic beverage costing'
     ],
     seatsAvailable: 10,
     totalSeats: 20,
