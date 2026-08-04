@@ -272,8 +272,34 @@ export default function AdmissionForm() {
 
     setIsUploadingReceipt(true);
     try {
-      // Upload the receipt to Firebase Storage and get URL
-      const downloadUrl = await uploadFile(receiptBase64, `receipt-${searchResult.id}.jpg`);
+      // Fast Upload Logic for Receipts (Max 4 seconds)
+      let downloadUrl = receiptBase64;
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: `receipt-${searchResult.id}.jpg`,
+            fileType: 'image/jpeg',
+            fileData: receiptBase64
+          }),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success && result.url) {
+            downloadUrl = result.url;
+          }
+        }
+      } catch (err) {
+        console.warn('Fast upload failed, using direct base64 string fallback', err);
+      }
       
       // Update local storage and context with the URL (await Firestore setDoc merge)
       await updateAdmissionReceipt(searchResult.id, slipNumber, downloadUrl);

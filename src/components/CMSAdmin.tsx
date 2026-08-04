@@ -1006,13 +1006,6 @@ export default function CMSAdmin() {
                 Authorize Portal
               </button>
 
-              <button
-                type="button"
-                onClick={() => loginAdmin('admin123')}
-                className="w-full bg-slate-900 border border-slate-700 text-slate-300 hover:text-white font-sans font-bold uppercase text-[11px] tracking-wider py-2.5 rounded-xl hover:bg-slate-800 transition-all cursor-pointer"
-              >
-                🔓 Direct Open Admin Panel
-              </button>
             </form>
           ) : (
             <form onSubmit={handleStaffLogin} className="space-y-4">
