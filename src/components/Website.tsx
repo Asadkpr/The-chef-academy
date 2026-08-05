@@ -662,6 +662,7 @@ export default function Website() {
               loop 
               playsInline
               preload="auto"
+              poster="https://images.unsplash.com/photo-1570968915860-54d5c301fc9f?auto=format&fit=crop&q=80&w=1920"
               onLoadedMetadata={(e) => {
                 (e.target as HTMLVideoElement).playbackRate = 1.5;
               }}

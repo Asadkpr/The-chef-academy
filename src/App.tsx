@@ -47,16 +47,15 @@ function StorageWarningToast() {
 }
 
 function AppContent() {
-  const { activeView, setView, websiteData } = useAcademy();
+  const { activeView, setView, websiteData, isDataLoaded } = useAcademy();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Increased loader delay by 0.5s (to 1.8s) to give more time for background resources to initialize
-    const timer = setTimeout(() => {
+    if (isDataLoaded) {
+      // Hide loader instantly when data is loaded
       setIsLoading(false);
-    }, 1800);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [isDataLoaded]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white selection:bg-[#c19d53] selection:text-slate-950">

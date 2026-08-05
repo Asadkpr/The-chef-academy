@@ -260,11 +260,6 @@ export default function AdmissionForm() {
     e.preventDefault();
     if (!searchResult) return;
 
-    if (!slipNumber.trim()) {
-      setUploadMessage({ type: 'error', text: 'Please enter your Deposit / Transaction Slip number.' });
-      return;
-    }
-
     if (!receiptBase64) {
       setUploadMessage({ type: 'error', text: 'Please upload or drop a photo of your payment slip.' });
       return;
@@ -302,12 +297,12 @@ export default function AdmissionForm() {
       }
       
       // Update local storage and context with the URL (await Firestore setDoc merge)
-      await updateAdmissionReceipt(searchResult.id, slipNumber, downloadUrl);
+      await updateAdmissionReceipt(searchResult.id, 'N/A', downloadUrl);
       
       // Update the searched local object so the UI refreshes
       setSearchResult((prev: any) => prev ? ({
         ...prev,
-        receiptNumber: slipNumber,
+        receiptNumber: 'N/A',
         receiptFile: downloadUrl,
         feeStatus: 'Uploaded',
         status: 'Pending'
@@ -315,7 +310,7 @@ export default function AdmissionForm() {
 
       setSubmittedAdmission((prev: any) => (prev && prev.id === searchResult.id) ? ({
         ...prev,
-        receiptNumber: slipNumber,
+        receiptNumber: 'N/A',
         receiptFile: downloadUrl,
         feeStatus: 'Uploaded',
         status: 'Pending'
@@ -1115,10 +1110,10 @@ export default function AdmissionForm() {
                               </div>
 
                               {uploadMessage && (
-                                <div id="upload-msg" className={`p-4 rounded-xl border text-xs font-sans leading-relaxed ${
+                                <div id="upload-msg" className={`p-6 rounded-xl border text-base sm:text-lg font-bold text-center leading-relaxed ${
                                   uploadMessage.type === 'success' 
-                                    ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300' 
-                                    : 'bg-red-500/5 border-red-500/20 text-red-300'
+                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
+                                    : 'bg-red-500/10 border-red-500/30 text-red-300'
                                 }`}>
                                   {uploadMessage.text}
                                 </div>
@@ -1146,19 +1141,6 @@ export default function AdmissionForm() {
 
                               <form onSubmit={handleUploadReceiptSubmit} className="space-y-4 font-sans text-xs sm:text-sm">
                                 
-                                <div className="space-y-1.5">
-                                  <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">
-                                    Transaction ID / Slip Reference Number *
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={slipNumber}
-                                    onChange={(e) => setSlipNumber(e.target.value)}
-                                    placeholder="e.g. TRX9018274 or Bank deposit scroll number"
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:border-[#c19d53]/50 focus:outline-none"
-                                  />
-                                </div>
-
                                 <div className="space-y-1.5">
                                   <label className="block text-xs font-sans font-bold uppercase tracking-wider text-slate-400">
                                     Attach Slip Image / Transfer Screenshot *

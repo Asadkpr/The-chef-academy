@@ -115,8 +115,8 @@ interface AcademyContextType {
   loginAdmin: (passcode: string) => boolean;
   logoutAdmin: () => void;
   changeAdminPasscode: (newPasscode: string) => void;
-  resetAllData: () => void;
   purgeFeeCache: () => void;
+  isDataLoaded: boolean;
 }
 
 const AcademyContext = createContext<AcademyContextType | undefined>(undefined);
@@ -171,6 +171,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [websiteData, setWebsiteData] = useState<WebsiteData>(INITIAL_WEBSITE_DATA);
   const [adminPasscode, setAdminPasscode] = useState<string>('admin123'); // Default fallback
+  const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
 
   // Load from Firebase on start, with localStorage fallback & SPA Browser History setup
   useEffect(() => {
@@ -407,6 +408,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             });
           } catch (e) { console.warn('Purchases listener error:', e); }
 
+          setIsDataLoaded(true);
           return; // ← skip full Firebase fetch, cache is fresh & real-time listeners are active
         }
       }
@@ -628,6 +630,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
           });
         } catch (e) { console.error('Error loading purchases:', e); }
 
+        setIsDataLoaded(true);
       } catch (err) {
         console.warn("Failed to initialize Firebase or load data, falling back to localStorage:", err);
         loadFromLocalStorageFallback();
@@ -670,6 +673,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       if (storedPurchases) setPurchaseRecords(JSON.parse(storedPurchases));
       else setPurchaseRecords([]);
+
+      setIsDataLoaded(true);
     };
 
     initFirebaseAndLoadData();
@@ -1725,7 +1730,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       logoutAdmin,
       changeAdminPasscode,
       resetAllData,
-      purgeFeeCache
+      purgeFeeCache,
+      isDataLoaded
     }}>
       {children}
     </AcademyContext.Provider>
