@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Megaphone, Calendar, ArrowRight } from "lucide-react";
 import { PopupSettings } from "../types";
+import { useAcademy } from "../context/AcademyContext";
 
 interface AnnouncementPopupProps {
   popupSettings?: PopupSettings;
@@ -12,7 +13,11 @@ const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({ popupSettings, on
   const [isVisible, setIsVisible] = useState(false);
   const hasTriggered = useRef(false);
 
+  const { isDataLoaded } = useAcademy();
+
   useEffect(() => {
+    // Only proceed when data is fully loaded and loader has disappeared
+    if (!isDataLoaded) return;
     if (!popupSettings?.enabled) return;
     
     // Check if we've already triggered the popup in this page load
@@ -29,15 +34,15 @@ const AnnouncementPopup: React.FC<AnnouncementPopupProps> = ({ popupSettings, on
       if (now > endOfDay) return;
     }
 
-    // Show popup almost immediately after loader finishes
+    // Show popup immediately after loader finishes (loader takes 500ms to fade out)
     const timer = setTimeout(() => {
       setIsVisible(true);
       // Mark as triggered so it doesn't show again if popupSettings update
       hasTriggered.current = true;
-    }, 100);
+    }, 550);
 
     return () => clearTimeout(timer);
-  }, [popupSettings]);
+  }, [popupSettings, isDataLoaded]);
 
   useEffect(() => {
     if (isVisible) {

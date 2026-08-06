@@ -32,6 +32,20 @@ export default function Website() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [selectedCourseSlug]);
 
+  // Preload hero video for faster load performance
+  useEffect(() => {
+    if (websiteData?.hero?.video) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'video';
+      link.href = websiteData.hero.video;
+      document.head.appendChild(link);
+      return () => {
+        document.head.removeChild(link);
+      };
+    }
+  }, [websiteData?.hero?.video]);
+
   // ── Browser history for course detail pages ──────────────────────────────
   // When a course detail page opens, push a history entry so the back button
   // brings the user back to the main courses section — not to the portal or
@@ -654,9 +668,8 @@ export default function Website() {
           {/* SECTION 1: HERO SECTION */}
           <section className="relative min-h-screen flex items-center justify-start overflow-hidden pt-20">
             <video 
-              key={websiteData.hero.video}
               className="absolute inset-0 w-full h-full object-cover z-0"
-              src={websiteData.hero.video}
+              src="/website_video.mp4"
               autoPlay 
               muted 
               loop 
