@@ -414,116 +414,88 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
       // ── END CACHE CHECK ────────────────────────────────────────────────────
 
-      // Step 2: Load data from Firestore (works even without auth if rules are open)
+      // Step 2: Load data from Firestore (Parallelized for Speed)
       try {
-        // 0. Load Admin Settings (Firestore is the MASTER source — always takes priority over localStorage)
-        let firestorePasscodeLoaded = false;
-        try {
-          const adminDoc = await getDoc(doc(db, 'website_data', 'admin_settings'));
-          if (adminDoc.exists() && adminDoc.data()?.passcode) {
-            setAdminPasscode(adminDoc.data()!.passcode);
-            // Keep localStorage in sync with what Firestore says
-            safeSetItem('chef_admin_passcode', adminDoc.data()!.passcode);
-            setCacheItem('cache_admin_passcode', adminDoc.data()!.passcode);
-            firestorePasscodeLoaded = true;
-          } else {
-            // First time: write default to Firestore
-            await setDoc(doc(db, 'website_data', 'admin_settings'), { passcode: 'admin123' }, { merge: true }).catch(e => console.warn('Could not init admin settings:', e));
-            firestorePasscodeLoaded = true;
-          }
-        } catch (e) { console.error('Error loading admin settings:', e); }
-        // Only fall back to localStorage if Firestore completely failed
-        if (!firestorePasscodeLoaded) {
-          const storedPasscode = localStorage.getItem('chef_admin_passcode');
-          if (storedPasscode) setAdminPasscode(storedPasscode);
-        }
-
-        // 1. Load Website Data
-        try {
-          const websiteDoc = await getDoc(doc(db, 'website_data', 'main'));
-          if (websiteDoc.exists()) {
-            const data = websiteDoc.data() as WebsiteData;
-            setWebsiteData(data);
-            setCacheItem('cache_website_data', data);
-          } else {
-            setWebsiteData(INITIAL_WEBSITE_DATA);
-            setCacheItem('cache_website_data', INITIAL_WEBSITE_DATA);
-            await setDoc(doc(db, 'website_data', 'main'), INITIAL_WEBSITE_DATA).catch(e => console.warn('Could not init website data:', e));
-          }
-        } catch (e) { console.error('Error loading website data:', e); throw e; }
-
-        // 2. Load Course Plans
-        try {
-          const plansDoc = await getDoc(doc(db, 'course_plans', 'main'));
-          if (plansDoc.exists()) {
-            const data = plansDoc.data() as CoursePlans;
-            setCoursePlans(data);
-            setCacheItem('cache_course_plans', data);
-          } else {
-            setCoursePlans(DEFAULT_COURSE_PLANS);
-            setCacheItem('cache_course_plans', DEFAULT_COURSE_PLANS);
-            await setDoc(doc(db, 'course_plans', 'main'), DEFAULT_COURSE_PLANS).catch(e => console.warn('Could not init plans:', e));
-          }
-        } catch (e) { console.error('Error loading course plans:', e); throw e; }
-
-        // 3. Load Courses
-        try {
-          const coursesSnap = await getDocs(collection(db, 'courses'));
-          if (!coursesSnap.empty) {
-            const loadedCourses: Course[] = [];
-            coursesSnap.forEach(docSnap => {
-              loadedCourses.push(docSnap.data() as Course);
-            });
-            setCourses(loadedCourses);
-            setCacheItem('cache_courses', loadedCourses);
-          } else {
-            setCourses(INITIAL_COURSES);
-            setCacheItem('cache_courses', INITIAL_COURSES);
-            for (const course of INITIAL_COURSES) {
-              await setDoc(doc(db, 'courses', course.id), course).catch(e => console.warn('Could not init course:', e));
+        const fetchTasks = [
+          getDoc(doc(db, 'website_data', 'admin_settings')).then(adminDoc => {
+            if (adminDoc.exists() && adminDoc.data()?.passcode) {
+              setAdminPasscode(adminDoc.data().passcode);
+              safeSetItem('chef_admin_passcode', adminDoc.data().passcode);
+              setCacheItem('cache_admin_passcode', adminDoc.data().passcode);
+            } else {
+              setDoc(doc(db, 'website_data', 'admin_settings'), { passcode: 'admin123' }, { merge: true }).catch(()=>{});
             }
-          }
-        } catch (e) { console.error('Error loading courses:', e); throw e; }
-
-        // 4. Load Testimonials
-        try {
-          const testimonialsSnap = await getDocs(collection(db, 'testimonials'));
-          if (!testimonialsSnap.empty) {
-            const loadedTestimonials: Testimonial[] = [];
-            testimonialsSnap.forEach(docSnap => {
-              loadedTestimonials.push(docSnap.data() as Testimonial);
-            });
-            setTestimonials(loadedTestimonials);
-            setCacheItem('cache_testimonials', loadedTestimonials);
-          } else {
-            setTestimonials(INITIAL_TESTIMONIALS);
-            setCacheItem('cache_testimonials', INITIAL_TESTIMONIALS);
-            for (const test of INITIAL_TESTIMONIALS) {
-              await setDoc(doc(db, 'testimonials', test.id), test).catch(e => console.warn('Could not init testimonial:', e));
+          }).catch(() => {
+            const storedPasscode = localStorage.getItem('chef_admin_passcode');
+            if (storedPasscode) setAdminPasscode(storedPasscode);
+          }),
+          getDoc(doc(db, 'website_data', 'main')).then(websiteDoc => {
+            if (websiteDoc.exists()) {
+              const data = websiteDoc.data() as WebsiteData;
+              setWebsiteData(data);
+              setCacheItem('cache_website_data', data);
+            } else {
+              setWebsiteData(INITIAL_WEBSITE_DATA);
+              setCacheItem('cache_website_data', INITIAL_WEBSITE_DATA);
+              setDoc(doc(db, 'website_data', 'main'), INITIAL_WEBSITE_DATA).catch(()=>{});
             }
-          }
-        } catch (e) { console.error('Error loading testimonials:', e); throw e; }
-
-        // 5. Load Gallery
-        try {
-          const gallerySnap = await getDocs(collection(db, 'gallery'));
-          if (!gallerySnap.empty) {
-            const loadedGallery: GalleryItem[] = [];
-            gallerySnap.forEach(docSnap => {
-              loadedGallery.push(docSnap.data() as GalleryItem);
-            });
-            setGallery(loadedGallery);
-            setCacheItem('cache_gallery', loadedGallery);
-          } else {
-            setGallery(INITIAL_GALLERY);
-            setCacheItem('cache_gallery', INITIAL_GALLERY);
-            for (const gal of INITIAL_GALLERY) {
-              await setDoc(doc(db, 'gallery', gal.id), gal).catch(e => console.warn('Could not init gallery:', e));
+          }),
+          getDoc(doc(db, 'course_plans', 'main')).then(plansDoc => {
+            if (plansDoc.exists()) {
+              const data = plansDoc.data() as CoursePlans;
+              setCoursePlans(data);
+              setCacheItem('cache_course_plans', data);
+            } else {
+              setCoursePlans(DEFAULT_COURSE_PLANS);
+              setCacheItem('cache_course_plans', DEFAULT_COURSE_PLANS);
+              setDoc(doc(db, 'course_plans', 'main'), DEFAULT_COURSE_PLANS).catch(()=>{});
             }
-          }
-        } catch (e) { console.error('Error loading gallery:', e); throw e; }
+          }),
+          getDocs(collection(db, 'courses')).then(coursesSnap => {
+            if (!coursesSnap.empty) {
+              const loadedCourses: Course[] = [];
+              coursesSnap.docs.forEach(docSnap => loadedCourses.push(docSnap.data() as Course));
+              setCourses(loadedCourses);
+              setCacheItem('cache_courses', loadedCourses);
+            } else {
+              setCourses(INITIAL_COURSES);
+              setCacheItem('cache_courses', INITIAL_COURSES);
+              INITIAL_COURSES.forEach(c => setDoc(doc(db, 'courses', c.id), c).catch(()=>{}));
+            }
+          }),
+          getDocs(collection(db, 'testimonials')).then(testimonialsSnap => {
+            if (!testimonialsSnap.empty) {
+              const loadedTestimonials: Testimonial[] = [];
+              testimonialsSnap.docs.forEach(docSnap => loadedTestimonials.push(docSnap.data() as Testimonial));
+              setTestimonials(loadedTestimonials);
+              setCacheItem('cache_testimonials', loadedTestimonials);
+            } else {
+              setTestimonials(INITIAL_TESTIMONIALS);
+              setCacheItem('cache_testimonials', INITIAL_TESTIMONIALS);
+              INITIAL_TESTIMONIALS.forEach(t => setDoc(doc(db, 'testimonials', t.id), t).catch(()=>{}));
+            }
+          }),
+          getDocs(collection(db, 'gallery')).then(gallerySnap => {
+            if (!gallerySnap.empty) {
+              const loadedGallery: GalleryItem[] = [];
+              gallerySnap.docs.forEach(docSnap => loadedGallery.push(docSnap.data() as GalleryItem));
+              setGallery(loadedGallery);
+              setCacheItem('cache_gallery', loadedGallery);
+            } else {
+              setGallery(INITIAL_GALLERY);
+              setCacheItem('cache_gallery', INITIAL_GALLERY);
+              INITIAL_GALLERY.forEach(g => setDoc(doc(db, 'gallery', g.id), g).catch(()=>{}));
+            }
+          })
+        ];
 
-        // 6. Load Admissions in Real-time
+        await Promise.allSettled(fetchTasks);
+
+      } catch (err) {
+        console.warn('Failed to load some Firestore core data:', err);
+      }
+
+      // 6. Load Admissions in Real-time
         try {
           const admissionsRef = collection(db, 'admissions');
           unsubscribeAdmissions = onSnapshot(admissionsRef, (snapshot) => {

@@ -105,12 +105,13 @@ function MediaUploader({ onUpload, allowedTypes, label = 'Upload', helperText }:
 
         try {
           const compressed = await compressImage(base64);
-          // Return base64 directly to avoid Firebase Storage timeout issues for images
-          onUpload(compressed);
+          // Upload the compressed image to Firebase Storage instead of saving raw base64 to Firestore
+          const downloadUrl = await uploadFile(compressed, file.name.replace(/\.[^/.]+$/, "") + ".webp");
+          onUpload(downloadUrl);
           setIsUploading(false);
           return;
         } catch (err) {
-          console.warn('Image compression failed', err);
+          console.warn('Image compression/upload failed', err);
         }
       }
 
