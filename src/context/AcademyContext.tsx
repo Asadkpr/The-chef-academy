@@ -491,10 +491,6 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         await Promise.allSettled(fetchTasks);
 
-      } catch (err) {
-        console.warn('Failed to load some Firestore core data:', err);
-      }
-
       // 6. Load Admissions in Real-time
         try {
           const admissionsRef = collection(db, 'admissions');
