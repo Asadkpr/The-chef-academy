@@ -15,6 +15,37 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import WebsiteCMSEditor from './WebsiteCMSEditor';
 
+const compressImage = (base64Str: string, maxW = 800, maxH = 800, quality = 0.6): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxW) {
+          height = Math.round((height * maxW) / width);
+          width = maxW;
+        }
+      } else {
+        if (height > maxH) {
+          width = Math.round((width * maxH) / height);
+          height = maxH;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return resolve(base64Str);
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/webp', quality));
+    };
+    img.onerror = () => resolve(base64Str);
+  });
+};
+
+
 const DEFAULT_COURSE_DETAILS: Record<string, any> = {
   'Culinary Arts': {
     overview: "Our flagship six-month course for students who want a complete professional foundation. Progress from knife skills, stocks, and mother sauces to full menu production across Pakistani, Continental, and Asian cuisines — finishing with plating, costing, and a timed service simulation assessed by industry chefs.",
@@ -199,6 +230,14 @@ export default function CMSAdmin() {
   const [issueModalLoading, setIssueModalLoading] = useState(false);
   const [issueModalError, setIssueModalError] = useState('');
 
+  // Bulk Issue to User modal state
+  const [isBulkIssueModalOpen, setIsBulkIssueModalOpen] = useState(false);
+  const [bulkIssueUserId, setBulkIssueUserId] = useState('');
+  const [bulkIssueReason, setBulkIssueReason] = useState('');
+  const [bulkIssueItems, setBulkIssueItems] = useState<{item: InventoryItem, qty: number}[]>([]);
+  const [bulkIssueLoading, setBulkIssueLoading] = useState(false);
+  const [bulkIssueError, setBulkIssueError] = useState('');
+
   // User Ledger modal state
   const [ledgerUser, setLedgerUser] = useState<typeof users[0] | null>(null);
 
@@ -303,7 +342,18 @@ export default function CMSAdmin() {
     }
     setUploading(true);
     try {
-      const url = await uploadFile(file, file.name);
+      let payload: File | string = file;
+      if (file.type.startsWith('image/')) {
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = () => reject(new Error('Failed to read image file'));
+          reader.readAsDataURL(file);
+        });
+        payload = await compressImage(base64);
+      }
+      
+      const url = await uploadFile(payload, file.name.replace(/\.[^/.]+$/, "") + ".webp");
       onSuccess(url);
     } catch (err: any) {
       alert(`Upload failed: ${err.message || err}. Please try again.`);
@@ -2882,13 +2932,21 @@ export default function CMSAdmin() {
               startOfWeek.setHours(0,0,0,0);
               const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-              const filtered = purchaseRecords.filter(r => {
+              const filteredPurchases = purchaseRecords.filter(r => {
                 const d = new Date(r.date);
                 if (reportFilter === 'week') return d >= startOfWeek;
                 if (reportFilter === 'month') return d >= startOfMonth;
                 return true;
               });
-              const totalExpense = filtered.reduce((s, r) => s + (r.cost || 0), 0);
+              
+              const filteredIssues = issueRecords.filter(r => {
+                const d = new Date(r.issuedAt);
+                if (reportFilter === 'week') return d >= startOfWeek;
+                if (reportFilter === 'month') return d >= startOfMonth;
+                return true;
+              });
+              
+              const totalExpense = filteredPurchases.reduce((s, r) => s + (r.cost || 0), 0);
               const weekExpense = purchaseRecords.filter(r => new Date(r.date) >= startOfWeek).reduce((s,r)=>s+r.cost,0);
               const monthExpense = purchaseRecords.filter(r => new Date(r.date) >= startOfMonth).reduce((s,r)=>s+r.cost,0);
 
@@ -2951,13 +3009,25 @@ export default function CMSAdmin() {
                               placeholder="Unit" className="w-1/2 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#AE8C45]" />
                           </div>
                         </div>
-                        <button onClick={async()=>{
-                          if(!newInventoryItem.name.trim()) return;
-                          await addInventoryItem(newInventoryItem);
-                          setNewInventoryItem({name:'',category:'',quantity:0,unit:'pcs'});
-                        }} className="inline-flex items-center gap-2 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold text-xs px-4 py-2 rounded-lg transition-colors cursor-pointer">
-                          <Plus className="h-3 w-3"/> Add to Inventory
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button onClick={async()=>{
+                            if(!newInventoryItem.name.trim()) return;
+                            await addInventoryItem(newInventoryItem);
+                            setNewInventoryItem({name:'',category:'',quantity:0,unit:'pcs'});
+                          }} className="inline-flex items-center gap-2 bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] font-bold text-xs px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                            <Plus className="h-3 w-3"/> Add to Inventory
+                          </button>
+                          
+                          <button onClick={() => {
+                            setIsBulkIssueModalOpen(true);
+                            setBulkIssueItems([]);
+                            setBulkIssueUserId('');
+                            setBulkIssueReason('');
+                            setBulkIssueError('');
+                          }} className="inline-flex items-center gap-2 border border-[#AE8C45] hover:bg-[#AE8C45]/20 text-[#C5A964] font-bold text-xs px-4 py-2 rounded-lg transition-colors cursor-pointer">
+                            <Send className="h-3 w-3"/> Bulk Issue Items
+                          </button>
+                        </div>
                       </div>
 
                       {/* ── Issue to User Modal ────────────────────────────────────────── */}
@@ -3086,6 +3156,203 @@ export default function CMSAdmin() {
                                   <><span className="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full"></span> Issuing...</>
                                 ) : (
                                   <><Send className="h-3.5 w-3.5"/> Issue to {users.find(u=>u.id===issueModalUserId)?.username || 'User'}</>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ── Bulk Issue Modal ────────────────────────────────────────── */}
+                      {isBulkIssueModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+                          <div className="bg-[#0f1d2b] border border-[#AE8C45]/40 rounded-2xl w-full max-w-2xl shadow-2xl my-auto">
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                              <div>
+                                <p className="text-[10px] text-[#C5A964] uppercase tracking-widest font-bold">Bulk Issue from Inventory</p>
+                                <h3 className="text-white font-serif text-lg">Issue Multiple Items</h3>
+                              </div>
+                              <button
+                                onClick={() => { setIsBulkIssueModalOpen(false); setBulkIssueItems([]); setBulkIssueUserId(''); setBulkIssueReason(''); setBulkIssueError(''); }}
+                                className="text-slate-500 hover:text-white transition-colors cursor-pointer"
+                              ><X className="h-5 w-5"/></button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="px-6 py-5 space-y-5">
+                              {/* Select User */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Issue To (User) *</label>
+                                <select
+                                  value={bulkIssueUserId}
+                                  onChange={e => setBulkIssueUserId(e.target.value)}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#AE8C45] cursor-pointer"
+                                >
+                                  <option value="">— Select a user —</option>
+                                  {users.map(u => (
+                                    <option key={u.id} value={u.id}>{u.username} ({u.role})</option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* Add Items Dropdown */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Add Item to Issue list</label>
+                                <select
+                                  value=""
+                                  onChange={e => {
+                                    const selectedId = e.target.value;
+                                    if (!selectedId) return;
+                                    const item = inventoryItems.find(i => i.id === selectedId);
+                                    if (item && !bulkIssueItems.find(b => b.item.id === selectedId)) {
+                                      setBulkIssueItems(prev => [...prev, { item, qty: 1 }]);
+                                    }
+                                  }}
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#AE8C45] cursor-pointer"
+                                >
+                                  <option value="">— Select an item from inventory to add —</option>
+                                  {inventoryItems.map(item => (
+                                    <option key={item.id} value={item.id} disabled={bulkIssueItems.some(b => b.item.id === item.id) || item.quantity <= 0}>
+                                      {item.name} (Stock: {item.quantity} {item.unit})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {/* Selected Items List */}
+                              {bulkIssueItems.length > 0 && (
+                                <div className="space-y-2 border border-slate-800 rounded-xl p-3 bg-slate-950/50 max-h-[300px] overflow-y-auto">
+                                  <label className="text-[10px] text-[#C5A964] uppercase tracking-wider font-bold px-1">Selected Items</label>
+                                  <div className="space-y-2">
+                                    {bulkIssueItems.map((bItem, idx) => (
+                                      <div key={bItem.item.id} className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 bg-slate-900 px-3 py-2 rounded-lg border border-slate-800">
+                                        <div className="flex-1 min-w-[150px]">
+                                          <p className="text-sm font-bold text-white truncate">{bItem.item.name}</p>
+                                          <p className="text-[10px] text-slate-400">Stock: {bItem.item.quantity} {bItem.item.unit}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() => setBulkIssueItems(prev => {
+                                              const upd = [...prev];
+                                              upd[idx].qty = Math.max(1, upd[idx].qty - 1);
+                                              return upd;
+                                            })}
+                                            className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center cursor-pointer"
+                                          >−</button>
+                                          <input
+                                            type="number"
+                                            min={1}
+                                            max={bItem.item.quantity}
+                                            value={bItem.qty}
+                                            onChange={e => setBulkIssueItems(prev => {
+                                              const upd = [...prev];
+                                              upd[idx].qty = Math.max(1, Math.min(bItem.item.quantity, +e.target.value));
+                                              return upd;
+                                            })}
+                                            className="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white text-center font-bold focus:outline-none focus:border-[#AE8C45]"
+                                          />
+                                          <button
+                                            onClick={() => setBulkIssueItems(prev => {
+                                              const upd = [...prev];
+                                              upd[idx].qty = Math.min(bItem.item.quantity, upd[idx].qty + 1);
+                                              return upd;
+                                            })}
+                                            className="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center cursor-pointer"
+                                          >+</button>
+                                          <span className="text-xs text-slate-400 w-8">{bItem.item.unit}</span>
+                                          <button
+                                            onClick={() => setBulkIssueItems(prev => prev.filter((_, i) => i !== idx))}
+                                            className="ml-2 w-7 h-7 flex items-center justify-center rounded bg-red-950/40 text-red-400 hover:bg-red-900/60 transition-colors cursor-pointer"
+                                            title="Remove item"
+                                          ><Trash2 className="h-3 w-3"/></button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Reason */}
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Reason / Note</label>
+                                <input
+                                  type="text"
+                                  value={bulkIssueReason}
+                                  onChange={e => setBulkIssueReason(e.target.value)}
+                                  placeholder="e.g. Class practical, kit issuance..."
+                                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#AE8C45] placeholder:text-slate-600"
+                                />
+                              </div>
+
+                              {/* Error */}
+                              {bulkIssueError && (
+                                <p className="text-xs text-red-400 bg-red-950/30 border border-red-800/30 rounded-lg px-3 py-2">{bulkIssueError}</p>
+                              )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="flex items-center gap-3 px-6 py-4 border-t border-slate-800">
+                              <button
+                                onClick={() => { setIsBulkIssueModalOpen(false); setBulkIssueItems([]); setBulkIssueUserId(''); setBulkIssueReason(''); setBulkIssueError(''); }}
+                                className="flex-1 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800 transition-colors cursor-pointer"
+                              >Cancel</button>
+                              <button
+                                disabled={bulkIssueLoading || !bulkIssueUserId || bulkIssueItems.length === 0}
+                                onClick={async () => {
+                                  if (!bulkIssueUserId) { setBulkIssueError('Please select a user.'); return; }
+                                  if (bulkIssueItems.length === 0) { setBulkIssueError('Please add at least one item to issue.'); return; }
+                                  const targetUser = users.find(u => u.id === bulkIssueUserId);
+                                  if (!targetUser) { setBulkIssueError('User not found.'); return; }
+                                  
+                                  setBulkIssueLoading(true);
+                                  setBulkIssueError('');
+                                  
+                                  let hasError = false;
+                                  for (const { item, qty } of bulkIssueItems) {
+                                    if (qty < 1 || qty > item.quantity) {
+                                      setBulkIssueError(`Invalid quantity for ${item.name}. Must be between 1 and ${item.quantity}.`);
+                                      hasError = true;
+                                      break;
+                                    }
+                                  }
+
+                                  if (!hasError) {
+                                    let successCount = 0;
+                                    for (const { item, qty } of bulkIssueItems) {
+                                      const res = await issueInventoryToUser(
+                                        item,
+                                        qty,
+                                        { id: targetUser.id, username: targetUser.username },
+                                        bulkIssueReason,
+                                        currentUser?.username || 'Admin'
+                                      );
+                                      if (res.success) {
+                                        successCount++;
+                                      } else {
+                                        setBulkIssueError(res.error || `Failed to issue ${item.name}`);
+                                        hasError = true;
+                                        break;
+                                      }
+                                    }
+                                    if (!hasError) {
+                                      setIsBulkIssueModalOpen(false);
+                                      setBulkIssueItems([]);
+                                      setBulkIssueUserId('');
+                                      setBulkIssueReason('');
+                                      setBulkIssueError('');
+                                      alert(`Successfully issued ${successCount} item(s) to ${targetUser.username}.`);
+                                    }
+                                  }
+                                  
+                                  setBulkIssueLoading(false);
+                                }}
+                                className="flex-[2] py-2.5 rounded-xl text-xs font-bold bg-[#AE8C45] hover:bg-[#C5A964] text-[#0C1B2C] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer flex items-center justify-center gap-2"
+                              >
+                                {bulkIssueLoading ? (
+                                  <><span className="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full"></span> Issuing Items...</>
+                                ) : (
+                                  <><Send className="h-3.5 w-3.5"/> Issue {bulkIssueItems.length} Item(s) to {users.find(u=>u.id===bulkIssueUserId)?.username || 'User'}</>
                                 )}
                               </button>
                             </div>
@@ -3507,94 +3774,83 @@ export default function CMSAdmin() {
                   {shopSubTab === 'report' && (
                     <div className="space-y-5">
                       {/* Filter */}
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="text-xs text-slate-400">Filter by:</span>
+                      <div className="flex items-center gap-3 flex-wrap bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Date Filter:</span>
                         {(['week','month','all'] as const).map(f => (
                           <button key={f} onClick={()=>setReportFilter(f)}
-                            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${reportFilter===f?'bg-[#AE8C45] text-[#0C1B2C]':'bg-slate-800 text-slate-400 hover:text-white'}`}>
+                            className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all ${reportFilter===f?'bg-[#AE8C45] text-[#0C1B2C]':'bg-slate-800 text-slate-400 hover:text-white'}`}>
                             {f === 'week' ? 'This Week' : f === 'month' ? 'This Month' : 'All Time'}
                           </button>
                         ))}
-                        <span className="ml-auto text-xs font-bold text-[#C5A964]">Total: Rs {totalExpense.toLocaleString()}</span>
                       </div>
 
-                      {/* Summary Cards */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 text-center space-y-2">
-                          <BarChart2 className="h-6 w-6 text-[#C5A964] mx-auto"/>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Total Expense ({reportFilter === 'week' ? 'Week' : reportFilter === 'month' ? 'Month' : 'All'})</p>
-                          <p className="text-3xl font-bold text-white font-serif">Rs {totalExpense.toLocaleString()}</p>
-                        </div>
-                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 text-center space-y-2">
-                          <ShoppingCart className="h-6 w-6 text-[#C5A964] mx-auto"/>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Purchase Transactions</p>
-                          <p className="text-3xl font-bold text-white font-serif">{filtered.length}</p>
-                        </div>
-                        <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 text-center space-y-2">
-                          <TrendingUp className="h-6 w-6 text-[#C5A964] mx-auto"/>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Avg Cost / Purchase</p>
-                          <p className="text-3xl font-bold text-white font-serif">Rs {filtered.length ? Math.round(totalExpense / filtered.length).toLocaleString() : '0'}</p>
-                        </div>
-                      </div>
-
-                      {/* Category Breakdown */}
-                      {(() => {
-                        const byItem: Record<string, number> = {};
-                        filtered.forEach(r => { byItem[r.itemName] = (byItem[r.itemName] || 0) + r.cost; });
-                        const sorted = Object.entries(byItem).sort((a,b) => b[1] - a[1]);
-                        return sorted.length === 0 ? (
-                          <div className="text-center text-slate-600 py-8 italic text-xs">No purchases in this period.</div>
-                        ) : (
-                          <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-                            <div className="px-4 py-3 border-b border-slate-800">
-                              <span className="text-xs font-bold text-slate-300">Expense Breakdown by Item</span>
-                            </div>
-                            <div className="divide-y divide-slate-800">
-                              {sorted.map(([name, cost]) => (
-                                <div key={name} className="flex items-center justify-between px-4 py-3">
-                                  <span className="text-xs text-white font-medium">{name}</span>
-                                  <div className="flex items-center gap-4">
-                                    <div className="w-32 sm:w-48 bg-slate-800 rounded-full h-1.5">
-                                      <div className="bg-[#AE8C45] h-1.5 rounded-full" style={{width:`${Math.min(100,(cost/totalExpense)*100)}%`}}/>
-                                    </div>
-                                    <span className="text-xs font-bold text-[#C5A964] w-24 text-right">Rs {cost.toLocaleString()}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                        {/* Purchases Table */}
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col max-h-[600px]">
+                          <div className="px-5 py-4 border-b border-slate-800 bg-slate-900 flex justify-between items-center">
+                            <span className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                              <ShoppingCart className="h-4 w-4 text-[#C5A964]" /> Purchases Report
+                            </span>
+                            <span className="text-xs font-bold text-[#C5A964]">Total: Rs {totalExpense.toLocaleString()}</span>
                           </div>
-                        );
-                      })()}
-
-                      {/* Detailed Log */}
-                      <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-                        <div className="px-4 py-3 border-b border-slate-800">
-                          <span className="text-xs font-bold text-slate-300">Detailed Transaction Log</span>
+                          <div className="overflow-y-auto">
+                            <table className="w-full text-xs">
+                              <thead className="bg-slate-900 border-b border-slate-800 sticky top-0">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Date</th>
+                                  <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Item</th>
+                                  <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase">Qty</th>
+                                  <th className="px-4 py-3 text-right text-[10px] text-slate-400 uppercase">Cost</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-800">
+                                {filteredPurchases.length === 0 ? (
+                                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-600 italic">No purchases for selected period.</td></tr>
+                                ) : filteredPurchases.map(rec => (
+                                  <tr key={rec.id} className="hover:bg-slate-900/50">
+                                    <td className="px-4 py-3 text-slate-400">{new Date(rec.date).toLocaleDateString()}</td>
+                                    <td className="px-4 py-3 text-white font-medium">{rec.itemName}</td>
+                                    <td className="px-4 py-3 text-center text-slate-300">{rec.quantityAdded} <span className="text-[10px] text-slate-500">{rec.unit}</span></td>
+                                    <td className="px-4 py-3 text-right font-bold text-[#C5A964]">Rs {rec.cost.toLocaleString()}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
-                        <table className="w-full text-xs">
-                          <thead className="bg-slate-900 border-b border-slate-800">
-                            <tr>
-                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Date</th>
-                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Item</th>
-                              <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase">Qty</th>
-                              <th className="px-4 py-3 text-right text-[10px] text-slate-400 uppercase">Cost</th>
-                              <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">By</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800">
-                            {filtered.length === 0 ? (
-                              <tr><td colSpan={5} className="px-4 py-6 text-center text-slate-600 italic">No records for selected period.</td></tr>
-                            ) : filtered.map(rec => (
-                              <tr key={rec.id} className="hover:bg-slate-900/50">
-                                <td className="px-4 py-3 text-slate-400">{new Date(rec.date).toLocaleDateString()}</td>
-                                <td className="px-4 py-3 text-white">{rec.itemName}</td>
-                                <td className="px-4 py-3 text-center text-slate-300">{rec.quantityAdded} {rec.unit}</td>
-                                <td className="px-4 py-3 text-right font-bold text-[#C5A964]">Rs {rec.cost.toLocaleString()}</td>
-                                <td className="px-4 py-3 text-slate-400">{rec.purchasedBy || '—'}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+
+                        {/* Issued Items Table */}
+                        <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col max-h-[600px]">
+                          <div className="px-5 py-4 border-b border-slate-800 bg-slate-900">
+                            <span className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                              <Send className="h-4 w-4 text-amber-500" /> Issuances Report
+                            </span>
+                          </div>
+                          <div className="overflow-y-auto">
+                            <table className="w-full text-xs">
+                              <thead className="bg-slate-900 border-b border-slate-800 sticky top-0">
+                                <tr>
+                                  <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Date</th>
+                                  <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Issued To</th>
+                                  <th className="px-4 py-3 text-left text-[10px] text-slate-400 uppercase">Item</th>
+                                  <th className="px-4 py-3 text-center text-[10px] text-slate-400 uppercase">Qty</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-800">
+                                {filteredIssues.length === 0 ? (
+                                  <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-600 italic">No items issued for selected period.</td></tr>
+                                ) : filteredIssues.map(rec => (
+                                  <tr key={rec.id} className="hover:bg-slate-900/50">
+                                    <td className="px-4 py-3 text-slate-400">{new Date(rec.issuedAt).toLocaleDateString()}</td>
+                                    <td className="px-4 py-3 text-white font-medium">{rec.issuedToUsername}</td>
+                                    <td className="px-4 py-3 text-slate-300">{rec.itemName}</td>
+                                    <td className="px-4 py-3 text-center font-bold text-amber-400">{rec.issuedQty} <span className="text-[10px] font-normal text-amber-600/70">{rec.unit}</span></td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

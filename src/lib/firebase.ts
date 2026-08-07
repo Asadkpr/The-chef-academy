@@ -116,7 +116,7 @@ export const uploadFile = async (fileOrBase64: File | string, fileName: string):
     // 3. Try Primary Firebase Storage (firebasestorage.app suffix)
     try {
       console.log(`Attempting upload to Primary Firebase Storage: ${defaultBucket}`);
-      const downloadUrl = await uploadBytesWithTimeout(storage, storagePath, fileBlob, finalFileType, 30000);
+      const downloadUrl = await uploadBytesWithTimeout(storage, storagePath, fileBlob, finalFileType, 5000);
       console.log('Uploaded successfully to Primary Firebase Storage:', downloadUrl);
       return downloadUrl;
     } catch (primaryError: any) {
@@ -125,7 +125,7 @@ export const uploadFile = async (fileOrBase64: File | string, fileName: string):
       // 4. Try Backup Firebase Storage (appspot.com suffix)
       try {
         console.log(`Attempting upload to Backup Firebase Storage: ${backupBucket}`);
-        const downloadUrl = await uploadBytesWithTimeout(storageBackup, storagePath, fileBlob, finalFileType, 30000);
+        const downloadUrl = await uploadBytesWithTimeout(storageBackup, storagePath, fileBlob, finalFileType, 5000);
         console.log('Uploaded successfully to Backup Firebase Storage:', downloadUrl);
         return downloadUrl;
       } catch (backupError: any) {
@@ -174,6 +174,15 @@ export const uploadFile = async (fileOrBase64: File | string, fileName: string):
     if (typeof fileOrBase64 === 'string' && fileOrBase64.startsWith('data:')) {
       console.log("Returning processed Base64 data URL directly as ultimate fail-safe fallback.");
       return fileOrBase64;
+    }
+
+    if (fileBlob) {
+      console.log("Ultimate fail-safe: converting to Base64 to prevent blocking.");
+      return await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(fileBlob);
+      });
     }
 
     throw new Error("All upload methods failed");
