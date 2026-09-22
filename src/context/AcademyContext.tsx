@@ -101,6 +101,7 @@ interface AcademyContextType {
   deleteCourse: (id: string) => void;
   addAdmission: (admission: Omit<Admission, 'id' | 'status' | 'createdAt'>) => Admission;
   updateAdmissionStatus: (id: string, status: Admission['status'], remarks?: string) => void;
+  deleteAdmission: (id: string) => Promise<void>;
   updateAdmissionReceipt: (id: string, receiptNumber: string, receiptFile: string) => void;
   updateAdmissionInvoiceHtml: (id: string, invoiceHtml: string) => void;
   updateAdmissionDiscountAndFees: (id: string, discount: number, tuitionFee?: number, regFee?: number, feeStatus?: string) => void;
@@ -774,6 +775,15 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     })();
 
     return freshAdmission;
+  };
+
+  const deleteAdmission = async (id: string) => {
+    setAdmissions(prev => prev.filter(adm => adm.id !== id));
+    try {
+      await deleteDoc(doc(db, 'admissions', id));
+    } catch (err) {
+      console.error('Failed to sync deleted admission to Firestore:', err);
+    }
   };
 
   const updateAdmissionStatus = async (id: string, status: Admission['status'], remarks?: string) => {
@@ -1616,6 +1626,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       deleteCourse,
       addAdmission,
       updateAdmissionStatus,
+      deleteAdmission,
       updateAdmissionReceipt,
       updateAdmissionInvoiceHtml,
       updateAdmissionDiscountAndFees,

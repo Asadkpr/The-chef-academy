@@ -136,7 +136,7 @@ const DEFAULT_COURSE_DETAILS: Record<string, any> = {
 export default function CMSAdmin() {
   const { 
     courses = [], admissions = [], testimonials = [], gallery = [], isAdminAuthenticated = false,
-    addCourse, updateCourse, deleteCourse, updateAdmissionStatus, 
+    addCourse, updateCourse, deleteCourse, updateAdmissionStatus, deleteAdmission,
     addTestimonial, deleteTestimonial, addGalleryItem, deleteGalleryItem,
     loginAdmin,
     logoutAdmin,
@@ -1813,6 +1813,17 @@ export default function CMSAdmin() {
                                </td>
                                <td className="py-2.5 px-2 text-right">
                                  <div className="flex items-center justify-end space-x-1.5">
+                                   <button
+                                     onClick={() => {
+                                       if (window.confirm('Are you sure you want to permanently delete this admission record?')) {
+                                         deleteAdmission(adm.id);
+                                       }
+                                     }}
+                                     title="Delete Admission"
+                                     className="bg-red-500/10 border border-red-500/30 hover:border-red-500 text-red-400 hover:text-red-300 px-2 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors flex items-center space-x-1"
+                                   >
+                                     <Trash2 className="h-3.5 w-3.5" />
+                                   </button>
                                    <button
                                      onClick={() => {
                                        setReceiptModalData({
