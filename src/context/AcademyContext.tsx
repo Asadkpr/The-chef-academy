@@ -503,74 +503,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
               loadedAdmissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
               setAdmissions(loadedAdmissions);
             } else {
-              // Initialize mock admissions for live demo
-              const mockAdmissions: Admission[] = [
-                {
-                  id: 'adm-101',
-                  studentName: 'Zain Ul Abideen',
-                  fatherName: 'Iftikhar Ahmed',
-                  email: 'zain.chef@gmail.com',
-                  phone: '0333-9123456',
-                  cnic: '17301-1234567-9',
-                  gender: 'Male',
-                  dateOfBirth: '2004-03-12',
-                  qualification: 'Intermediate (FSc)',
-                  selectedCourseId: 'course-1',
-                  selectedCourseTitle: 'Professional Diploma in Culinary Arts',
-                  shift: 'Morning (09:00 AM - 12:00 PM)',
-                  city: 'Peshawar',
-                  address: 'House #42, Sector F-5, Phase 6, Hayatabad, Peshawar',
-                  receiptNumber: 'REC-908122',
-                  notes: 'I want to specialize in Italian sauces. Excited to join!',
-                  status: 'Pending',
-                  createdAt: new Date(Date.now() - 4 * 3600000).toISOString()
-                },
-                {
-                  id: 'adm-102',
-                  studentName: 'Ayesha Bibi',
-                  fatherName: 'Shahid Khan',
-                  email: 'ayesha.bakes@outlook.com',
-                  phone: '0345-9876543',
-                  cnic: '17301-7654321-2',
-                  gender: 'Female',
-                  dateOfBirth: '2002-11-20',
-                  qualification: 'Bachelors (BA)',
-                  selectedCourseId: 'course-2',
-                  selectedCourseTitle: 'Professional Baking & Patisserie Program',
-                  shift: 'Weekend (10:00 AM - 02:00 PM)',
-                  city: 'Mardan',
-                  address: 'Sheikh Maltoon Town, Mardan',
-                  receiptNumber: 'REC-776102',
-                  notes: 'Planning to start my own boutique home bakery.',
-                  status: 'Approved',
-                  remarks: 'Documents verified and registration fee received.',
-                  createdAt: new Date(Date.now() - 24 * 3600000).toISOString()
-                },
-                {
-                  id: 'adm-103',
-                  studentName: 'Hamza Yousaf',
-                  fatherName: 'Yousaf Ali',
-                  email: 'hamza.yousaf@gmail.com',
-                  phone: '0312-5551212',
-                  cnic: '14201-9988112-1',
-                  gender: 'Male',
-                  dateOfBirth: '2005-07-15',
-                  qualification: 'Matric',
-                  selectedCourseId: 'course-3',
-                  selectedCourseTitle: 'Fast Food & Continental Masterclass',
-                  shift: 'Evening (03:00 PM - 05:00 PM)',
-                  city: 'Peshawar',
-                  address: 'Main Bazar, Board Peshawar',
-                  receiptNumber: 'REC-882031',
-                  status: 'Hold',
-                  remarks: 'CNIC copy is blurry. Requested student to resubmit.',
-                  createdAt: new Date(Date.now() - 48 * 3600000).toISOString()
-                }
-              ];
-              setAdmissions(mockAdmissions);
-              mockAdmissions.forEach(async (adm) => {
-                await setDoc(doc(db, 'admissions', adm.id), adm).catch(e => console.warn('Could not init admission:', e));
-              });
+              setAdmissions([]);
             }
           }, (err) => {
             console.error('Admissions snapshot error:', err);
