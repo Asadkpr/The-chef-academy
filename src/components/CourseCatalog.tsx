@@ -73,7 +73,7 @@ export default function CourseCatalog() {
             <p className="text-slate-500 font-sans">No courses found in this category.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${filteredCourses.length === 1 ? 'lg:grid-cols-1 max-w-xl mx-auto' : filteredCourses.length === 2 || filteredCourses.length === 4 ? 'lg:grid-cols-2 max-w-5xl mx-auto' : 'lg:grid-cols-3'} gap-8`}>
             {filteredCourses.map((course) => (
               <motion.div
                 key={course.id}
