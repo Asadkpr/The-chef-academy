@@ -383,7 +383,11 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             unsubscribeAdmissions = onSnapshot(admissionsRef, (snapshot) => {
               const loaded: Admission[] = [];
               if (!snapshot.empty) {
-                snapshot.forEach(d => loaded.push(d.data() as Admission));
+                snapshot.forEach(d => {
+                  const data = d.data() as Admission;
+                  if (!data.id) data.id = d.id;
+                  loaded.push(data);
+                });
                 loaded.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
               }
               setAdmissions(loaded);
@@ -499,7 +503,9 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             if (!snapshot.empty) {
               const loadedAdmissions: Admission[] = [];
               snapshot.forEach(docSnap => {
-                loadedAdmissions.push(docSnap.data() as Admission);
+                const data = docSnap.data() as Admission;
+                if (!data.id) data.id = docSnap.id;
+                loadedAdmissions.push(data);
               });
               loadedAdmissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
               setAdmissions(loadedAdmissions);
