@@ -784,6 +784,37 @@ export default function CMSAdmin() {
   // Process admissions
   const handleProcessAdmission = (id: string, status: Admission['status']) => {
     updateAdmissionStatus(id, status, adminRemarks);
+    
+    if (status === 'Approved' && selectedAdmission) {
+      const tuition = selectedTuitionFee;
+      const reg = selectedRegFee;
+      const discount = selectedDiscount;
+      const totalFee = Math.max(0, tuition + reg - discount);
+      const paid = selectedAdmission.paidAmount !== undefined ? selectedAdmission.paidAmount : (selectedFeeStatus === 'Paid' ? totalFee : 0);
+      const rem = selectedAdmission.remainingBalance !== undefined ? selectedAdmission.remainingBalance : Math.max(0, totalFee - paid);
+      
+      const receiptMessage = `*Admission Confirmed* ✅
+
+Student Name: *${selectedAdmission.studentName}*
+Course: *${selectedAdmission.selectedCourseTitle}*
+
+*--- FEE RECEIPT ---*
+- Total Fee : PKR ${totalFee.toLocaleString()}
+- Submitted : PKR ${paid.toLocaleString()}
+- Remaining : PKR ${rem.toLocaleString()}
+- Status    : ${selectedFeeStatus || selectedAdmission.feeStatus || 'Pending'}`;
+
+      const encodedMessage = encodeURIComponent(receiptMessage);
+      
+      let phone = selectedAdmission.phone.replace(/[^\d+]/g, '');
+      if (phone.startsWith('0')) {
+        phone = '+92' + phone.substring(1);
+      }
+      
+      const waUrl = `https://wa.me/${phone.replace('+', '')}?text=${encodedMessage}`;
+      window.open(waUrl, '_blank');
+    }
+
     setAdminRemarks('');
     setSelectedAdmission(null);
   };
