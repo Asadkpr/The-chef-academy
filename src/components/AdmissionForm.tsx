@@ -73,20 +73,10 @@ export default function AdmissionForm() {
   const activePlan = getSelectedPlan();
 
   // Fee Calculation:
-  // The admin sets a base monthly rate in System Settings (e.g. 1 Month = 40k tuition + 10k reservation)
-  // ALL durations are derived automatically from that 1-month base:
-  //   Total for N months = (base_monthly_tuition + base_reservation) × N  = 50k × N
-  //   But reservation stays FIXED (10k always, NOT multiplied)
-  //   So: scaledTotal = monthly_total × months, scaledRegFee = reservation(fixed)
-  const allPlansForCourse = (coursePlans && coursePlans[formData.selectedCourseName]) || COURSE_PLANS[formData.selectedCourseName] || [];
-  const oneMonthPlan = allPlansForCourse.find(p => parseMonths(p.duration) === 1) || activePlan;
-  // Base monthly total = 1-month tuition + 1-month reservation (e.g. 40k + 10k = 50k)
-  const baseMonthlyTotal = oneMonthPlan.fee + oneMonthPlan.regFee;
-  const baseRegFee = oneMonthPlan.regFee; // FIXED reservation from 1-month plan (e.g. 10k)
-  const durationMonths = parseMonths(formData.selectedDuration || activePlan.duration);
-  const scaledTotal = baseMonthlyTotal * durationMonths;   // e.g. 50k × 3 = 150k
-  const scaledRegFee = baseRegFee;                          // FIXED 10k always
-  const scaledTuition = scaledTotal - scaledRegFee;         // e.g. 150k − 10k = 140k
+  // Directly use the tuition fee (fee) and reservation/registration fee (regFee) configured in System Settings for the selected duration
+  const scaledTuition = activePlan.fee;
+  const scaledRegFee = activePlan.regFee;
+  const scaledTotal = scaledTuition + scaledRegFee;
 
   const validateStep = () => {
     const errors: Record<string, string> = {};

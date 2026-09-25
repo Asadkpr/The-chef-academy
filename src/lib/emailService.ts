@@ -97,6 +97,7 @@ export function generateSubmissionConfirmationHtml(data: SubmissionPayload): str
 }
 
 export async function sendSubmissionConfirmationEmail(payload: SubmissionPayload): Promise<{ success: boolean; method: string; message: string }> {
+  // Primary Attempt: Server API (/api/send-invoice)
   try {
     const res = await window.fetch('/api/send-invoice', {
       method: 'POST',
@@ -117,7 +118,36 @@ export async function sendSubmissionConfirmationEmail(payload: SubmissionPayload
       }
     }
   } catch (e) {
-    console.warn('[EMAIL SERVICE]: Submission confirmation — Node API error:', e);
+    console.warn('[EMAIL SERVICE]: Submission confirmation — Node API unavailable. Switching to live host dispatch...');
+  }
+
+  // Live Hosting Fallback (FormSubmit autoresponder)
+  try {
+    const confirmHtml = generateSubmissionConfirmationHtml(payload);
+    const fsRes = await window.fetch(`https://formsubmit.co/ajax/${encodeURIComponent(payload.email)}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        _subject: `Application Received — Tracking Code: ${payload.trackingId} | The Chef's Academy`,
+        _autoresponse: confirmHtml,
+        _captcha: 'false',
+        "Sender Name": "The Chef's Academy Lahore",
+        "Student Name": payload.studentName,
+        "Tracking Code": payload.trackingId,
+        "Course Selected": payload.courseTitle,
+        "Shift": payload.shift,
+        "Message": "Your admission application has been received. Our team will contact you shortly.",
+      }),
+    });
+
+    if (fsRes.ok) {
+      return { success: true, method: 'LIVE_HOST_DISPATCH', message: `Confirmation email sent to ${payload.email}` };
+    }
+  } catch (err) {
+    console.warn('[EMAIL SERVICE]: Live host submission email dispatch error:', err);
   }
 
   return { success: true, method: 'RECORDED', message: `Application recorded for ${payload.studentName}.` };
@@ -231,6 +261,7 @@ export function generateInvoiceHtml(data: InvoicePayload): string {
 export async function sendInvoiceEmail(payload: InvoicePayload): Promise<{ success: boolean; method: string; message: string; invoiceHtml: string; error?: string }> {
   const localInvoiceHtml = generateInvoiceHtml(payload);
 
+  // Primary Attempt: Server API (/api/send-invoice)
   try {
     const res = await window.fetch('/api/send-invoice', {
       method: 'POST',
@@ -250,7 +281,43 @@ export async function sendInvoiceEmail(payload: InvoicePayload): Promise<{ succe
       }
     }
   } catch (e) {
-    console.warn('[EMAIL SERVICE]: /api/send-invoice error:', e);
+    console.warn('[EMAIL SERVICE]: /api/send-invoice unavailable. Switching to live host dispatch...');
+  }
+
+  // Live Hosting Fallback (FormSubmit autoresponder)
+  try {
+    const fsRes = await window.fetch(`https://formsubmit.co/ajax/${encodeURIComponent(payload.email)}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        _subject: `Admission Invoice & Tracking Code: ${payload.trackingId} — The Chef's Academy`,
+        _autoresponse: localInvoiceHtml,
+        _captcha: 'false',
+        "Sender Name": "The Chef's Academy Lahore",
+        "Student Name": payload.studentName,
+        "Father Name": payload.fatherName,
+        "Tracking Code": payload.trackingId,
+        "Course Selected": payload.courseTitle,
+        "Shift": payload.shift,
+        "Registration Fee": `PKR ${payload.regFee.toLocaleString()}`,
+        "Tuition Fee": `PKR ${payload.tuitionFee.toLocaleString()}`,
+        "Total Payable Fee": `PKR ${payload.totalFee.toLocaleString()}`,
+      }),
+    });
+
+    if (fsRes.ok) {
+      return {
+        success: true,
+        method: 'LIVE_HOST_DISPATCH',
+        message: `Invoice email dispatched successfully to ${payload.email}!`,
+        invoiceHtml: localInvoiceHtml,
+      };
+    }
+  } catch (err: any) {
+    console.warn('[EMAIL SERVICE]: Live host invoice email dispatch error:', err);
   }
 
   return {

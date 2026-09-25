@@ -1101,8 +1101,7 @@ export default function Website() {
                     {coursePlans[currentCourse.name].map((plan, idx) => {
                       const isOneMonth = plan.duration.includes('1 Month');
                       const displayDetail = isOneMonth ? DEFAULT_COURSE_PLANS[currentCourse.name]?.[idx]?.detail : (plan.detail || DEFAULT_COURSE_PLANS[currentCourse.name]?.[idx]?.detail);
-                      // Force fee from defaults to guarantee 50k, 150k, 300k pricing
-                      const displayFee = DEFAULT_COURSE_PLANS[currentCourse.name]?.[idx]?.fee || plan.fee;
+                      const totalPlanFee = (plan.fee || 0) + (plan.regFee || 0);
                       
                       return (
                       <div 
@@ -1126,7 +1125,7 @@ export default function Website() {
                         </div>
                         <div className="flex items-center mb-2">
                           <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${hoveredPlan === idx ? 'bg-[#13283F] text-[#C5A964]' : 'bg-[#C5A964] text-[#13283F]'}`}>
-                            PKR {(displayFee || plan.fee || 0).toLocaleString()}
+                            PKR {totalPlanFee.toLocaleString()}
                           </span>
                         </div>
                         <div className={`text-sm whitespace-pre-line transition-all duration-500 overflow-y-auto overflow-x-hidden ${hoveredPlan === idx ? 'max-h-[300px] opacity-100 mt-2 border-t border-[#13283F]/20 pt-3' : 'max-h-0 opacity-0'}`}>
