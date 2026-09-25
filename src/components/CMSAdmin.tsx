@@ -806,19 +806,21 @@ Course: *${selectedAdmission.selectedCourseTitle}*
 
       const encodedMessage = encodeURIComponent(receiptMessage);
       
-      let phone = selectedAdmission.phone.replace(/[^\d+]/g, '');
+      let phone = (selectedAdmission.phone || '').replace(/[^\d+]/g, '');
       if (phone.startsWith('0')) {
         phone = '+92' + phone.substring(1);
       }
       
       const waUrl = `https://wa.me/${phone.replace('+', '')}?text=${encodedMessage}`;
       
-      const newWin = window.open(waUrl, '_blank');
-      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
-        // If popup blocked, notify and navigate in current tab
-        alert('Popup blocker prevented opening WhatsApp. Redirecting you to WhatsApp...');
-        window.location.href = waUrl;
-      }
+      // Use anchor tag click (most reliable method to bypass popup blockers in Chrome/Safari)
+      const link = document.createElement('a');
+      link.href = waUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => document.body.removeChild(link), 100);
     }
 
     setAdminRemarks('');
