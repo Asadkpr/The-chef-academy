@@ -812,7 +812,13 @@ Course: *${selectedAdmission.selectedCourseTitle}*
       }
       
       const waUrl = `https://wa.me/${phone.replace('+', '')}?text=${encodedMessage}`;
-      window.open(waUrl, '_blank');
+      
+      const newWin = window.open(waUrl, '_blank');
+      if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+        // If popup blocked, notify and navigate in current tab
+        alert('Popup blocker prevented opening WhatsApp. Redirecting you to WhatsApp...');
+        window.location.href = waUrl;
+      }
     }
 
     setAdminRemarks('');
