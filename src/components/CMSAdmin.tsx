@@ -793,7 +793,7 @@ export default function CMSAdmin() {
       const paid = selectedAdmission.paidAmount !== undefined ? selectedAdmission.paidAmount : (selectedFeeStatus === 'Paid' ? totalFee : 0);
       const rem = selectedAdmission.remainingBalance !== undefined ? selectedAdmission.remainingBalance : Math.max(0, totalFee - paid);
       
-      const receiptMessage = `*Admission Confirmed* ✅
+      const receiptMessage = `*Admission Confirmed - The Chef's Academy* ✅
 
 Student Name: *${selectedAdmission.studentName}*
 Course: *${selectedAdmission.selectedCourseTitle}*
@@ -813,14 +813,16 @@ Course: *${selectedAdmission.selectedCourseTitle}*
       
       const waUrl = `https://wa.me/${phone.replace('+', '')}?text=${encodedMessage}`;
       
-      // Use anchor tag click (most reliable method to bypass popup blockers in Chrome/Safari)
-      const link = document.createElement('a');
-      link.href = waUrl;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => document.body.removeChild(link), 100);
+      try {
+        const newWin = window.open(waUrl, '_blank');
+        if (!newWin || newWin.closed || typeof newWin.closed === 'undefined') {
+          // Fallback if popup is blocked
+          window.location.href = waUrl;
+        }
+      } catch (e) {
+        // Fallback for strict browser policies
+        window.location.href = waUrl;
+      }
     }
 
     setAdminRemarks('');
