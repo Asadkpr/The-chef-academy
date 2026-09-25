@@ -14,6 +14,115 @@ export interface InvoicePayload {
   paymentSettings?: any;
 }
 
+export interface SubmissionPayload {
+  studentName: string;
+  email: string;
+  trackingId: string;
+  courseTitle: string;
+  shift: string;
+}
+
+export function generateSubmissionConfirmationHtml(data: SubmissionPayload): string {
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; background-color: #f8fafc; margin: 0; padding: 0; }
+        .wrapper { width: 100%; background-color: #f8fafc; padding: 30px 0; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .header { background-color: #0a0f18; color: #ffffff; padding: 30px; text-align: center; border-bottom: 3px solid #c19d53; }
+        .logo-text { font-family: 'Georgia', serif; font-size: 22px; letter-spacing: 2px; color: #ffffff; margin: 0; text-transform: uppercase; }
+        .logo-sub { font-size: 11px; letter-spacing: 3px; color: #c19d53; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; }
+        .content { padding: 30px; }
+        .title { font-size: 18px; font-weight: bold; color: #0a0f18; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+        .intro-text { font-size: 14px; line-height: 1.7; color: #4a5568; margin-bottom: 25px; }
+        .tracking-box { background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 20px; margin-bottom: 25px; text-align: center; }
+        .tracking-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #92400e; font-weight: bold; margin-bottom: 8px; }
+        .tracking-code { font-family: monospace; font-size: 22px; font-weight: bold; color: #b45309; }
+        .details-card { background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .grid-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px; }
+        .label { color: #64748b; font-weight: 500; }
+        .val { color: #0f172a; font-weight: 600; text-align: right; }
+        .footer { background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 11px; color: #64748b; line-height: 1.5; }
+        .note-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px; font-size: 13px; color: #166534; line-height: 1.6; }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="container">
+          <div class="header">
+            <h1 class="logo-text"><strong>THE CHEF'S ACADEMY</strong></h1>
+            <p class="logo-sub"><strong>79-B3 Gulberg III, Lahore, Pakistan</strong></p>
+          </div>
+          <div class="content">
+            <h2 class="title">Application Submitted Successfully ✓</h2>
+            <p class="intro-text">
+              Dear <strong>${data.studentName}</strong>,<br><br>
+              Thank you for applying to <strong>The Chef's Academy</strong>. We have successfully received your admission application dated <strong>${dateStr}</strong>.<br><br>
+              Our admissions team will review your application and contact you shortly with further instructions.
+            </p>
+            <div class="tracking-box">
+              <div class="tracking-label">Your Application Tracking Code</div>
+              <div class="tracking-code">${data.trackingId}</div>
+              <p style="font-size: 11px; color: #92400e; margin-top: 8px; margin-bottom: 0;">Keep this code safe to track your application status.</p>
+            </div>
+            <div class="details-card">
+              <div class="grid-row"><span class="label">Candidate Name:</span><span class="val">${data.studentName}</span></div>
+              <div class="grid-row"><span class="label">Program Selected:</span><span class="val">${data.courseTitle}</span></div>
+              <div class="grid-row"><span class="label">Shift:</span><span class="val">${data.shift}</span></div>
+              <div class="grid-row"><span class="label">Application Date:</span><span class="val">${dateStr}</span></div>
+            </div>
+            <div class="note-box">
+              <strong>What happens next?</strong><br>
+              Our admissions team will reach out to you via phone or WhatsApp. You may also visit our campus at <strong>79-B3 Gulberg III, Lahore</strong> or call us at <strong>0333-9123456</strong> for any queries.
+            </div>
+          </div>
+          <div class="footer">
+            <strong>The Chef's Academy — Lahore</strong><br>
+            79-B3 Gulberg III, Lahore | Helpline: 0333-9123456 | Email: info@thechefsacademy.pk
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+export async function sendSubmissionConfirmationEmail(payload: SubmissionPayload): Promise<{ success: boolean; method: string; message: string }> {
+  try {
+    const res = await window.fetch('/api/send-invoice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentName: payload.studentName,
+        email: payload.email,
+        trackingId: payload.trackingId,
+        courseTitle: payload.courseTitle,
+        shift: payload.shift,
+        isSubmissionOnly: true,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) {
+        return { success: true, method: data.method || 'SMTP', message: `Confirmation email sent to ${payload.email}` };
+      }
+    }
+  } catch (e) {
+    console.warn('[EMAIL SERVICE]: Submission confirmation — Node API error:', e);
+  }
+
+  return { success: true, method: 'RECORDED', message: `Application recorded for ${payload.studentName}.` };
+}
+
 export function generateInvoiceHtml(data: InvoicePayload): string {
   const dateStr = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -121,17 +230,12 @@ export function generateInvoiceHtml(data: InvoicePayload): string {
 
 export async function sendInvoiceEmail(payload: InvoicePayload): Promise<{ success: boolean; method: string; message: string; invoiceHtml: string; error?: string }> {
   const localInvoiceHtml = generateInvoiceHtml(payload);
-  const emailSubject = `Admission Invoice & Tracking Code: ${payload.trackingId} — The Chef's Academy`;
 
-  // Step 1: Try primary Node API endpoint /api/send-invoice
   try {
     const res = await window.fetch('/api/send-invoice', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...payload,
-        senderName: "The Chef's Academy Lahore",
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (res.ok) {
@@ -139,80 +243,16 @@ export async function sendInvoiceEmail(payload: InvoicePayload): Promise<{ succe
       if (data.success) {
         return {
           success: true,
-          method: data.method || 'API',
+          method: data.method || 'SMTP',
           message: data.message || `Invoice sent successfully to ${payload.email}`,
           invoiceHtml: data.invoiceHtml || localInvoiceHtml,
         };
       }
     }
   } catch (e) {
-    console.warn('[EMAIL SERVICE]: /api/send-invoice unavailable or returned 404 on live host. Checking PHP endpoint...');
+    console.warn('[EMAIL SERVICE]: /api/send-invoice error:', e);
   }
 
-  // Step 1.5: Try PHP endpoint /api/send-invoice.php (Ideal for Cloudways / Apache / NGINX)
-  try {
-    const phpRes = await window.fetch('/api/send-invoice.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...payload,
-        senderName: "The Chef's Academy Lahore",
-      }),
-    });
-
-    if (phpRes.ok) {
-      const data = await phpRes.json();
-      if (data.success) {
-        return {
-          success: true,
-          method: data.method || 'PHP_GMAIL_SMTP',
-          message: data.message || `Invoice email sent successfully to ${payload.email}`,
-          invoiceHtml: data.invoiceHtml || localInvoiceHtml,
-        };
-      }
-    }
-  } catch (e) {
-    console.warn('[EMAIL SERVICE]: /api/send-invoice.php unavailable. Switching to FormSubmit direct dispatch...');
-  }
-
-  // Step 2: Fallback for live static hosts (FormSubmit HTTPS endpoint)
-  try {
-    const fsRes = await window.fetch(`https://formsubmit.co/ajax/${encodeURIComponent(payload.email)}`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        _subject: emailSubject,
-        _autoresponse: localInvoiceHtml,
-        _captcha: 'false',
-        "Sender Name": "The Chef's Academy Lahore",
-        "Student Name": payload.studentName,
-        "Father Name": payload.fatherName,
-        "Tracking Code": payload.trackingId,
-        "Course Selected": payload.courseTitle,
-        "Shift": payload.shift,
-        "Registration Fee Due": `PKR ${payload.regFee.toLocaleString()}`,
-        "Total Payable Fee": `PKR ${payload.totalFee.toLocaleString()}`,
-        "Bank Details": `Bank: ${payload.paymentSettings?.bankName || 'Bank Alfalah'} | Acc: ${payload.paymentSettings?.accountNumber || '5502-9018274619'} | Title: ${payload.paymentSettings?.accountTitle || "The Chef's Academy"}`,
-        "Easypaisa/JazzCash": `${payload.paymentSettings?.mobileName || 'Wallet'}: ${payload.paymentSettings?.mobileNumber || '0333-9123456'}`,
-      }),
-    });
-
-    if (fsRes.ok) {
-      return {
-        success: true,
-        method: 'DIRECT_WEB_MAIL',
-        message: `Invoice dispatched successfully to ${payload.email}! Please check your Inbox / Spam folder.`,
-        invoiceHtml: localInvoiceHtml,
-      };
-    }
-  } catch (err: any) {
-    console.warn('[EMAIL SERVICE]: FormSubmit web dispatch error:', err);
-  }
-
-  // Step 3: Always return generated invoice HTML so student has instant on-screen invoice preview & printable card
   return {
     success: true,
     method: 'CLIENT_INVOICE_GENERATED',

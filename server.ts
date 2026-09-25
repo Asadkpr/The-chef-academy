@@ -436,7 +436,7 @@ function generateInvoiceHtml(data: {
   `;
 }
 
-// POST API route to dispatch Email Invoice
+// POST API route to dispatch Email Invoice (handles both invoice mode and simple submission confirmation)
 app.post('/api/send-invoice', async (req, res) => {
   const {
     studentName,
@@ -451,28 +451,13 @@ app.post('/api/send-invoice', async (req, res) => {
     tuitionFee,
     totalFee,
     discount,
-    paymentSettings
+    paymentSettings,
+    isSubmissionOnly
   } = req.body;
 
   if (!email || !studentName || !trackingId) {
     return res.status(400).json({ error: 'Missing required parameters.' });
   }
-
-  const htmlContent = generateInvoiceHtml({
-    studentName,
-    fatherName,
-    email,
-    phone,
-    cnic,
-    trackingId,
-    courseTitle,
-    shift,
-    regFee,
-    tuitionFee,
-    totalFee,
-    discount: discount ? Number(discount) : 0,
-    paymentSettings
-  });
 
   const isSmtpConfigured = !!(
     process.env.SMTP_HOST &&
@@ -480,13 +465,98 @@ app.post('/api/send-invoice', async (req, res) => {
     process.env.SMTP_PASS
   );
 
+  const senderFrom = process.env.SMTP_FROM || `"The Chef's Academy Lahore" <${process.env.SMTP_USER}>`;
+
+  // -----------------------------------------------------------------------
+  // MODE A: Simple Submission Confirmation Email (Invoice OFF)
+  // -----------------------------------------------------------------------
+  if (isSubmissionOnly) {
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const confirmHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+body{font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#333;background:#f8fafc;margin:0;padding:0}
+.wrapper{width:100%;background:#f8fafc;padding:40px 0}
+.container{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,.05)}
+.header{background:#0a0f18;color:#fff;padding:35px;text-align:center;border-bottom:3px solid #c19d53}
+.logo-text{font-family:'Georgia',serif;font-size:22px;letter-spacing:2px;color:#fff;margin:0;text-transform:uppercase}
+.logo-sub{font-size:11px;letter-spacing:4px;color:#c19d53;margin:5px 0 0;text-transform:uppercase;font-weight:bold}
+.content{padding:35px}
+.title{font-size:18px;font-weight:bold;color:#0a0f18;margin-top:0;margin-bottom:20px;border-bottom:1px solid #e2e8f0;padding-bottom:10px}
+.intro{font-size:14px;line-height:1.7;color:#4a5568;margin-bottom:25px}
+.track-box{background:#fffbeb;border:1px solid #fef3c7;border-radius:8px;padding:20px;margin-bottom:25px;text-align:center}
+.track-label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#92400e;font-weight:bold;margin-bottom:8px}
+.track-code{font-family:monospace;font-size:24px;font-weight:bold;color:#b45309}
+.details{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:20px;margin-bottom:25px}
+.row{display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px}
+.row:last-child{margin-bottom:0}
+.lbl{color:#64748b;font-weight:500}.val{color:#0f172a;font-weight:600;text-align:right}
+.note{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:15px;font-size:13px;color:#166534;line-height:1.6;margin-bottom:25px}
+.footer{background:#f1f5f9;padding:20px;text-align:center;font-size:11px;color:#64748b;line-height:1.5}
+.footer a{color:#c19d53;text-decoration:none}
+</style></head><body>
+<div class="wrapper"><div class="container">
+<div class="header"><h1 class="logo-text"><strong>THE CHEF'S ACADEMY</strong></h1><p class="logo-sub"><strong>79-B3 Gulberg III, Lahore, Pakistan</strong></p></div>
+<div class="content">
+<h2 class="title">Application Submitted Successfully &#10003;</h2>
+<p class="intro">Dear <strong>${studentName}</strong>,<br><br>Thank you for applying to <strong>The Chef's Academy</strong>. We have successfully received your admission application dated <strong>${dateStr}</strong>.<br><br>Our admissions team will review your application and contact you shortly.</p>
+<div class="track-box">
+<div class="track-label">Your Application Tracking Code</div>
+<div class="track-code">${trackingId}</div>
+<p style="font-size:11px;color:#92400e;margin-top:8px;margin-bottom:0">Keep this code safe to track your application status on our portal.</p>
+</div>
+<div class="details">
+<div class="row"><span class="lbl">Candidate Name:</span><span class="val">${studentName}</span></div>
+<div class="row"><span class="lbl">Program Selected:</span><span class="val">${courseTitle}</span></div>
+<div class="row"><span class="lbl">Shift:</span><span class="val">${shift}</span></div>
+<div class="row"><span class="lbl">Application Date:</span><span class="val">${dateStr}</span></div>
+</div>
+<div class="note"><strong>What happens next?</strong><br>Our admissions team will reach out to you via phone or WhatsApp. You may also visit our campus at <strong>79-B3 Gulberg III, Lahore</strong> or call <strong>0333-9123456</strong> for any queries.</div>
+</div>
+<div class="footer"><strong>The Chef's Academy &mdash; Lahore</strong><br>79-B3 Gulberg III, Lahore, Pakistan<br>Helpline: <a href="https://wa.me/923339123456">0333-9123456</a> | Email: <a href="mailto:info@thechefsacademy.pk">info@thechefsacademy.pk</a></div>
+</div></div></body></html>`;
+
+    console.log(`\n=============== [SUBMISSION CONFIRMATION] ===============`);
+    console.log(`Tracking ID: ${trackingId} | Student: ${studentName} | Email: ${email}`);
+    console.log(`SMTP: ${isSmtpConfigured}`);
+    console.log(`=========================================================\n`);
+
+    if (isSmtpConfigured) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_PORT === '465',
+          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+        });
+        await transporter.sendMail({
+          from: senderFrom,
+          to: email,
+          subject: `Application Received — Tracking Code: ${trackingId} | The Chef's Academy`,
+          html: confirmHtml
+        });
+        console.log(`Submission confirmation sent via SMTP to ${email}`);
+        return res.json({ success: true, method: 'SMTP', message: `Submission confirmation email sent to ${email}` });
+      } catch (err: any) {
+        console.error('SMTP confirmation failed:', err.message);
+        return res.json({ success: true, method: 'FALLBACK', message: 'Application recorded. Email could not be sent.' });
+      }
+    } else {
+      return res.json({ success: true, method: 'SIMULATED', message: 'Application recorded (SMTP not configured).' });
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // MODE B: Full Invoice Email (Invoice ON)
+  // -----------------------------------------------------------------------
+  const htmlContent = generateInvoiceHtml({
+    studentName, fatherName, email, phone, cnic, trackingId,
+    courseTitle, shift, regFee, tuitionFee, totalFee,
+    discount: discount ? Number(discount) : 0,
+    paymentSettings
+  });
+
   console.log(`\n=================== [INVOICE DISPATCH] ===================`);
-  console.log(`Tracking ID: ${trackingId}`);
-  console.log(`Student Name: ${studentName}`);
-  console.log(`Email Sent To: ${email}`);
-  console.log(`Course Program: ${courseTitle}`);
-  console.log(`Reg Fee: PKR ${regFee} | Total Fee: PKR ${totalFee}`);
-  console.log(`SMTP Configured: ${isSmtpConfigured ? 'YES' : 'NO'}`);
+  console.log(`Tracking ID: ${trackingId} | Student: ${studentName} | Email: ${email}`);
+  console.log(`Reg Fee: PKR ${regFee} | Total Fee: PKR ${totalFee} | SMTP: ${isSmtpConfigured}`);
   console.log(`==========================================================\n`);
 
   if (isSmtpConfigured) {
@@ -495,47 +565,22 @@ app.post('/api/send-invoice', async (req, res) => {
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: process.env.SMTP_PORT === '465',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        }
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       });
-
-      const mailOptions = {
-        from: process.env.SMTP_FROM || `"The Chef's Academy Lahore" <${process.env.SMTP_USER}>`,
+      await transporter.sendMail({
+        from: senderFrom,
         to: email,
         subject: `Admission Invoice & Tracking Code: ${trackingId} — The Chef's Academy`,
         html: htmlContent
-      };
-
-      await transporter.sendMail(mailOptions);
-      console.log(`Email sent successfully via SMTP to ${email}`);
-
-      return res.json({
-        success: true,
-        method: 'SMTP',
-        message: 'Invoice email has been sent successfully to your registered email address!',
-        invoiceHtml: htmlContent
       });
+      console.log(`Invoice email sent via SMTP to ${email}`);
+      return res.json({ success: true, method: 'SMTP', message: 'Invoice email has been sent successfully to your registered email address!', invoiceHtml: htmlContent });
     } catch (err: any) {
       console.error('SMTP Email dispatch failed:', err.message);
-      // Fallback with response stating email failed but invoice is generated
-      return res.json({
-        success: true,
-        method: 'FALLBACK_PREVIEW',
-        error: `Could not send email directly: ${err.message}`,
-        message: 'Your registration is successful! (Email failed, displaying invoice below).',
-        invoiceHtml: htmlContent
-      });
+      return res.json({ success: true, method: 'FALLBACK_PREVIEW', error: `Could not send email: ${err.message}`, message: 'Your registration is successful! (Email failed, displaying invoice below).', invoiceHtml: htmlContent });
     }
   } else {
-    // Return the invoice HTML directly so the client can display/render it beautifully in the UI as a downloadable card
-    return res.json({
-      success: true,
-      method: 'SIMULATED',
-      message: 'Invoice simulated and sent successfully! (SMTP parameters not configured in .env, showing local invoice preview).',
-      invoiceHtml: htmlContent
-    });
+    return res.json({ success: true, method: 'SIMULATED', message: 'Invoice simulated (SMTP not configured in .env).', invoiceHtml: htmlContent });
   }
 });
 

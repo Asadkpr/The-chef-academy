@@ -118,6 +118,8 @@ interface AcademyContextType {
   changeAdminPasscode: (newPasscode: string) => void;
   purgeFeeCache: () => void;
   isDataLoaded: boolean;
+  invoiceEnabled: boolean;
+  setInvoiceEnabled: (enabled: boolean) => void;
 }
 
 const AcademyContext = createContext<AcademyContextType | undefined>(undefined);
@@ -173,6 +175,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [websiteData, setWebsiteData] = useState<WebsiteData>(INITIAL_WEBSITE_DATA);
   const [adminPasscode, setAdminPasscode] = useState<string>('admin123'); // Default fallback
   const [isDataLoaded, setIsDataLoaded] = useState<boolean>(false);
+  const [invoiceEnabled, setInvoiceEnabledState] = useState<boolean>(true); // Invoice ON/OFF toggle
 
   // Load from Firebase on start, with localStorage fallback & SPA Browser History setup
   useEffect(() => {
@@ -423,16 +426,26 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       try {
         const fetchTasks = [
           getDoc(doc(db, 'website_data', 'admin_settings')).then(adminDoc => {
-            if (adminDoc.exists() && adminDoc.data()?.passcode) {
-              setAdminPasscode(adminDoc.data().passcode);
-              safeSetItem('chef_admin_passcode', adminDoc.data().passcode);
-              setCacheItem('cache_admin_passcode', adminDoc.data().passcode);
+            if (adminDoc.exists()) {
+              const settingsData = adminDoc.data();
+              if (settingsData?.passcode) {
+                setAdminPasscode(settingsData.passcode);
+                safeSetItem('chef_admin_passcode', settingsData.passcode);
+                setCacheItem('cache_admin_passcode', settingsData.passcode);
+              }
+              // Load invoiceEnabled setting (default: true)
+              if (typeof settingsData?.invoiceEnabled === 'boolean') {
+                setInvoiceEnabledState(settingsData.invoiceEnabled);
+                safeSetItem('chef_invoice_enabled', JSON.stringify(settingsData.invoiceEnabled));
+              }
             } else {
-              setDoc(doc(db, 'website_data', 'admin_settings'), { passcode: 'admin123' }, { merge: true }).catch(()=>{});
+              setDoc(doc(db, 'website_data', 'admin_settings'), { passcode: 'admin123', invoiceEnabled: true }, { merge: true }).catch(()=>{});
             }
           }).catch(() => {
             const storedPasscode = localStorage.getItem('chef_admin_passcode');
             if (storedPasscode) setAdminPasscode(storedPasscode);
+            const storedInvoice = localStorage.getItem('chef_invoice_enabled');
+            if (storedInvoice !== null) setInvoiceEnabledState(JSON.parse(storedInvoice));
           }),
           getDoc(doc(db, 'website_data', 'main')).then(websiteDoc => {
             if (websiteDoc.exists()) {
@@ -1231,6 +1244,18 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     console.log('✅ Purged local fee cache.');
   };
 
+  // Invoice ON/OFF toggle — persisted to Firebase admin_settings
+  const setInvoiceEnabled = async (enabled: boolean) => {
+    setInvoiceEnabledState(enabled);
+    safeSetItem('chef_invoice_enabled', JSON.stringify(enabled));
+    try {
+      await setDoc(doc(db, 'website_data', 'admin_settings'), { invoiceEnabled: enabled }, { merge: true });
+      console.log(`✅ Invoice mode ${enabled ? 'ON' : 'OFF'} saved to Firebase.`);
+    } catch (err) {
+      console.error('Failed to sync invoiceEnabled to Firestore:', err);
+    }
+  };
+
   const updateCoursePlans = async (plans: CoursePlans) => {
     setCoursePlans(plans);
     safeSetItem('chef_course_plans', JSON.stringify(plans));
@@ -1649,7 +1674,9 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       changeAdminPasscode,
       resetAllData,
       purgeFeeCache,
-      isDataLoaded
+      isDataLoaded,
+      invoiceEnabled,
+      setInvoiceEnabled
     }}>
       {children}
     </AcademyContext.Provider>

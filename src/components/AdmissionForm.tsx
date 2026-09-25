@@ -3,7 +3,7 @@ import { useAcademy, DEFAULT_COURSE_PLANS } from '../context/AcademyContext';
 import { uploadFile } from '../lib/firebase';
 
 
-import { sendInvoiceEmail } from '../lib/emailService';
+import { sendInvoiceEmail, sendSubmissionConfirmationEmail } from '../lib/emailService';
 
 import { 
   GraduationCap, CheckCircle, ArrowLeft, ArrowRight, ClipboardCheck, 
@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'motion/react';
 const COURSE_PLANS = DEFAULT_COURSE_PLANS;
 
 export default function AdmissionForm() {
-  const { courses, admissions, addAdmission, updateAdmissionReceipt, updateAdmissionInvoiceHtml, coursePlans, websiteData } = useAcademy();
+  const { courses, admissions, addAdmission, updateAdmissionReceipt, updateAdmissionInvoiceHtml, coursePlans, websiteData, invoiceEnabled } = useAcademy();
   
   const [portalTab, setPortalTab] = useState<'apply' | 'status'>('apply');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -368,41 +368,64 @@ export default function AdmissionForm() {
     setSubmittedId(createdAdmission.id);
     setSubmittedAdmission(createdAdmission);
 
-    // Send email invoice
-    try {
-      const emailResult = await sendInvoiceEmail({
-        studentName: formData.studentName,
-        fatherName: formData.fatherName,
-        email: formData.email,
-        phone: formData.phone,
-        cnic: formData.cnic,
-        trackingId: createdAdmission.id,
-        courseTitle: `${formData.selectedCourseName} (${formData.selectedDuration})`,
-        shift: formData.shift,
-        regFee: scaledRegFee,
-        tuitionFee: scaledTuition,
-        totalFee: scaledTotal,
-        paymentSettings: websiteData?.paymentSettings,
-      });
+    // Only send invoice email and generate invoice when invoiceEnabled is ON
+    if (invoiceEnabled) {
+      // Send email invoice
+      try {
+        const emailResult = await sendInvoiceEmail({
+          studentName: formData.studentName,
+          fatherName: formData.fatherName,
+          email: formData.email,
+          phone: formData.phone,
+          cnic: formData.cnic,
+          trackingId: createdAdmission.id,
+          courseTitle: `${formData.selectedCourseName} (${formData.selectedDuration})`,
+          shift: formData.shift,
+          regFee: scaledRegFee,
+          tuitionFee: scaledTuition,
+          totalFee: scaledTotal,
+          paymentSettings: websiteData?.paymentSettings,
+        });
 
-      // Store invoice HTML regardless of outcome
-      setGeneratedInvoiceHtml(emailResult.invoiceHtml || '');
-      updateAdmissionInvoiceHtml(createdAdmission.id, emailResult.invoiceHtml || '');
+        // Store invoice HTML regardless of outcome
+        setGeneratedInvoiceHtml(emailResult.invoiceHtml || '');
+        updateAdmissionInvoiceHtml(createdAdmission.id, emailResult.invoiceHtml || '');
 
-      setEmailMessage({
-        type: 'success',
-        text: `Invoice sent successfully to ${formData.email}! Tracking Code: ${createdAdmission.id}.`,
-      });
-    } catch (err: any) {
-      console.error(err);
-      setEmailMessage({
-        type: 'error',
-        text: `Application saved! Tracking Code: ${createdAdmission.id}. You can view/print the invoice below.`,
-      });
-    } finally {
-      setIsSendingEmail(false);
-      setStep(4);
+        setEmailMessage({
+          type: 'success',
+          text: `Invoice sent successfully to ${formData.email}! Tracking Code: ${createdAdmission.id}.`,
+        });
+      } catch (err: any) {
+        console.error(err);
+        setEmailMessage({
+          type: 'error',
+          text: `Application saved! Tracking Code: ${createdAdmission.id}. You can view/print the invoice below.`,
+        });
+      }
+    } else {
+      // Invoice is OFF — send a simple submission confirmation email (no invoice/fees)
+      try {
+        await sendSubmissionConfirmationEmail({
+          studentName: formData.studentName,
+          email: formData.email,
+          trackingId: createdAdmission.id,
+          courseTitle: `${formData.selectedCourseName} (${formData.selectedDuration})`,
+          shift: formData.shift,
+        });
+        setEmailMessage({
+          type: 'success',
+          text: `Application submitted! A confirmation email has been sent to ${formData.email}. Your Tracking Code: ${createdAdmission.id}.`,
+        });
+      } catch (err) {
+        setEmailMessage({
+          type: 'success',
+          text: `Application submitted successfully! Your Tracking Code is ${createdAdmission.id}.`,
+        });
+      }
     }
+
+    setIsSendingEmail(false);
+    setStep(4);
   };
 
   // Print Invoice / Save as PDF via browser print dialog
@@ -808,7 +831,9 @@ export default function AdmissionForm() {
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
                     <CheckCircle className="h-8 w-8 stroke-[1.5]" />
                   </div>
-                  <h3 className="font-serif text-2xl sm:text-3xl text-white">Application Recorded Successfully!</h3>
+                  <h3 className="font-serif text-2xl sm:text-3xl text-white">
+                    {invoiceEnabled ? 'Application Recorded Successfully!' : 'Application Submitted Successfully!'}
+                  </h3>
                   <p className="font-sans text-slate-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
                     Application submitted successfully! Tracking Code: <span className="text-amber-400 font-mono font-bold tracking-wider">{submittedId}</span>.
                   </p>
@@ -826,152 +851,185 @@ export default function AdmissionForm() {
                   </div>
                 )}
 
-                {/* Print-friendly Digital Invoice Section */}
-                <div id="invoice-content" className="border border-slate-800 rounded-2xl bg-white text-slate-900 p-6 sm:p-10 space-y-6 shadow-xl max-w-2xl mx-auto font-sans relative overflow-hidden">
-                  
-                  {/* Decorative stamp/watermark */}
-                  <div className="absolute top-6 right-6 border-2 border-amber-500/25 text-amber-500/30 text-[10px] uppercase font-mono font-black py-1.5 px-4 rounded-lg transform rotate-12 select-none tracking-widest">
-                    Awaiting Payment
-                  </div>
-
-                  <div className="flex justify-between items-start border-b border-slate-100 pb-5">
-                    <div>
-                      <div className="font-serif leading-[0.9] text-slate-950">
-                        <div className="flex items-end gap-1">
-                          <span className="text-[10px] text-slate-900 font-light">The</span>
-                          <span className="text-lg text-slate-900 font-medium leading-none">Chef's</span>
-                        </div>
-                        <div className="text-base text-slate-900 font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
+                {/* INVOICE DISPLAY — only shown when invoiceEnabled is ON */}
+                {invoiceEnabled ? (
+                  <>
+                    {/* Print-friendly Digital Invoice Section */}
+                    <div id="invoice-content" className="border border-slate-800 rounded-2xl bg-white text-slate-900 p-6 sm:p-10 space-y-6 shadow-xl max-w-2xl mx-auto font-sans relative overflow-hidden">
+                      
+                      {/* Decorative stamp/watermark */}
+                      <div className="absolute top-6 right-6 border-2 border-amber-500/25 text-amber-500/30 text-[10px] uppercase font-mono font-black py-1.5 px-4 rounded-lg transform rotate-12 select-none tracking-widest">
+                        Awaiting Payment
                       </div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Professional Culinary Institute</p>
-                      <p className="text-[10px] text-slate-400 mt-2">79-B3 Gulberg III, Lahore, Pakistan</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[9px] uppercase tracking-wider text-slate-400 block">Admissions Invoice</span>
-                      <span className="font-mono text-lg font-bold text-amber-600 block mt-0.5">{submittedId}</span>
-                      <span className="text-[10px] text-slate-500 block mt-1">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                    </div>
-                  </div>
 
-                  {/* Candidate / Course Details Grid */}
-                  <div className="grid grid-cols-2 gap-4 text-xs border-b border-slate-100 pb-5">
-                    <div>
-                      <span className="text-slate-400 uppercase text-[9px] font-bold block">Student Name</span>
-                      <span className="text-slate-800 font-semibold block mt-0.5">{formData.studentName}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 uppercase text-[9px] font-bold block">Father Name</span>
-                      <span className="text-slate-800 font-semibold block mt-0.5">{formData.fatherName}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 uppercase text-[9px] font-bold block">WhatsApp Contact</span>
-                      <span className="text-slate-800 font-medium block mt-0.5 font-mono">{formData.phone}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 uppercase text-[9px] font-bold block">Candidate CNIC</span>
-                      <span className="text-slate-800 font-medium block mt-0.5 font-mono">{formData.cnic}</span>
-                    </div>
-                  </div>
-
-                  {/* Fee item breakdown list */}
-                  <div className="space-y-3">
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">Program Fees & Dues</span>
-                    
-                    <div className="space-y-2.5">
-                      <div className="flex justify-between text-xs pb-2 border-b border-slate-100/60">
+                      <div className="flex justify-between items-start border-b border-slate-100 pb-5">
                         <div>
-                          <span className="font-semibold text-slate-800 block">{formData.selectedCourseName}</span>
-                          <span className="text-[10px] text-slate-500">Selected Duration: {formData.selectedDuration} | Shift: {formData.shift}</span>
+                          <div className="font-serif leading-[0.9] text-slate-950">
+                            <div className="flex items-end gap-1">
+                              <span className="text-[10px] text-slate-900 font-light">The</span>
+                              <span className="text-lg text-slate-900 font-medium leading-none">Chef's</span>
+                            </div>
+                            <div className="text-base text-slate-900 font-medium tracking-wide -mt-0.5 leading-none">Academy</div>
+                          </div>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-0.5">Professional Culinary Institute</p>
+                          <p className="text-[10px] text-slate-400 mt-2">79-B3 Gulberg III, Lahore, Pakistan</p>
                         </div>
-                        <span className="font-mono text-slate-700 font-semibold">PKR {scaledTuition.toLocaleString()}</span>
+                        <div className="text-right">
+                          <span className="text-[9px] uppercase tracking-wider text-slate-400 block">Admissions Invoice</span>
+                          <span className="font-mono text-lg font-bold text-amber-600 block mt-0.5">{submittedId}</span>
+                          <span className="text-[10px] text-slate-500 block mt-1">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
                       </div>
 
-                      <div className="flex justify-between text-xs pb-2 border-b border-slate-100/60">
-                        <span className="text-slate-700">Reservation Fee</span>
-                        <span className="font-mono text-slate-700 font-semibold">PKR {scaledRegFee.toLocaleString()}</span>
+                      {/* Candidate / Course Details Grid */}
+                      <div className="grid grid-cols-2 gap-4 text-xs border-b border-slate-100 pb-5">
+                        <div>
+                          <span className="text-slate-400 uppercase text-[9px] font-bold block">Student Name</span>
+                          <span className="text-slate-800 font-semibold block mt-0.5">{formData.studentName}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 uppercase text-[9px] font-bold block">Father Name</span>
+                          <span className="text-slate-800 font-semibold block mt-0.5">{formData.fatherName}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 uppercase text-[9px] font-bold block">WhatsApp Contact</span>
+                          <span className="text-slate-800 font-medium block mt-0.5 font-mono">{formData.phone}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 uppercase text-[9px] font-bold block">Candidate CNIC</span>
+                          <span className="text-slate-800 font-medium block mt-0.5 font-mono">{formData.cnic}</span>
+                        </div>
                       </div>
 
-                      <div className="flex justify-between items-center pt-2 text-sm">
-                        <span className="font-bold text-slate-900">Total Program Enrollment Fees:</span>
-                        <span className="font-mono font-bold text-[#c19d53] text-base">PKR {scaledTotal.toLocaleString()}</span>
+                      {/* Fee item breakdown list */}
+                      <div className="space-y-3">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">Program Fees & Dues</span>
+                        
+                        <div className="space-y-2.5">
+                          <div className="flex justify-between text-xs pb-2 border-b border-slate-100/60">
+                            <div>
+                              <span className="font-semibold text-slate-800 block">{formData.selectedCourseName}</span>
+                              <span className="text-[10px] text-slate-500">Selected Duration: {formData.selectedDuration} | Shift: {formData.shift}</span>
+                            </div>
+                            <span className="font-mono text-slate-700 font-semibold">PKR {scaledTuition.toLocaleString()}</span>
+                          </div>
+
+                          <div className="flex justify-between text-xs pb-2 border-b border-slate-100/60">
+                            <span className="text-slate-700">Reservation Fee</span>
+                            <span className="font-mono text-slate-700 font-semibold">PKR {scaledRegFee.toLocaleString()}</span>
+                          </div>
+
+                          <div className="flex justify-between items-center pt-2 text-sm">
+                            <span className="font-bold text-slate-900">Total Program Enrollment Fees:</span>
+                            <span className="font-mono font-bold text-[#c19d53] text-base">PKR {scaledTotal.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Official Bank details */}
+                      <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3 text-xs leading-relaxed">
+                        <div className="flex items-center space-x-1.5 text-amber-700 font-bold uppercase tracking-wider text-[10px]">
+                          <Landmark className="h-3.5 w-3.5" />
+                          <span>Direct Payment Instructions</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase">Bank Account:</span>
+                            <span className="text-slate-800 font-semibold block">{websiteData?.paymentSettings?.bankName || 'Bank Alfalah Ltd'}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[10px] uppercase">Account Title:</span>
+                            <span className="text-slate-800 font-semibold block">{websiteData?.paymentSettings?.accountTitle || "The Chef's Academy"}</span>
+                          </div>
+                          <div className="sm:col-span-2">
+                            <span className="text-slate-400 block text-[10px] uppercase">IBAN Number:</span>
+                            <span className="text-slate-900 font-bold font-mono text-sm tracking-wider">
+                              {websiteData?.paymentSettings?.iban || 'PK00ALFH00000000000000'}
+                            </span>
+                          </div>
+                          <div className="sm:col-span-2 border-t border-slate-100 pt-2 text-[10px] text-slate-500">
+                            {websiteData?.paymentSettings?.mobileName || 'Easypaisa or JazzCash'} Wallet: <strong>{websiteData?.paymentSettings?.mobileNumber || '0333-9123456'}</strong> (Title: {websiteData?.paymentSettings?.mobileTitle || "The Chef's Academy"})
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-center pt-1 no-print">
+                        <button
+                          id="download-btn"
+                          onClick={handleDownloadPdf}
+                          className="inline-flex items-center space-x-1.5 bg-slate-950 text-white hover:bg-amber-600 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                        >
+                          <Printer className="h-4 w-4 text-[#c19d53]" />
+                          <span>Print / Save as PDF</span>
+                        </button>
                       </div>
                     </div>
+
+                    {/* Helpful instructions about returning */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-2xl mx-auto space-y-4">
+                      <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">Next Steps to Finalize Your Admission:</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-sans text-slate-400">
+                        <div className="space-y-1">
+                          <span className="text-white font-bold block">1. Make Payment</span>
+                          <p className="leading-relaxed">Transfer/Deposit the registration fee of PKR {activePlan.regFee.toLocaleString()} (or full amount) to our Bank Alfalah or Easypaisa account.</p>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-white font-bold block">2. Save Receipt / Screenshot</span>
+                          <p className="leading-relaxed">Take a clear photo, screenshot, or image copy of the bank transfer slip or payment receipt.</p>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-white font-bold block">3. Upload Slip Below</span>
+                          <p className="leading-relaxed">Go to the "Track Status & Upload Receipt" tab, search with your tracking code, and submit your payment receipt photo.</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 text-center">
+                        <button
+                          onClick={() => {
+                            setPortalTab('status');
+                            const targetId = submittedId || (submittedAdmission ? submittedAdmission.id : '');
+                            setSearchQuery(targetId);
+                            const found = admissions.find(a => a.id === targetId) || submittedAdmission;
+                            setSearchResult(found || null);
+                            setHasSearched(true);
+                          }}
+                          className="inline-flex items-center space-x-1.5 bg-[#c19d53] text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider hover:brightness-110 shadow-lg shadow-[#c19d53]/15 transition-all cursor-pointer"
+                        >
+                          <span>Go Upload My Payment Receipt</span>
+                          <Upload className="h-4 w-4 stroke-[2.5]" />
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* INVOICE OFF — Simple Submission Confirmation */
+                  <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-8 sm:p-10 max-w-2xl mx-auto text-center space-y-6">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#c19d53]/10 border border-[#c19d53]/30">
+                      <ClipboardCheck className="h-8 w-8 text-[#c19d53] stroke-[1.5]" />
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="font-serif text-xl sm:text-2xl text-white">Your Application Has Been Submitted</h4>
+                      <p className="text-slate-400 text-sm leading-relaxed max-w-md mx-auto font-sans">
+                        Thank you for applying to <span className="text-[#c19d53] font-semibold">The Chef's Academy</span>. Your application has been received and is being reviewed by our admissions team.
+                      </p>
+                    </div>
+                    <div className="bg-slate-800/60 rounded-xl p-5 border border-slate-700/50 space-y-3 max-w-sm mx-auto">
+                      <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Your Tracking Code</div>
+                      <div className="font-mono text-2xl font-bold text-amber-400 tracking-wider">{submittedId}</div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed">Save this code to track your application status later.</p>
+                    </div>
+                    <div className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/30 text-left max-w-sm mx-auto">
+                      <div className="text-[10px] uppercase tracking-widest text-[#c19d53] font-bold mb-2">Application Details</div>
+                      <div className="space-y-1.5 text-xs font-sans">
+                        <div className="flex justify-between"><span className="text-slate-500">Program:</span><span className="text-slate-300 font-medium">{formData.selectedCourseName}</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Duration:</span><span className="text-slate-300 font-medium">{formData.selectedDuration}</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Shift:</span><span className="text-slate-300 font-medium">{formData.shift}</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Candidate:</span><span className="text-slate-300 font-medium">{formData.studentName}</span></div>
+                      </div>
+                    </div>
+                    <p className="text-slate-500 text-[11px] font-sans">Our admissions team will contact you soon. You can also visit our campus for more details.</p>
                   </div>
-
-                  {/* Official Bank details */}
-                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3 text-xs leading-relaxed">
-                    <div className="flex items-center space-x-1.5 text-amber-700 font-bold uppercase tracking-wider text-[10px]">
-                      <Landmark className="h-3.5 w-3.5" />
-                      <span>Direct Payment Instructions</span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                      <div>
-                        <span className="text-slate-400 block text-[10px] uppercase">Bank Account:</span>
-                        <span className="text-slate-800 font-semibold block">{websiteData?.paymentSettings?.bankName || 'Bank Alfalah Ltd'}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 block text-[10px] uppercase">Account Title:</span>
-                        <span className="text-slate-800 font-semibold block">{websiteData?.paymentSettings?.accountTitle || "The Chef's Academy"}</span>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <span className="text-slate-400 block text-[10px] uppercase">IBAN Number:</span>
-                        <span className="text-slate-900 font-bold font-mono text-sm tracking-wider">
-                          {websiteData?.paymentSettings?.iban || 'PK00ALFH00000000000000'}
-                        </span>
-                      </div>
-                      <div className="sm:col-span-2 border-t border-slate-100 pt-2 text-[10px] text-slate-500">
-                        {websiteData?.paymentSettings?.mobileName || 'Easypaisa or JazzCash'} Wallet: <strong>{websiteData?.paymentSettings?.mobileNumber || '0333-9123456'}</strong> (Title: {websiteData?.paymentSettings?.mobileTitle || "The Chef's Academy"})
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-center pt-1 no-print">
-                    <button
-                      id="download-btn"
-                      onClick={handleDownloadPdf}
-                      className="inline-flex items-center space-x-1.5 bg-slate-950 text-white hover:bg-amber-600 px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
-                    >
-                      <Printer className="h-4 w-4 text-[#c19d53]" />
-                      <span>Print / Save as PDF</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Helpful instructions about returning */}
-                <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 max-w-2xl mx-auto space-y-4">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-400 block">Next Steps to Finalize Your Admission:</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-sans text-slate-400">
-                    <div className="space-y-1">
-                      <span className="text-white font-bold block">1. Make Payment</span>
-                      <p className="leading-relaxed">Transfer/Deposit the registration fee of PKR {activePlan.regFee.toLocaleString()} (or full amount) to our Bank Alfalah or Easypaisa account.</p>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-white font-bold block">2. Save Receipt / Screenshot</span>
-                      <p className="leading-relaxed">Take a clear photo, screenshot, or image copy of the bank transfer slip or payment receipt.</p>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="text-white font-bold block">3. Upload Slip Below</span>
-                      <p className="leading-relaxed">Go to the "Track Status & Upload Receipt" tab, search with your tracking code, and submit your payment receipt photo.</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 text-center">
-                    <button
-                      onClick={() => {
-                        setPortalTab('status');
-                        const targetId = submittedId || (submittedAdmission ? submittedAdmission.id : '');
-                        setSearchQuery(targetId);
-                        const found = admissions.find(a => a.id === targetId) || submittedAdmission;
-                        setSearchResult(found || null);
-                        setHasSearched(true);
-                      }}
-                      className="inline-flex items-center space-x-1.5 bg-[#c19d53] text-slate-950 font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-wider hover:brightness-110 shadow-lg shadow-[#c19d53]/15 transition-all cursor-pointer"
-                    >
-                      <span>Go Upload My Payment Receipt</span>
-                      <Upload className="h-4 w-4 stroke-[2.5]" />
-                    </button>
-                  </div>
-                </div>
+                )}
 
                 {/* Reset portal form buttons */}
                 <div className="text-center pt-2">

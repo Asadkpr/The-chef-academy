@@ -150,7 +150,8 @@ export default function CMSAdmin() {
     recordAdmissionPayment, addWalkInAdmission,
     users = [], demands = [], issueRecords = [], currentUser = null,
     addCMSUser, updateCMSUser, deleteCMSUser, loginCMSUser, logoutCMSUser,
-    raiseDemand, approveDemand, rejectDemand, markDemandPurchased, issueDemandToUser, issueInventoryToUser
+    raiseDemand, approveDemand, rejectDemand, markDemandPurchased, issueDemandToUser, issueInventoryToUser,
+    invoiceEnabled, setInvoiceEnabled
   } = useAcademy();
 
   const [passcode, setPasscode] = useState('');
@@ -1195,13 +1196,41 @@ Course: *${selectedAdmission.selectedCourseTitle}*
             </div>
           </div>
 
-          <button
-            onClick={logoutAdmin}
-            className="flex items-center space-x-2 bg-slate-900 hover:bg-red-950/20 text-slate-400 hover:text-red-400 px-4 py-2 rounded-xl text-xs font-semibold border border-slate-800 hover:border-red-500/20 transition-all cursor-pointer"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Logout Panel</span>
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={logoutAdmin}
+              className="flex items-center space-x-2 bg-slate-900 hover:bg-red-950/20 text-slate-400 hover:text-red-400 px-4 py-2 rounded-xl text-xs font-semibold border border-slate-800 hover:border-red-500/20 transition-all cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout Panel</span>
+            </button>
+
+            {/* Invoice ON/OFF Toggle */}
+            <button
+              onClick={() => setInvoiceEnabled(!invoiceEnabled)}
+              className={`flex items-center space-x-2.5 px-4 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                invoiceEnabled
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
+                  : 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800 hover:text-slate-400'
+              }`}
+              title={invoiceEnabled ? 'Invoice is ON — Students will see invoice & receive email after enrollment' : 'Invoice is OFF — Students will only see a submission confirmation'}
+            >
+              <FileText className="h-4 w-4" />
+              <span>Invoice</span>
+              <span className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-300 ${
+                invoiceEnabled ? 'bg-emerald-500' : 'bg-slate-600'
+              }`}>
+                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                  invoiceEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'
+                }`} />
+              </span>
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                invoiceEnabled ? 'text-emerald-400' : 'text-slate-500'
+              }`}>
+                {invoiceEnabled ? 'ON' : 'OFF'}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Core CMS Navigation Grid */}
