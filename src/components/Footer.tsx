@@ -128,7 +128,7 @@ export default function Footer() {
                 </button>
               </li>
               <li>
-                <button onClick={() => setView('home')} className="hover:text-[#c19d53] transition-colors text-left font-light">
+                <button onClick={() => setView('privacy')} className="hover:text-[#c19d53] transition-colors text-left font-light">
                   Privacy Policy
                 </button>
               </li>

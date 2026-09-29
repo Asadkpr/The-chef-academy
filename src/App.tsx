@@ -11,6 +11,7 @@ import Footer from './components/Footer';
 import CMSAdmin from './components/CMSAdmin';
 import Website from './components/Website';
 import ShopCatalog from './components/ShopCatalog';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import AnnouncementPopup from './components/AnnouncementPopup';
 import TcaLoader from './components/TcaLoader';
 import { motion, AnimatePresence } from 'motion/react';
@@ -97,6 +98,16 @@ function AppContent() {
             className="pt-20"
           >
             <ShopCatalog />
+          </motion.div>
+        ) : activeView === 'privacy' ? (
+          <motion.div
+            key="privacy-view"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PrivacyPolicy />
           </motion.div>
         ) : (
           <motion.div

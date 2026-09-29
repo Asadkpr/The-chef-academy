@@ -91,7 +91,7 @@ interface AcademyContextType {
   updateShopOrderStatus: (id: string, status: ShopOrder['status']) => void;
   coursePlans: CoursePlans;
   updateCoursePlans: (plans: CoursePlans) => void;
-  activeView: 'home' | 'cms' | 'portal' | 'shop';
+  activeView: 'home' | 'cms' | 'portal' | 'shop' | 'privacy';
   currentSection: string;
   isAdminAuthenticated: boolean;
   websiteData: WebsiteData;
@@ -111,7 +111,7 @@ interface AcademyContextType {
   deleteTestimonial: (id: string) => void;
   addGalleryItem: (item: Omit<GalleryItem, 'id'>) => void;
   deleteGalleryItem: (id: string) => void;
-  setView: (view: 'home' | 'cms' | 'portal' | 'shop') => void;
+  setView: (view: 'home' | 'cms' | 'portal' | 'shop' | 'privacy') => void;
   setSection: (section: string) => void;
   loginAdmin: (passcode: string) => boolean;
   logoutAdmin: () => void;
@@ -169,7 +169,7 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [demands, setDemands] = useState<DemandRecord[]>([]);
   const [issueRecords, setIssueRecords] = useState<IssueRecord[]>([]);
   const [currentUser, setCurrentUser] = useState<CMSUser | null>(null);
-  const [activeView, setActiveView] = useState<'home' | 'cms' | 'portal' | 'shop'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'cms' | 'portal' | 'shop' | 'privacy'>('home');
   const [currentSection, setCurrentSection] = useState<'hero' | 'about' | 'courses' | 'admission' | 'gallery' | 'testimonials'>('hero');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
   const [websiteData, setWebsiteData] = useState<WebsiteData>(INITIAL_WEBSITE_DATA);
@@ -183,13 +183,15 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const hash = window.location.hash.toLowerCase();
     const params = new URLSearchParams(window.location.search);
     
-    let initialView: 'home' | 'cms' | 'portal' | 'shop' = 'home';
+    let initialView: 'home' | 'cms' | 'portal' | 'shop' | 'privacy' = 'home';
     if (params.get('cms') === 'true' || hash.includes('admin') || hash.includes('cms')) {
       initialView = 'cms';
     } else if (hash.includes('portal') || hash.includes('apply')) {
       initialView = 'portal';
     } else if (hash.includes('shop') || hash.includes('store')) {
       initialView = 'shop';
+    } else if (hash.includes('privacy')) {
+      initialView = 'privacy';
     }
 
     setActiveView(initialView);
@@ -197,14 +199,14 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Initialize root history entries so back button stays in SPA if landed on deep view
     if (initialView !== 'home') {
       window.history.replaceState({ view: 'home' }, '', '#home');
-      window.history.pushState({ view: initialView }, '', initialView === 'portal' ? '#portal' : initialView === 'cms' ? '#admin' : '#shop');
+      window.history.pushState({ view: initialView }, '', initialView === 'portal' ? '#portal' : initialView === 'cms' ? '#admin' : initialView === 'shop' ? '#shop' : '#privacy');
     } else {
       window.history.replaceState({ view: 'home' }, '', '#home');
     }
 
     // Handle Browser Back & Forward button navigation
     const handlePopState = (event: PopStateEvent) => {
-      let targetView: 'home' | 'cms' | 'portal' | 'shop' = 'home';
+      let targetView: 'home' | 'cms' | 'portal' | 'shop' | 'privacy' = 'home';
       
       if (event.state && event.state.view) {
         targetView = event.state.view;
@@ -216,6 +218,8 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
           targetView = 'cms';
         } else if (currentHash.includes('shop') || currentHash.includes('store')) {
           targetView = 'shop';
+        } else if (currentHash.includes('privacy')) {
+          targetView = 'privacy';
         } else {
           targetView = 'home';
         }
@@ -616,11 +620,11 @@ export const AcademyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   // Set active view (Home or CMS Admin or Portal or Shop) with Browser History pushState
-  const setView = (view: 'home' | 'cms' | 'portal' | 'shop', pushHistory = true) => {
+  const setView = (view: 'home' | 'cms' | 'portal' | 'shop' | 'privacy', pushHistory = true) => {
     setActiveView(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    const targetHash = view === 'portal' ? '#portal' : view === 'cms' ? '#admin' : view === 'shop' ? '#shop' : '#home';
+    const targetHash = view === 'portal' ? '#portal' : view === 'cms' ? '#admin' : view === 'shop' ? '#shop' : view === 'privacy' ? '#privacy' : '#home';
     
     if (pushHistory) {
       if (!window.history.state || window.history.state.view !== view) {

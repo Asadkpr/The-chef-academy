@@ -1392,6 +1392,7 @@ export default function Website() {
               <li><button onClick={() => handleNavClick('home-about')} className="hover:text-[#C5A964] transition-colors">About Academy</button></li>
               <li><button onClick={() => setView('portal')} className="hover:text-[#C5A964] transition-colors">Apply Admissions</button></li>
               <li><button onClick={() => handleNavClick('home-faqs')} className="hover:text-[#C5A964] transition-colors">FAQs & Help</button></li>
+              <li><button onClick={() => setView('privacy')} className="hover:text-[#C5A964] transition-colors">Privacy Policy</button></li>
               <li><button onClick={() => setView('cms')} className="hover:text-[#C5A964] transition-colors">Instructor Portal</button></li>
             </ul>
           </div>
