@@ -177,7 +177,10 @@ export default function Footer() {
       {/* Bottom Footer Credits */}
       <div className="bg-slate-950 border-t border-slate-900 py-6 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p>© 2026 The Chef's Academy. All rights reserved.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <p>© {new Date().getFullYear()} The Chef's Academy. All rights reserved.</p>
+            <button onClick={() => setView('privacy')} className="text-[#c19d53] hover:text-white transition-colors underline underline-offset-4 font-medium">Privacy Policy</button>
+          </div>
           <div className="flex items-center space-x-2 text-[11px] font-medium text-slate-400">
             <span>SECP Registered</span>
             <span>·</span>

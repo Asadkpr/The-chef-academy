@@ -1432,7 +1432,10 @@ export default function Website() {
 
         {/* Foot Bar */}
         <div className="max-w-7xl mx-auto px-6 pt-6 mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <span>© 2026 The Chef's Academy. All rights reserved.</span>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <span>© {new Date().getFullYear()} The Chef's Academy. All rights reserved.</span>
+            <button onClick={() => setView('privacy')} className="text-[#C5A964] hover:text-white transition-colors underline underline-offset-4 font-medium">Privacy Policy</button>
+          </div>
           <span>SECP Registered • Gulberg III, Lahore, Pakistan</span>
         </div>
       </footer>
